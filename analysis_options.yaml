@@ -1,0 +1,16 @@
+analyzer:
+  errors:
+    file_names: ignore
+    prefer_const_constructors: ignore
+    prefer_const_literals_to_create_immutables: ignore
+
+  plugins:
+    - custom_lint
+
+formatter:
+  trailing_commas: preserve
+
+include: package:flutter_lints/flutter.yaml
+
+linter:
+  rules:
