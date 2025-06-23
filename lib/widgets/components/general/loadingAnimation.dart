@@ -54,6 +54,12 @@ class _LoadingAnimationState extends State<LoadingAnimation> with SingleTickerPr
   }
 
   @override
+  void dispose() {
+    controller.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,

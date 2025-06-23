@@ -1,10 +1,11 @@
 enum Pilar { alignment, people, process, leadership, none }
 
+enum Screen { logIn, selectCompany, orgStructure, assessment}
+
 enum Permission { admin, error }
 
 enum NavBarButtonType { home }
 
-// This is technically not correct. All of these are not indicators. but it works super well.
 enum Benchmark {
   purposeDriven,
   growthAlign,

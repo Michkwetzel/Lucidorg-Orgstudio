@@ -11,25 +11,23 @@ class TopLeftHud extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     TopleftHudState state = ref.watch(topleftHudProvider);
 
-    return Container(
-      decoration: kboxShadowNormal,
-      child: Row(
-        children: [
-          SizedBox(
-            width: 35,
-            height: 35,
-            child: Image.asset(
-              'assets/logo/logoIcon.png',
-            ),
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        SizedBox(
+          width: 35,
+          height: 35,
+          child: Image.asset(
+            'assets/logo/logoIcon.png',
           ),
-          SizedBox(width: 4),
-          if (state.showDropDown) Icon(Icons.keyboard_arrow_down_rounded),
-          SizedBox(width: 24),
-          Text(state.title ?? ""),
-          SizedBox(width: 4),
-          if (state.subTitle != null) Text(" - ${state.subTitle}"),
-        ],
-      ),
+        ),
+        SizedBox(width: 4),
+        if (state.showDropDown) Icon(Icons.keyboard_arrow_down_rounded),
+        SizedBox(width: 12),
+        Text(state.title ?? "", style: kTextHeading2R,),
+        SizedBox(width: 4),
+        if (state.subTitle != null) Text(" - ${state.subTitle}"),
+      ],
     );
   }
 }

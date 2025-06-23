@@ -14,7 +14,6 @@ class AuthState {
   final String? error;
 
   bool get isAuthenticated => firebaseUser != null;
-  bool get hasCompleteProfile => userProfile != null;
 
   AuthState({this.firebaseUser, this.userProfile, this.isLoading = false, this.error});
 

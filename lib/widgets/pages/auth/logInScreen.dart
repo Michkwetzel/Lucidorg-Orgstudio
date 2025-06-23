@@ -113,6 +113,7 @@ class _LogInScreenState extends ConsumerState<LogInScreen> {
               BackButton(
                 onPressed: () => NavigationService.navigateTo('/auth/landingPage'),
               ),
+              // CallToActionButton(onPressed: () => NavigationService.navigateTo('/app/companies'), buttonText: "Log in"),
               CallToActionButton(onPressed: () => emailPasswordSignIn(), buttonText: "Log in"),
             ],
           ),

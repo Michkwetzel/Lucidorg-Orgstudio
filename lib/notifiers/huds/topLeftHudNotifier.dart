@@ -30,4 +30,20 @@ class TopleftHudState {
 
 class TopleftHudNotifier extends StateNotifier<TopleftHudState> {
   TopleftHudNotifier() : super(TopleftHudState());
+
+  void setTitle(String title) {
+    state = state.copyWith(title: title);
+  }
+
+  void setSubtitle(String subTitle) {
+    state = state.copyWith(subTitle: subTitle);
+  }
+
+  void setExtraText(String extraText) {
+    state = state.copyWith(extraText: extraText);
+  }
+
+  void showDropDown(bool show) {
+    state = state.copyWith(showDropDown: show);
+  }
 }

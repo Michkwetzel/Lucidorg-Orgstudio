@@ -23,15 +23,15 @@ const kTextSubtitleM = TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.w
 
 // 32px - tertiary headings
 const kTextHeading3L = TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.w300, fontSize: 32, color: Colors.black87);
-const kTextHeading3M = TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.w400, fontSize: 32, color: Colors.black87);
+const kTextHeading3R = TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.w400, fontSize: 32, color: Colors.black87);
 
 // 40px - secondary headings, page sections
 const kTextHeading2L = TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.w300, fontSize: 40, color: Colors.black87);
-const kTextHeading2M = TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.w400, fontSize: 40, color: Colors.black87);
+const kTextHeading2R = TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.w400, fontSize: 40, color: Colors.black87);
 
 //48px - primary headings, hero text
-const kTextHeading1L = TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.w300, fontSize: 48);
-const kTextHeading1M = TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.w400, fontSize: 48);
+const kTextHeading1L = TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.w300, fontSize: 48, color: Colors.black87);
+const kTextHeading1R = TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.w400, fontSize: 48, color: Colors.black87);
 
 //*************************************************************************************************
 
