@@ -1,6 +1,8 @@
 enum Pilar { alignment, people, process, leadership, none }
 
-enum Screen { logIn, selectCompany, orgStructure, assessment}
+enum BlockType { add, existing }
+
+enum Screen { logIn, selectCompany, orgStructure, assessment }
 
 enum Permission { admin, error }
 
@@ -39,7 +41,7 @@ List<Benchmark> indicators() {
     Benchmark.collabProcesses,
     Benchmark.meetingEfficacy,
     Benchmark.purposeDriven,
-    Benchmark.empoweredLeadership,  
+    Benchmark.empoweredLeadership,
   ];
 }
 
