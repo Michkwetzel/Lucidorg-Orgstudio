@@ -11,7 +11,7 @@ class OrgBlock extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final blockNotifier = ref.watch(blockNotifierProvider(id));
+    final blockNotifier = ref.watch(blockNotifierProvider(id)); //Each block has its own notifier
 
     return Positioned(
       left: blockNotifier.position.dx,
@@ -22,10 +22,22 @@ class OrgBlock extends ConsumerWidget {
         },
         child: Draggable<Map<String, dynamic>>(
           data: {'id': id, 'blockType': BlockType.existing},
-          feedback: Container(
-            width: 50,
-            height: 50,
-            decoration: kboxShadowNormal,
+          feedback: Builder(
+            // So smart. a Builder function lets you run code before it is built. Ha
+            builder: (context) {
+              double scale = ref.read(canvasScaleProvider);
+              return Container(
+                width: 120 * scale,
+                height: 100 * scale,
+                decoration: kboxShadowNormal,
+                child: Center(
+                  child: Text(
+                    'Block Content',
+                    style: TextStyle(fontSize: 14 * scale),
+                  ),
+                ),
+              );
+            },
           ),
           child: Container(
             width: 120,

@@ -1,18 +1,41 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:platform_v2/config/constants.dart';
 import 'package:platform_v2/config/enums.dart';
 import 'package:platform_v2/config/provider.dart';
 import 'package:platform_v2/services/firestoreIdGenerator.dart';
 import 'package:platform_v2/widgets/components/general/orgBlock.dart';
 
-class OrgCanvas extends ConsumerWidget {
+class OrgCanvas extends ConsumerStatefulWidget {
   const OrgCanvas({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<OrgCanvas> createState() => _OrgCanvasState();
+}
+
+class _OrgCanvasState extends ConsumerState<OrgCanvas> {
+  final TransformationController _transformationController = TransformationController();
+
+  @override
+  void initState() {
+    super.initState();
+    // Listen to transformation changes and update the scale provider
+    _transformationController.addListener(() {
+      final scale = _transformationController.value.getMaxScaleOnAxis();
+      ref.read(canvasScaleProvider.notifier).state = scale;
+    });
+  }
+
+  @override
+  void dispose() {
+    _transformationController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return SizedBox.expand(
       child: InteractiveViewer(
+        transformationController: _transformationController,
         constrained: false,
         minScale: 0.1,
         maxScale: 10,
@@ -25,9 +48,9 @@ class OrgCanvas extends ConsumerWidget {
                 final localPosition = renderBox.globalToLocal(details.offset);
                 if (details.data['blockType'] == BlockType.add) {
                   final blockId = FirestoreIdGenerator.generate();
-                  ref.read(canvasProvider.notifier).addBlock(blockId); // Add block ID to canvas
+                  ref.read(canvasProvider.notifier).addBlock(blockId);
                   WidgetsBinding.instance.addPostFrameCallback((_) {
-                    ref.read(blockNotifierProvider(blockId).notifier).updatePosition(localPosition); //Created changeNotifier for block. Then updates position
+                    ref.read(blockNotifierProvider(blockId).notifier).updatePosition(localPosition);
                   });
                 } else if (details.data['blockType'] == BlockType.existing) {
                   ref.read(blockNotifierProvider(details.data['id']).notifier).updatePosition(localPosition);

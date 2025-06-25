@@ -52,3 +52,5 @@ final blockNotifierProvider = ChangeNotifierProvider.family.autoDispose<BlockNot
     position: Offset.zero,
   );
 });
+
+final canvasScaleProvider = StateProvider<double>((ref) => 1.0);

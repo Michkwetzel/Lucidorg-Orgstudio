@@ -1,6 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:flutter/material.dart';
 
 class FirestoreService {
   static late final FirebaseFirestore _instance;
@@ -14,15 +13,22 @@ class FirestoreService {
 
   static FirebaseFirestore get instance => _instance;
 
-  static Future<void> saveBlock(String orgId, String blockId, Offset position) async {
-    await _instance.collection('companies').doc(orgId).collection('blocks').doc(blockId).set({
-      'id': blockId,
-      'position': {'x': position.dx, 'y': position.dy},
+  static Future<void> addBlock(String orgId, Map<String, dynamic> blockData) async {
+    await _instance.collection('orgs').doc(orgId).collection('blocks').doc(blockData['id']).set({
+      ...blockData,
+      'createdAt': FieldValue.serverTimestamp(),
       'updatedAt': FieldValue.serverTimestamp(),
-    }, SetOptions(merge: true));
+    });
   }
 
-  static Future<void> deleteBlock(String orgID, String blockId) async {
-    await _instance.collection('companies').doc(orgID).collection('blocks').doc(blockId).delete();
+  static Future<void> deleteBlock(String orgId, String blockId) async {
+    await _instance.collection('orgs').doc(orgId).collection('blocks').doc(blockId).delete();
+  }
+
+  static Future<void> updateBlock(String orgId, String blockId, Map<String, dynamic> updates) async {
+    await _instance.collection('orgs').doc(orgId).collection('blocks').doc(blockId).update({
+      ...updates,
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
   }
 }

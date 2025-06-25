@@ -80,11 +80,70 @@ final connectionListProvider = StateProvider<List<Connection>>  // Derived from 
 2. Canvas removes block ID and related connections
 3. BlockNotifier auto-disposed when no longer watched
 
+## Drag Feedback Scaling Solution
+### Problem Solved: Draggable feedback widget scaling with InteractiveViewer zoom
+- **Issue**: Feedback widget not scaling with canvas zoom level
+- **Solution**: Use `Builder` widget in `feedback` to capture scale at drag time
+- **Implementation**: `ref.read(canvasScaleProvider)` in Builder function prevents rebuilds
+- **Performance**: No rebuilds on zoom, scale only read when dragging starts
+
+### Canvas Scale Provider
+- `canvasScaleProvider` updated by TransformationController listener in OrgCanvas  
+- Blocks don't watch this provider (no rebuilds)
+- Scale captured only during drag operations via `ref.read()`
+
+## Database Architecture - Real-time Firestore
+
+### Collection Structure
+```
+/organizations/{orgId}/
+  blocks/{blockId} - individual block documents
+  emails/{emailId} - email documents with blockId reference
+```
+
+### Block Data Model
+```dart
+{
+  id: "blockId",
+  position: {x: 100, y: 200},
+  name: "John Doe", 
+  department: "Engineering",
+  role: "Manager",
+  parentId: "parentBlockId", // null if root
+  childrenIds: ["child1", "child2"],
+  createdAt: timestamp,
+  updatedAt: timestamp
+}
+```
+
+### FirestoreService Methods (`/lib/services/firestoreService.dart`)
+```dart
+// CRUD operations using flexible Map<String, dynamic>
+static Future<void> addBlock(String orgId, Map<String, dynamic> blockData)
+static Future<void> updateBlock(String orgId, String blockId, Map<String, dynamic> updates) 
+static Future<void> deleteBlock(String orgId, String blockId)
+
+// Planned: Real-time reading
+static Stream<QuerySnapshot> getBlocksStream(String orgId) // For real-time updates
+```
+
+### Real-time Strategy
+- **Approach**: Firestore snapshots for real-time collaboration
+- **Performance**: Individual BlockNotifier architecture prevents cascade rebuilds
+- **Updates**: All block operations (add, move, edit, delete) sync immediately to Firestore
+- **Collaboration**: Multiple users can edit same canvas with live updates
+
+### Email Separation
+- Emails stored in separate collection to avoid document size limits
+- 6000+ emails across 100-300 blocks requires separate docs
+- Email documents reference blockId for efficient querying
+
 ## Future Enhancements
-- Block connections visualization
+- Real-time snapshot integration with existing notifiers
+- Block connections visualization  
 - Block data editing (name, department)
-- Persistence layer integration
-- Canvas save/load functionality
+- Email management UI
+- Offline persistence and conflict resolution
 
 ## Commands
 - `flutter analyze` - Check for issues
