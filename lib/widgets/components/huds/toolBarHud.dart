@@ -35,10 +35,10 @@ class ToolBarHud extends ConsumerWidget {
             child: Icon(Icons.add),
           ),
         ),
-        FilledButton.tonal(
-          onPressed: () => ref.read(canvasProvider.notifier).saveToDB(),
-          child: Text("Save"),
-        ),
+        // FilledButton.tonal(
+        //   onPressed: () => ref.read(canvasProvider.notifier).saveToDB(),
+        //   child: Text("Save"),
+        // ),
       ],
     );
   }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:platform_v2/dataClasses/blockParam.dart';
 import 'package:platform_v2/notifiers/general/appStateNotifier.dart';
 import 'package:platform_v2/notifiers/general/authNotifier.dart';
 import 'package:platform_v2/notifiers/general/blockNotifier.dart';
@@ -33,13 +34,15 @@ final appStateProvider = StateNotifierProvider<AppStateNotifier, AppState>((ref)
   return AppStateNotifier();
 });
 
-final canvasProvider = StateNotifierProvider<CanvasNotifier, CanvasState>((ref) {
-  final orgId = ref.watch(appStateProvider).orgId;
-  return CanvasNotifier(orgId: orgId);
+final canvasProvider = StateNotifierProvider.autoDispose<CanvasNotifier, Map<String, BlockParams>>((ref) {
+  ref.keepAlive();
+  final AppStateNotifier appStateNotifier = ref.read(appStateProvider.notifier);
+
+  return CanvasNotifier(appStateNotifier: appStateNotifier);
 });
 
-final blockListProvider = StateProvider<Set<String>>((ref) {
-  return ref.watch(canvasProvider).blockIds;
+final blockListProvider = StateProvider<Map<String, BlockParams>>((ref) {
+  return ref.watch(canvasProvider);
 });
 
 final blockNotifierProvider = ChangeNotifierProvider.family.autoDispose<BlockNotifier, String>((ref, blockId) {

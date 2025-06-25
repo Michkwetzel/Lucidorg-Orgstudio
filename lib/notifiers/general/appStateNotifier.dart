@@ -50,4 +50,6 @@ class AppStateNotifier extends StateNotifier<AppState> {
   void setScreen(Screen screen) {
     state = state.copyWith(screen: screen);
   }
+
+  String? get orgId => state.orgId;
 }

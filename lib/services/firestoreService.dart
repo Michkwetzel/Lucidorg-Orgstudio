@@ -14,7 +14,7 @@ class FirestoreService {
   static FirebaseFirestore get instance => _instance;
 
   static Future<void> addBlock(String orgId, Map<String, dynamic> blockData) async {
-    await _instance.collection('orgs').doc(orgId).collection('blocks').doc(blockData['id']).set({
+    await _instance.collection('orgs').doc(orgId).collection('blocks').doc(blockData['blockId']).set({
       ...blockData,
       'createdAt': FieldValue.serverTimestamp(),
       'updatedAt': FieldValue.serverTimestamp(),

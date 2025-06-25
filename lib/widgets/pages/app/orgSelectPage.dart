@@ -40,6 +40,7 @@ class OrgSelectPage extends ConsumerWidget {
                         ref.read(appStateProvider.notifier).setScreen(Screen.orgStructure);
                         ref.read(topleftHudProvider.notifier).setTitle(org.orgName);
                         ref.read(botLeftHudProvider.notifier).toggleOrgsButton(true);
+                        ref.read(canvasProvider.notifier).subscribeToBlocks(org.id);
                         NavigationService.navigateTo("/app/orgStructure");
                       },
                     ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:platform_v2/config/enums.dart';
 import 'package:platform_v2/config/provider.dart';
+import 'package:platform_v2/dataClasses/blockParam.dart';
 import 'package:platform_v2/services/firestoreIdGenerator.dart';
 import 'package:platform_v2/widgets/components/general/orgBlock.dart';
 
@@ -48,10 +49,7 @@ class _OrgCanvasState extends ConsumerState<OrgCanvas> {
                 final localPosition = renderBox.globalToLocal(details.offset);
                 if (details.data['blockType'] == BlockType.add) {
                   final blockId = FirestoreIdGenerator.generate();
-                  ref.read(canvasProvider.notifier).addBlock(blockId);
-                  WidgetsBinding.instance.addPostFrameCallback((_) {
-                    ref.read(blockNotifierProvider(blockId).notifier).updatePosition(localPosition);
-                  });
+                  ref.read(canvasProvider.notifier).addBlock(blockId, localPosition);
                 } else if (details.data['blockType'] == BlockType.existing) {
                   ref.read(blockNotifierProvider(details.data['id']).notifier).updatePosition(localPosition);
                 }
@@ -61,7 +59,17 @@ class _OrgCanvasState extends ConsumerState<OrgCanvas> {
                 height: 3000,
                 color: Colors.transparent,
                 child: Stack(
-                  children: ref.watch(blockListProvider).map((blockId) => OrgBlock(key: ValueKey(blockId), id: blockId)).toList(),
+                  children: ref
+                      .watch(blockListProvider)
+                      .entries
+                      .map(
+                        (entry) => OrgBlock(
+                          key: ValueKey(entry.key),
+                          id: entry.key,
+                          initialPosition: entry.value.position,
+                        ),
+                      )
+                      .toList(),
                 ),
               ),
             );

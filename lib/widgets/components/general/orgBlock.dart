@@ -6,12 +6,19 @@ import 'package:platform_v2/config/provider.dart';
 
 class OrgBlock extends ConsumerWidget {
   final String id;
+  final Offset initialPosition;
 
-  const OrgBlock({super.key, required this.id});
+  const OrgBlock({super.key, required this.id, required this.initialPosition});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final blockNotifier = ref.watch(blockNotifierProvider(id)); //Each block has its own notifier
+    // Set initial position once if provided
+    if (!blockNotifier.isInitialized) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        blockNotifier.updatePositionAndInit(initialPosition);
+      });
+    }
 
     return Positioned(
       left: blockNotifier.position.dx,

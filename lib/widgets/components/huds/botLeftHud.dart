@@ -25,6 +25,7 @@ class BotLeftHud extends ConsumerWidget {
           ),
         FilledButton.tonal(
           onPressed: () {
+            ref.invalidate(canvasProvider);
             ref.read(authProvider.notifier).signOutUser();
             NavigationService.navigateTo('/auth/landingPage');
           },
