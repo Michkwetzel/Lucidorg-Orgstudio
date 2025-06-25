@@ -1,13 +1,13 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:platform_v2/config/enums.dart';
 
-// Notifier Holding Main app state like which screen, Selected Company, Selected Assessment, etc.
+// Notifier Holding Main app state like which screen, Selected org, Selected Assessment, etc.
 class AppState {
   final bool isLoading;
   final Screen screen;
 
-  final String? companyID;
-  final String? companyName;
+  final String? orgId;
+  final String? orgName;
   final String? assessmentID;
   final String? assessmentName;
 
@@ -15,25 +15,25 @@ class AppState {
     this.isLoading = false,
     this.screen = Screen.logIn,
 
-    this.companyID,
-    this.companyName,
+    this.orgId,
+    this.orgName,
     this.assessmentID,
     this.assessmentName,
   });
 
   AppState copyWith({
     bool? isLoading,
-    String? companyID,
+    String? orgId,
     Screen? screen,
-    String? companyName,
+    String? orgName,
     String? assessmentID,
     String? assessmentName,
   }) {
     return AppState(
       isLoading: isLoading ?? this.isLoading,
-      companyID: companyID,
+      orgId: orgId,
       screen: screen ?? this.screen,
-      companyName: companyName,
+      orgName: orgName,
       assessmentID: assessmentID,
       assessmentName: assessmentName,
     );
@@ -43,8 +43,8 @@ class AppState {
 class AppStateNotifier extends StateNotifier<AppState> {
   AppStateNotifier() : super(AppState());
 
-  void setCompany(String? companyID, String? companyName) {
-    state = state.copyWith(companyID: companyID, companyName: companyName);
+  void setOrg(String? orgId, String? orgName) {
+    state = state.copyWith(orgId: orgId, orgName: orgName);
   }
 
   void setScreen(Screen screen) {

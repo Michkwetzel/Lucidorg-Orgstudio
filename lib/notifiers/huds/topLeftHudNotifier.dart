@@ -7,7 +7,7 @@ class TopleftHudState {
   final bool showDropDown;
 
   TopleftHudState({
-    this.title = "Companies",
+    this.title = "Orgs",
     this.subTitle,
     this.extraText,
     this.showDropDown = false,

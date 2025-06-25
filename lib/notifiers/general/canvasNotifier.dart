@@ -1,45 +1,45 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:platform_v2/services/firestoreIdGenerator.dart';
-
-class Connection {
-  final String fromBlockId;
-  final String toBlockId;
-
-  Connection({required this.fromBlockId, required this.toBlockId});
-}
+import 'package:platform_v2/services/firestoreService.dart';
+import 'dart:async';
 
 class CanvasState {
   final Set<String> blockIds;
-  final List<Connection> connections;
 
   CanvasState({
     required this.blockIds,
-    required this.connections,
   });
 
   CanvasState copyWith({
     Set<String>? blockIds,
-    List<Connection>? connections,
   }) {
     return CanvasState(
       blockIds: blockIds ?? this.blockIds,
-      connections: connections ?? this.connections,
     );
   }
 }
 
 class CanvasNotifier extends StateNotifier<CanvasState> {
-  CanvasNotifier() : super(_createInitialState());
+  final String? orgId;
+  StreamSubscription? _blocksSubscription;
 
-  static CanvasState _createInitialState() {
-    final block1Id = FirestoreIdGenerator.generate();
-    final block2Id = FirestoreIdGenerator.generate();
-    final block3Id = FirestoreIdGenerator.generate();
+  CanvasNotifier({required this.orgId}) : super(CanvasState(blockIds: {})) {
+    _subscribeToBlocks();
+  }
 
-    return CanvasState(
-      blockIds: {block1Id, block2Id, block3Id},
-      connections: [],
-    );
+  void _subscribeToBlocks() {
+    print("Subscribing to orgId: $orgId");
+    if (orgId != null) {
+      _blocksSubscription = FirestoreService.getBlocksStream(orgId!).listen((snapshot) {
+        final blockIds = snapshot.docs.map((doc) => doc.id).toSet();
+        state = state.copyWith(blockIds: blockIds);
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _blocksSubscription?.cancel();
+    super.dispose();
   }
 
   void addBlock(String blockId) {
@@ -50,27 +50,7 @@ class CanvasNotifier extends StateNotifier<CanvasState> {
 
   void deleteBlock(String blockId) {
     final newBlockIds = Set<String>.from(state.blockIds)..remove(blockId);
-    final newConnections = state.connections.where((conn) => conn.fromBlockId != blockId && conn.toBlockId != blockId).toList();
-
-    state = state.copyWith(
-      blockIds: newBlockIds,
-      connections: newConnections,
-    );
-  }
-
-  void addConnection(String fromBlockId, String toBlockId) {
-    if (state.blockIds.contains(fromBlockId) && state.blockIds.contains(toBlockId)) {
-      final newConnection = Connection(fromBlockId: fromBlockId, toBlockId: toBlockId);
-      state = state.copyWith(
-        connections: [...state.connections, newConnection],
-      );
-    }
-  }
-
-  void removeConnection(String fromBlockId, String toBlockId) {
-    final newConnections = state.connections.where((conn) => !(conn.fromBlockId == fromBlockId && conn.toBlockId == toBlockId)).toList();
-
-    state = state.copyWith(connections: newConnections);
+    state = state.copyWith(blockIds: newBlockIds);
   }
 
   void saveToDB() {
@@ -80,5 +60,4 @@ class CanvasNotifier extends StateNotifier<CanvasState> {
   }
 
   List<String> get blockIds => state.blockIds.toList();
-  List<Connection> get connections => state.connections;
 }

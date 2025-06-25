@@ -63,11 +63,11 @@ class AuthNotifier extends StateNotifier<AuthState> {
     try {
       final userDocRef = await _firestore.collection('users').doc(state.firebaseUser!.uid).get();
       final permission = _parsePermission(userDocRef.data()?['permission']);
-      final companyUID = userDocRef.data()?['companyUID'];
+      final orgUID = userDocRef.data()?['orgUID'];
       final email = userDocRef.data()?['userEmail'];
       final userUID = state.firebaseUser!.uid;
       state = state.copyWith(
-        userProfile: UserProfile(permission: permission, companyUID: companyUID, email: email, userUID: userUID),
+        userProfile: UserProfile(permission: permission, orgUID: orgUID, email: email, userUID: userUID),
       );
     } on Exception catch (e) {
       logger.severe("Unable to get userInfo for user UID: ${state.firebaseUser?.uid}, email: ${state.firebaseUser?.email}, e: $e");

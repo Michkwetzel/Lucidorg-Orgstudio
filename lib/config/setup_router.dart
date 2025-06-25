@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:platform_v2/widgets/pages/app/appScaffold.dart';
-import 'package:platform_v2/widgets/pages/app/companySelectPage.dart';
+import 'package:platform_v2/widgets/pages/app/orgSelectPage.dart';
 import 'package:platform_v2/widgets/pages/app/orgCanvas.dart';
 import 'package:platform_v2/widgets/pages/auth/appEntryLayout.dart';
 import 'package:platform_v2/widgets/pages/auth/logInScreen.dart';
@@ -30,8 +30,8 @@ GoRouter setupRouter() {
         builder: (context, state, child) => AppScaffold(child: child),
         routes: [
           GoRoute(
-            path: '/app/companies',
-            pageBuilder: (context, state) => NoTransitionPage(child: CompanySelectPage()),
+            path: '/app/orgs',
+            pageBuilder: (context, state) => NoTransitionPage(child: OrgSelectPage()),
           ),
           GoRoute(
             path: '/app/orgStructure',

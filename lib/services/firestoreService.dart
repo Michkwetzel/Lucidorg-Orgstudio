@@ -31,4 +31,12 @@ class FirestoreService {
       'updatedAt': FieldValue.serverTimestamp(),
     });
   }
+
+  static Stream<QuerySnapshot> getBlocksStream(String orgId) {
+    return _instance.collection('orgs').doc(orgId).collection('blocks').snapshots();
+  }
+
+  static Future<QuerySnapshot> getBlocks(String orgId) async {
+    return await _instance.collection('orgs').doc(orgId).collection('blocks').get();
+  }
 }

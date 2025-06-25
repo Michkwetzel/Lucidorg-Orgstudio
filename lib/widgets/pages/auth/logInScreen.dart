@@ -25,7 +25,7 @@ class _LogInScreenState extends ConsumerState<LogInScreen> {
     final Logger logger = Logger("LogIn");
 
     void successfullyLogIn() {
-      NavigationService.navigateTo('/app/companies');
+      NavigationService.navigateTo('/app/orgs');
     }
 
     // Sign in with google. If new account. cancel and delete newly created OAuth account.
@@ -113,7 +113,7 @@ class _LogInScreenState extends ConsumerState<LogInScreen> {
               BackButton(
                 onPressed: () => NavigationService.navigateTo('/auth/landingPage'),
               ),
-              // CallToActionButton(onPressed: () => NavigationService.navigateTo('/app/companies'), buttonText: "Log in"),
+              // CallToActionButton(onPressed: () => NavigationService.navigateTo('/app/orgs'), buttonText: "Log in"),
               CallToActionButton(onPressed: () => emailPasswordSignIn(), buttonText: "Log in"),
             ],
           ),

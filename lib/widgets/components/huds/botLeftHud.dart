@@ -12,14 +12,14 @@ class BotLeftHud extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       spacing: 4,
       children: [
-        if (ref.watch(botLeftHudProvider.select((state) => state.showCompaniesButton)))
+        if (ref.watch(botLeftHudProvider.select((state) => state.showOrgsButton)))
           FilledButton.tonal(
             onPressed: () {
               ref.read(toolBarHudProvider.notifier).toggleShow(false);
-              ref.read(appStateProvider.notifier).setCompany('', '');
-              ref.read(topleftHudProvider.notifier).setTitle('Companies');
-              ref.read(botLeftHudProvider.notifier).toggleCompaniesButton(false);
-              NavigationService.navigateTo('/app/companies');
+              ref.read(appStateProvider.notifier).setOrg('', '');
+              ref.read(topleftHudProvider.notifier).setTitle('Orgs');
+              ref.read(botLeftHudProvider.notifier).toggleOrgsButton(false);
+              NavigationService.navigateTo('/app/orgs');
             },
             child: Text("Back"),
           ),

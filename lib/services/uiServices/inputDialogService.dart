@@ -27,14 +27,14 @@ class InputDialogService {
     );
   }
 
-  static Future<Map<String, String>?> showCompanyForm() async {
+  static Future<Map<String, String>?> showorgForm() async {
     return showFormDialog(
-      title: 'Add Company',
+      title: 'Add org',
       fields: [
         FormField(
-          key: 'companyName',
-          label: 'Company Name',
-          hint: 'Enter company name',
+          key: 'orgName',
+          label: 'org Name',
+          hint: 'Enter org name',
           required: true,
         ),
       ],

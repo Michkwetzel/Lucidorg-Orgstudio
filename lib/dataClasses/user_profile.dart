@@ -3,14 +3,14 @@ import 'package:platform_v2/config/enums.dart';
 class UserProfile {
   final String userUID;
   final String email;
-  final String? companyUID;
+  final String? orgUID;
   final Permission permission;
   final String? latestSurveyDocName;
 
   const UserProfile({
     required this.userUID,
     required this.email,
-    required this.companyUID,
+    required this.orgUID,
     required this.permission,
     this.latestSurveyDocName,
   });
@@ -18,14 +18,14 @@ class UserProfile {
   UserProfile copyWith({
     String? userUID,
     String? email,
-    String? companyUID,
+    String? orgUID,
     Permission? permission,
     String? latestSurveyDocName,
   }) {
     return UserProfile(
       userUID: userUID ?? this.userUID,
       email: email ?? this.email,
-      companyUID: companyUID ?? this.companyUID,
+      orgUID: orgUID ?? this.orgUID,
       permission: permission ?? this.permission,
       latestSurveyDocName: latestSurveyDocName ?? this.latestSurveyDocName,
     );
@@ -37,7 +37,7 @@ class UserProfile {
     return other is UserProfile &&
         other.userUID == userUID &&
         other.email == email &&
-        other.companyUID == companyUID &&
+        other.orgUID == orgUID &&
         other.permission == permission &&
         other.latestSurveyDocName == latestSurveyDocName;
   }
@@ -47,7 +47,7 @@ class UserProfile {
     return Object.hash(
       userUID,
       email,
-      companyUID,
+      orgUID,
       permission,
       latestSurveyDocName,
     );
@@ -55,6 +55,6 @@ class UserProfile {
 
   @override
   String toString() {
-    return 'UserProfile(userUID: $userUID, email: $email, companyUID: $companyUID, permission: $permission, latestSurveyDocName: $latestSurveyDocName)';
+    return 'UserProfile(userUID: $userUID, email: $email, orgUID: $orgUID, permission: $permission, latestSurveyDocName: $latestSurveyDocName)';
   }
 }

@@ -2,7 +2,7 @@ enum Pilar { alignment, people, process, leadership, none }
 
 enum BlockType { add, existing }
 
-enum Screen { logIn, selectCompany, orgStructure, assessment }
+enum Screen { logIn, selectorg, orgStructure, assessment }
 
 enum Permission { admin, error }
 
@@ -20,7 +20,7 @@ enum Benchmark {
   engagedCommunity,
   meetingEfficacy,
   crossFuncAcc,
-  companyIndex,
+  orgIndex,
   workforce,
   operations,
   alignP,
@@ -79,7 +79,7 @@ extension Description on Benchmark {
         return "Meeting Efficacy";
       case Benchmark.crossFuncAcc:
         return "Cross-Functional Accountability";
-      case Benchmark.companyIndex:
+      case Benchmark.orgIndex:
         return "Index";
       case Benchmark.workforce:
         return "Workforce";

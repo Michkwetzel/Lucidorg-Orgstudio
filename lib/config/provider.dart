@@ -4,7 +4,7 @@ import 'package:platform_v2/notifiers/general/appStateNotifier.dart';
 import 'package:platform_v2/notifiers/general/authNotifier.dart';
 import 'package:platform_v2/notifiers/general/blockNotifier.dart';
 import 'package:platform_v2/notifiers/general/canvasNotifier.dart';
-import 'package:platform_v2/notifiers/general/companiesScreenNotifier.dart';
+import 'package:platform_v2/notifiers/general/orgsScreenNotifier.dart';
 import 'package:platform_v2/notifiers/huds/botLeftHudNotifier.dart';
 import 'package:platform_v2/notifiers/huds/toolBarHudNotifier.dart';
 import 'package:platform_v2/notifiers/huds/topLeftHudNotifier.dart';
@@ -25,8 +25,8 @@ final toolBarHudProvider = StateNotifierProvider<ToolBarHudNotifier, ToolbarHudS
   return ToolBarHudNotifier();
 });
 
-final companiesScreenProvider = StateNotifierProvider.autoDispose<CompaniesScreenNotifier, CompaniesScreenState>((ref) {
-  return CompaniesScreenNotifier();
+final orgsScreenProvider = StateNotifierProvider.autoDispose<OrgsScreenNotifier, OrgsScreenState>((ref) {
+  return OrgsScreenNotifier();
 });
 
 final appStateProvider = StateNotifierProvider<AppStateNotifier, AppState>((ref) {
@@ -34,16 +34,12 @@ final appStateProvider = StateNotifierProvider<AppStateNotifier, AppState>((ref)
 });
 
 final canvasProvider = StateNotifierProvider<CanvasNotifier, CanvasState>((ref) {
-  return CanvasNotifier();
+  final orgId = ref.watch(appStateProvider).orgId;
+  return CanvasNotifier(orgId: orgId);
 });
 
-// Separate providers for better performance
 final blockListProvider = StateProvider<Set<String>>((ref) {
   return ref.watch(canvasProvider).blockIds;
-});
-
-final connectionListProvider = StateProvider<List<Connection>>((ref) {
-  return ref.watch(canvasProvider).connections;
 });
 
 final blockNotifierProvider = ChangeNotifierProvider.family.autoDispose<BlockNotifier, String>((ref, blockId) {
