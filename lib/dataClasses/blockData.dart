@@ -2,22 +2,24 @@ class BlockData {
   final String name;
   final String role;
   final String department;
-  final String email;
   final List<String> emails;
-  final bool isMultipleEmails;
+  //TODO: At the moment these are not nullable. might be usefull to do this later depending on how calculations are made.
 
   BlockData({
     required this.name,
     required this.role,
     required this.department,
-    required this.email,
-    required this.isMultipleEmails,
     required this.emails,
   });
 
+  // Convenience getters
+  String get primaryEmail => emails.isNotEmpty ? emails.first : '';
+  bool get hasMultipleEmails => emails.length > 1;
+  bool get hasEmails => emails.isNotEmpty;
+
   @override
   String toString() {
-    return 'ContactData(name: $name, role: $role, department: $department, email: $email, isMultipleEmails: $isMultipleEmails, emails: $emails)';
+    return 'BlockData(name: $name\n, role: $role\n, department: $department\n, emails: $emails)';
   }
 
   factory BlockData.initial() {
@@ -25,9 +27,22 @@ class BlockData {
       name: '',
       role: '',
       department: '',
-      email: '',
       emails: [],
-      isMultipleEmails: false,
+    );
+  }
+
+  // Convenience constructors
+  factory BlockData.withSingleEmail({
+    required String name,
+    required String role,
+    required String department,
+    required String email,
+  }) {
+    return BlockData(
+      name: name,
+      role: role,
+      department: department,
+      emails: [email],
     );
   }
 }

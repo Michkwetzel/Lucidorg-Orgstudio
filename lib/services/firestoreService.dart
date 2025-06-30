@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:platform_v2/dataClasses/blockData.dart';
 
 class FirestoreService {
   static late final FirebaseFirestore _instance;
@@ -38,9 +39,12 @@ class FirestoreService {
     });
   }
 
-  static Future<void> updateData(String orgId, String blockId, Map<String, dynamic> updates) async {
+  static Future<void> updateData(String orgId, String blockId, BlockData blockData) async {
     await _instance.collection('orgs').doc(orgId).collection('blocks').doc(blockId).update({
-      ...updates,
+      'name' : blockData.name,
+      'role' : blockData.role,
+      'department' : blockData.department,
+      'emails' : blockData.emails,
       'updatedAt': FieldValue.serverTimestamp(),
     });
   }

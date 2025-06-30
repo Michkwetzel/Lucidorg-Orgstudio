@@ -18,7 +18,7 @@ class Block extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final blockID = BlockID(blockId, initialPosition); // initial position is added here cause only way to padd that to BlockNotifier on 1st build
+    final blockID = BlockID(blockId, initialPosition); // initial position is added here cause only way to pass that to BlockNotifier on 1st build
     final blockNotifier = ref.watch(blockNotifierProvider(blockID));
     final BlockData? blockData = blockNotifier.blockData;
 
@@ -27,27 +27,16 @@ class Block extends ConsumerWidget {
       top: blockNotifier.position.dy,
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
-        onTap: () => print("object"),
         onDoubleTapDown: (details) {
-          final RenderBox? canvasBox = context.findAncestorRenderObjectOfType<RenderBox>();
-          if (canvasBox != null) {
-            final localPosition = canvasBox.globalToLocal(details.globalPosition);
-            final adjustedPosition = Offset(
-              localPosition.dx - 60,
-              localPosition.dy - 50,
-            );
-            OverlayService.openBlockInputBox(
-              adjustedPosition,
-              context,
-              onSave: (data) {
-                ref.read(blockNotifierProvider(blockID).notifier).updateData(data);
-                print('Save pressed with data: $data');
-              },
-              onClose: () {
-                print('Close pressed - handle cleanup if needed');
-              },
-            );
-          }
+          OverlayService.openBlockInputBox(
+            context,
+            onSave: (data) {
+              ref.read(blockNotifierProvider(blockID).notifier).updateData(data);
+            },
+            onClose: () {
+              print('Close pressed - handle cleanup if needed');
+            },
+          );
         },
         onPanUpdate: (details) {
           // Convert global position to local canvas position

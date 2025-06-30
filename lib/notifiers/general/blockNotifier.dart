@@ -4,18 +4,20 @@ import 'package:flutter/material.dart';
 import 'package:platform_v2/dataClasses/blockData.dart';
 import 'package:platform_v2/services/firestoreService.dart';
 
-// Individual block notifier. Responsible for block movements and data functions
+// Individual block notifier. Responsible for block state: position, data and connections
 class BlockNotifier extends ChangeNotifier {
   final String blockId;
   final String? orgId;
   Offset _position;
   BlockData? blockData;
+
+  // Add StreamSubscription to track subscription tp the blocks doc
+  StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>? _streamSubscription;
   late final Stream<DocumentSnapshot<Map<String, dynamic>>> blockStream;
+
+  //Timers for debouncing
   Timer? _debounceTimer;
   static const Duration _debounceDuration = Duration(milliseconds: 500);
-
-  // Add StreamSubscription to track the subscription
-  StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>? _streamSubscription;
 
   BlockNotifier({
     required this.blockId,
@@ -35,9 +37,17 @@ class BlockNotifier extends ChangeNotifier {
           // Check if document exists before accessing data
           if (doc.exists && doc.data() != null) {
             final data = doc.data()!;
+            // Update Position
             if (data['position'] != null) {
               updatePositionFromStream(Offset(data['position']['x'], data['position']['y']));
             }
+            // Update block data
+            String name = data['name'] ?? '';
+            String role = data['role'] ?? '';
+            String department = data['department'] ?? '';
+            List<String> emails = List<String>.from(data['emails'] ?? []);
+            BlockData blockData = BlockData(name: name, role: role, department: department, emails: emails);
+            updateDataFromStream(blockData);
           }
         },
         onError: (error) {
@@ -64,7 +74,14 @@ class BlockNotifier extends ChangeNotifier {
   }
 
   void updatePositionFromStream(Offset newPosition) {
+    //UI update only. Otherwise forever loop
     _position = newPosition;
+    notifyListeners();
+  }
+
+  void updateDataFromStream(BlockData blockData) {
+    //UI update only
+    this.blockData = blockData;
     notifyListeners();
   }
 
@@ -72,7 +89,11 @@ class BlockNotifier extends ChangeNotifier {
     blockData = newData;
     notifyListeners();
     if (orgId != null) {
-      FirestoreService.updateData(orgId!, blockId, {'name': newData.name, 'role': newData.role, 'department': newData.department, newData.isMultipleEmails ? 'email': newData.email : null, 'isMultipleEmails': newData.isMultipleEmails ? true : false, 'updatedAt': FieldValue.serverTimestamp()});
+      FirestoreService.updateData(
+        orgId!,
+        blockId,
+        newData,
+      );
     }
   }
 

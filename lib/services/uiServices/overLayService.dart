@@ -6,7 +6,6 @@ class OverlayService {
   static OverlayEntry? _currentOverlay;
 
   static void openBlockInputBox(
-    Offset position,
     BuildContext context, {
     Function(BlockData)? onSave,
     VoidCallback? onClose,
@@ -17,11 +16,9 @@ class OverlayService {
     _currentOverlay?.remove();
 
     late OverlayEntry overlayEntry;
-    print(position);
 
     overlayEntry = OverlayEntry(
       builder: (context) => BlockInputOverlay(
-        position: position,
         onSave: (data) {
           overlayEntry.remove();
           _currentOverlay = null;
@@ -41,16 +38,14 @@ class OverlayService {
 }
 
 class BlockInputOverlay extends StatefulWidget {
-  final Offset position;
   final Function(BlockData)? onSave;
   final VoidCallback? onClose;
 
   const BlockInputOverlay({
-    Key? key,
-    required this.position,
+    super.key,
     this.onSave,
     this.onClose,
-  }) : super(key: key);
+  });
 
   @override
   State<BlockInputOverlay> createState() => _BlockInputOverlayState();
@@ -67,25 +62,23 @@ class _BlockInputOverlayState extends State<BlockInputOverlay> {
   bool csvError = false;
 
   void _handleSave() {
-    List<String> finalEmails = [];
+    List<String> emails = [];
 
     if (isMultipleEmails) {
       // Parse comma-separated emails from text field
       if (emailController.text.trim().isNotEmpty) {
-        finalEmails.addAll(emailController.text.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty));
+        emails.addAll(emailController.text.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty));
       }
 
       // Add CSV emails
-      finalEmails.addAll(csvEmails);
+      emails.addAll(csvEmails);
     }
 
     final data = BlockData(
       name: nameController.text.trim(),
       role: roleController.text.trim(),
       department: departmentController.text.trim(),
-      email: isMultipleEmails ? '' : emailController.text.trim(),
-      emails: finalEmails,
-      isMultipleEmails: isMultipleEmails,
+      emails: isMultipleEmails ? emails : [emailController.text.trim()],
     );
     widget.onSave?.call(data);
   }
