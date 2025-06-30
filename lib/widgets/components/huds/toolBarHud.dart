@@ -2,8 +2,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:platform_v2/config/constants.dart';
-import 'package:platform_v2/config/enums.dart';
 import 'package:platform_v2/config/provider.dart';
+import 'package:platform_v2/services/firestoreIDGenerator.dart';
 
 class ToolBarHud extends ConsumerWidget {
   const ToolBarHud({super.key});
@@ -12,27 +12,24 @@ class ToolBarHud extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return Column(
       children: [
-        Draggable<Map<String, dynamic>>(
-          data: {'blockType': BlockType.add},
-          feedback: Builder(
-            builder: (context) {
-              double scale = ref.read(canvasScaleProvider);
-              return Container(
-                width: 120 * scale,
-                height: 100 * scale,
-                decoration: kboxShadowNormal,
-                child: Icon(
-                  Icons.add,
-                  size: 24 * scale,
-                ),
-              );
-            },
-          ),
+        GestureDetector(
+          onTap: () {
+            // // Add new block at center of canvas
+            // final blockId = FirestoreIdGenerator.generate();
+            // ref.read(canvasProvider.notifier).addBlock(blockId);
+            // print("Added new block: $blockId");
+          },
           child: Container(
             width: 120,
             height: 100,
             decoration: kboxShadowNormal,
-            child: Icon(Icons.add),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.add, size: 32),
+                Text('Add Block', style: TextStyle(fontSize: 12)),
+              ],
+            ),
           ),
         ),
         // FilledButton.tonal(

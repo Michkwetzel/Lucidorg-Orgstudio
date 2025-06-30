@@ -1,4 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -13,6 +12,7 @@ import 'package:platform_v2/config/setup_router.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
   FirestoreService.initialize(); //Initialize service class.
 
   setupLogging();
@@ -21,7 +21,7 @@ void main() async {
   NavigationService.initialize(router);
 
   runApp(const ProviderScope(child: App()));
-  
+
   // Shows FPS overlay in debug mode
   if (kDebugMode) {
     WidgetsBinding.instance.addPostFrameCallback((_) {

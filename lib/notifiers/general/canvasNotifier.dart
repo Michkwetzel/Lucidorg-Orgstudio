@@ -1,46 +1,56 @@
-import 'package:flutter/widgets.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:platform_v2/dataClasses/blockParam.dart';
-import 'package:platform_v2/notifiers/general/appStateNotifier.dart';
 import 'package:platform_v2/services/firestoreService.dart';
-import 'package:platform_v2/config/enums.dart';
 import 'dart:async';
 
-// class CanvasState {
-//   final Set<BlockParams> blocks;
-
-//   CanvasState({
-//     required this.blocks,
-//   });
-
-//   CanvasState copyWith({
-//     Set<BlockParams>? blocks,
-//   }) {
-//     return CanvasState(
-//       blocks: blocks ?? this.blocks,
-//     );
-//   }
-// }
-
-class CanvasNotifier extends StateNotifier<Map<String, BlockParams>> {
-  AppStateNotifier appStateNotifier;
+// Takes care of What blocks are being built and displayed on canvas.
+// Responsible for add and delete functions
+class CanvasNotifier extends StateNotifier<Set<String>> {
+  String? orgId;
+  Map<String, Offset> initialPositions = {}; //This is a workaround to get over some issues haha
   StreamSubscription? _blocksSubscription;
 
-  CanvasNotifier({required this.appStateNotifier}) : super({});
+  CanvasNotifier({required this.orgId}) : super({}) {
+    subscribeToBlocks();
+  }
 
-  void subscribeToBlocks(String? orgId) {
+  void subscribeToBlocks() {
+    print("Subscribe to: $orgId");
     if (orgId != null) {
-      _blocksSubscription = FirestoreService.getBlocksStream(orgId).listen((snapshot) {
-        final blocks = Map<String, BlockParams>.fromEntries(
-          snapshot.docs.map(
-            (doc) => MapEntry(
-              doc.id,
-              BlockParams(blockId: doc.id, position: Offset(doc['position']['x'], doc['position']['y'])),
-            ),
-          ),
-        );
-        state = blocks;
-      });
+      _blocksSubscription?.cancel();
+
+      _blocksSubscription = FirestoreService.getBlocksStream(orgId!).listen(
+        (snapshot) {
+          bool hasAdditionsOrDeletions = false;
+
+          for (final change in snapshot.docChanges) {
+            if (change.type == DocumentChangeType.added) {
+              // print("Document added: ${change.doc.id}");
+              hasAdditionsOrDeletions = true;
+            } else if (change.type == DocumentChangeType.removed) {
+              print("Document removed: ${change.doc.id}");
+              hasAdditionsOrDeletions = true;
+            }
+            // Ignore DocumentChangeType.modified
+          }
+
+          // Only update state if there were additions or deletions
+          if (hasAdditionsOrDeletions) {
+            Set<String> ids = {};
+            Map<String, Offset> initialPositionsT = {};
+            for (final doc in snapshot.docs) {
+              initialPositionsT[doc.id] = Offset(doc['position']['x'], doc['position']['y']);
+              ids.add(doc.id);
+            }
+            initialPositions = initialPositionsT;
+            state = ids;
+          }
+        },
+        onError: (error) {
+          print("Error subscribing to blocks: $error");
+        },
+      );
     }
   }
 
@@ -50,21 +60,20 @@ class CanvasNotifier extends StateNotifier<Map<String, BlockParams>> {
     super.dispose();
   }
 
-  void addBlock(String blockId, Offset position) {
-    state = {...state, blockId: BlockParams(blockId: blockId, position: position)};
-
-    // String? orgId = appStateNotifier.orgId;
-    //if add block then add doc to db
-    //orgId ?? FirestoreService.addBlock(orgId!, {'blockId': blockId});
+  void addBlock(String blockId, Offset position) async {
+    await FirestoreService.addBlock(orgId!, {
+      'blockId': blockId,
+      'position': {'x': position.dx, 'y': position.dy},
+    });
+    state = {...state, blockId}; //Add Id to state
+    initialPositions[blockId] = position; //Add initial position
   }
 
-  void deleteBlock(String blockId) {
-    state = Map.from(state)..remove(blockId);
+  void deleteBlock(String blockId) async {
+    if (orgId != null) {
+     await FirestoreService.deleteBlock(orgId!, blockId); //Delete from Firestore first.
+    }
+    state = Set<String>.from(state)..remove(blockId);
+    initialPositions.remove(blockId);
   }
-
-  // void saveToDB() {
-  //   for (var blockId in state.blockIds) {
-  //     print(blockId);
-  //   }
-  // }
 }

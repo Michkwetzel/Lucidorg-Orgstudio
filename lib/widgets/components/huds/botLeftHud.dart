@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:platform_v2/config/provider.dart';
+import 'package:platform_v2/services/firestoreService.dart';
 import 'package:platform_v2/services/uiServices/navigationService.dart';
 
 class BotLeftHud extends ConsumerWidget {
@@ -15,8 +16,6 @@ class BotLeftHud extends ConsumerWidget {
         if (ref.watch(botLeftHudProvider.select((state) => state.showOrgsButton)))
           FilledButton.tonal(
             onPressed: () {
-              ref.read(toolBarHudProvider.notifier).toggleShow(false);
-              ref.read(appStateProvider.notifier).setOrg('', '');
               ref.read(topleftHudProvider.notifier).setTitle('Orgs');
               ref.read(botLeftHudProvider.notifier).toggleOrgsButton(false);
               NavigationService.navigateTo('/app/orgs');
@@ -24,8 +23,8 @@ class BotLeftHud extends ConsumerWidget {
             child: Text("Back"),
           ),
         FilledButton.tonal(
-          onPressed: () {
-            ref.invalidate(canvasProvider);
+          onPressed: () async {
+            await FirestoreService.dispose();
             ref.read(authProvider.notifier).signOutUser();
             NavigationService.navigateTo('/auth/landingPage');
           },

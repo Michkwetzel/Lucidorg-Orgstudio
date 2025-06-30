@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:platform_v2/config/enums.dart';
 import 'package:platform_v2/config/provider.dart';
-import 'package:platform_v2/dataClasses/blockParam.dart';
 import 'package:platform_v2/services/firestoreIdGenerator.dart';
-import 'package:platform_v2/widgets/components/general/orgBlock.dart';
+import 'package:platform_v2/widgets/components/general/block.dart';
 
 class OrgCanvas extends ConsumerStatefulWidget {
   const OrgCanvas({super.key});
@@ -15,6 +13,7 @@ class OrgCanvas extends ConsumerStatefulWidget {
 
 class _OrgCanvasState extends ConsumerState<OrgCanvas> {
   final TransformationController _transformationController = TransformationController();
+  late Offset _lastTapPosition;
 
   @override
   void initState() {
@@ -34,6 +33,7 @@ class _OrgCanvasState extends ConsumerState<OrgCanvas> {
 
   @override
   Widget build(BuildContext context) {
+    print("Build orgCanvas");
     return SizedBox.expand(
       child: InteractiveViewer(
         transformationController: _transformationController,
@@ -43,30 +43,34 @@ class _OrgCanvasState extends ConsumerState<OrgCanvas> {
         boundaryMargin: EdgeInsets.all(20),
         child: Builder(
           builder: (context) {
-            return DragTarget<Map<String, dynamic>>(
-              onAcceptWithDetails: (details) {
+            // Note Gesture system is a little weird. Flutter gestures compete in Arena with child winning a tap.
+            // However, onTapDown or onDoubleTapDown is registered by all Gesture Detectors no matter widget tree.
+            // Thus. onDoubleTapDown save pointer position. Then if this doulbe tap is on canvas, Canvas DoubleTap() will win.
+            //If it is on Block then Block DoubleTap() will win
+            return GestureDetector(
+              onTap: () => print("object"),
+              onDoubleTapDown: (details) {
+                // Save pointer position
                 final RenderBox renderBox = context.findRenderObject() as RenderBox;
-                final localPosition = renderBox.globalToLocal(details.offset);
-                if (details.data['blockType'] == BlockType.add) {
-                  final blockId = FirestoreIdGenerator.generate();
-                  ref.read(canvasProvider.notifier).addBlock(blockId, localPosition);
-                } else if (details.data['blockType'] == BlockType.existing) {
-                  ref.read(blockNotifierProvider(details.data['id']).notifier).updatePosition(localPosition);
-                }
+                _lastTapPosition = renderBox.globalToLocal(details.globalPosition);
               },
-              builder: (context, candidateData, rejectedData) => Container(
+              onDoubleTap: () {
+                // Create new block at tap position
+                final blockId = FirestoreIdGenerator.generate();
+                ref.read(canvasProvider.notifier).addBlock(blockId, _lastTapPosition);
+              },
+              child: Container(
                 width: 3000,
                 height: 3000,
                 color: Colors.transparent,
                 child: Stack(
                   children: ref
-                      .watch(blockListProvider)
-                      .entries
+                      .watch(canvasProvider)
                       .map(
-                        (entry) => OrgBlock(
-                          key: ValueKey(entry.key),
-                          id: entry.key,
-                          initialPosition: entry.value.position,
+                        (entry) => Block(
+                          key: ValueKey(entry),
+                          blockId: entry,
+                          initialPosition: ref.read(canvasProvider.notifier).initialPositions[entry]!,
                         ),
                       )
                       .toList(),
