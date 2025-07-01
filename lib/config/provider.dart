@@ -5,6 +5,7 @@ import 'package:platform_v2/notifiers/general/appStateNotifier.dart';
 import 'package:platform_v2/notifiers/general/authNotifier.dart';
 import 'package:platform_v2/notifiers/general/blockNotifier.dart';
 import 'package:platform_v2/notifiers/general/canvasNotifier.dart';
+import 'package:platform_v2/notifiers/general/connectionsManager.dart';
 import 'package:platform_v2/notifiers/general/orgsScreenNotifier.dart';
 import 'package:platform_v2/notifiers/huds/botLeftHudNotifier.dart';
 import 'package:platform_v2/notifiers/huds/topLeftHudNotifier.dart';
@@ -45,7 +46,14 @@ final blockNotifierProvider = ChangeNotifierProvider.family.autoDispose<BlockNot
     blockId: params.blockId,
     orgId: orgId ?? 'null',
     position: params.initialPosition ?? Offset.zero,
+    onPositionChanged: (blockId, position) {
+      ref.read(connectionManagerProvider.notifier).updateBlockPosition(blockId, position);
+    },
   );
+});
+
+final connectionManagerProvider = StateNotifierProvider<ConnectionManager, ConnectionsState>((ref) {
+  return ConnectionManager();
 });
 
 final canvasScaleProvider = StateProvider<double>((ref) => 1.0);

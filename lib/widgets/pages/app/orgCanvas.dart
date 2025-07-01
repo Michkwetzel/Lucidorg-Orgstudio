@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:platform_v2/config/provider.dart';
+import 'package:platform_v2/services/customPainters/connectionPainter.dart';
 import 'package:platform_v2/services/firestoreIdGenerator.dart';
 import 'package:platform_v2/widgets/components/general/block.dart';
 
@@ -48,7 +49,6 @@ class _OrgCanvasState extends ConsumerState<OrgCanvas> {
             // Thus. onDoubleTapDown save pointer position. Then if this doulbe tap is on canvas, Canvas DoubleTap() will win.
             //If it is on Block then Block DoubleTap() will win
             return GestureDetector(
-              onTap: () => print("object"),
               onDoubleTapDown: (details) {
                 // Save pointer position
                 final RenderBox renderBox = context.findRenderObject() as RenderBox;
@@ -64,16 +64,35 @@ class _OrgCanvasState extends ConsumerState<OrgCanvas> {
                 height: 3000,
                 color: Colors.transparent,
                 child: Stack(
-                  children: ref
-                      .watch(canvasProvider)
-                      .map(
-                        (entry) => Block(
-                          key: ValueKey(entry),
-                          blockId: entry,
-                          initialPosition: ref.read(canvasProvider.notifier).initialPositions[entry]!,
+                  children: [
+                    // Connections layer with tap detection (isolated consumer)
+                    // Connections layer (isolated consumer - doesn't affect blocks)
+                    Consumer(
+                      builder: (context, ref, child) {
+                        final connectionState = ref.watch(connectionManagerProvider);
+
+                        return RepaintBoundary(
+                          child: CustomPaint(
+                            painter: ConnectionsPainter(
+                              connections: connectionState.connections,
+                              blockPositions: connectionState.blockPositions,
+                            ),
+                            size: const Size(3000, 3000),
+                          ),
+                        );
+                      },
+                    ),
+
+                    ...ref
+                        .watch(canvasProvider)
+                        .map(
+                          (blockId) => Block(
+                            key: ValueKey(blockId),
+                            blockId: blockId,
+                            initialPosition: ref.read(canvasProvider.notifier).initialPositions[blockId]!,
+                          ),
                         ),
-                      )
-                      .toList(),
+                  ],
                 ),
               ),
             );

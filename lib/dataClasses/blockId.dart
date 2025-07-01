@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+// Block Identification class. Not ideal to have this as its own class but only way to pass initial position to the providier.family setup
 class BlockID {
   final String blockId;
   final Offset? initialPosition;

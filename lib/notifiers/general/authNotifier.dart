@@ -1,9 +1,9 @@
 import 'dart:async';
-import 'package:cloud_firestore/cloud_firestore.dart';
+// import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:logging/logging.dart';
-import 'package:platform_v2/config/enums.dart';
+// import 'package:platform_v2/config/enums.dart';
 import 'package:platform_v2/dataClasses/user_profile.dart';
 
 class AuthState {
@@ -30,7 +30,7 @@ class AuthState {
 class AuthNotifier extends StateNotifier<AuthState> {
   final logger = Logger("AuthFireStoreService");
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  // final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   AuthNotifier() : super(AuthState());
 
@@ -46,33 +46,33 @@ class AuthNotifier extends StateNotifier<AuthState> {
     });
   }
 
-  UserProfile? getUserProfile() {
-    return state.userProfile;
-  }
+  // UserProfile? getUserProfile() {
+  //   return state.userProfile;
+  // }
 
-  Permission _parsePermission(String? permission) {
-    switch (permission) {
-      case 'admin':
-        return Permission.admin;
-      default:
-        return Permission.error;
-    }
-  }
+  // Permission _parsePermission(String? permission) {
+  //   switch (permission) {
+  //     case 'admin':
+  //       return Permission.admin;
+  //     default:
+  //       return Permission.error;
+  //   }
+  // }
 
-  Future<void> getUserInfo() async {
-    try {
-      final userDocRef = await _firestore.collection('users').doc(state.firebaseUser!.uid).get();
-      final permission = _parsePermission(userDocRef.data()?['permission']);
-      final orgUID = userDocRef.data()?['orgUID'];
-      final email = userDocRef.data()?['userEmail'];
-      final userUID = state.firebaseUser!.uid;
-      state = state.copyWith(
-        userProfile: UserProfile(permission: permission, orgUID: orgUID, email: email, userUID: userUID),
-      );
-    } on Exception catch (e) {
-      logger.severe("Unable to get userInfo for user UID: ${state.firebaseUser?.uid}, email: ${state.firebaseUser?.email}, e: $e");
-    }
-  }
+  // Future<void> getUserInfo() async {
+  //   try {
+  //     final userDocRef = await _firestore.collection('users').doc(state.firebaseUser!.uid).get();
+  //     final permission = _parsePermission(userDocRef.data()?['permission']);
+  //     final orgUID = userDocRef.data()?['orgUID'];
+  //     final email = userDocRef.data()?['userEmail'];
+  //     final userUID = state.firebaseUser!.uid;
+  //     state = state.copyWith(
+  //       userProfile: UserProfile(permission: permission, orgUID: orgUID, email: email, userUID: userUID),
+  //     );
+  //   } on Exception catch (e) {
+  //     logger.severe("Unable to get userInfo for user UID: ${state.firebaseUser?.uid}, email: ${state.firebaseUser?.email}, e: $e");
+  //   }
+  // }
 
   Future<void> deleteAccount() async {
     logger.info("Attempting to delete account that was just created");

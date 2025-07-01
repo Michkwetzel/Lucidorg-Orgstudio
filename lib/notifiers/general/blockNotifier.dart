@@ -10,6 +10,7 @@ class BlockNotifier extends ChangeNotifier {
   final String? orgId;
   Offset _position;
   BlockData? blockData;
+  final Function(String blockId, Offset position)? onPositionChanged;
 
   // Add StreamSubscription to track subscription tp the blocks doc
   StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>? _streamSubscription;
@@ -23,6 +24,7 @@ class BlockNotifier extends ChangeNotifier {
     required this.blockId,
     required this.orgId,
     this.blockData,
+    this.onPositionChanged,
     Offset position = Offset.zero,
     String name = '',
     String department = '',
@@ -63,6 +65,9 @@ class BlockNotifier extends ChangeNotifier {
     _position = newPosition;
     notifyListeners();
 
+    // call ConnetionManager
+    onPositionChanged?.call(blockId, newPosition);
+
     _debounceTimer?.cancel();
 
     // Debounce before saving to firestore
@@ -77,6 +82,9 @@ class BlockNotifier extends ChangeNotifier {
     //UI update only. Otherwise forever loop
     _position = newPosition;
     notifyListeners();
+
+    // call ConnetionManager
+    onPositionChanged?.call(blockId, newPosition);
   }
 
   void updateDataFromStream(BlockData blockData) {
