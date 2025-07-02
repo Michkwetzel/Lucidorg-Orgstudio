@@ -34,6 +34,14 @@ class _OrgCanvasState extends ConsumerState<OrgCanvas> {
 
   @override
   Widget build(BuildContext context) {
+    final canvasState = ref.watch(canvasProvider);
+    final canvasNotifier = ref.read(canvasProvider.notifier);
+
+    if (canvasNotifier.isInitialLoadComplete == false) {
+      print("Busy Loading Initial Canvas");
+      return const Center(child: CircularProgressIndicator());
+    }
+
     print("Build orgCanvas");
     return SizedBox.expand(
       child: InteractiveViewer(
@@ -56,8 +64,8 @@ class _OrgCanvasState extends ConsumerState<OrgCanvas> {
               },
               onDoubleTap: () {
                 // Create new block at tap position
-                final blockId = FirestoreIdGenerator.generate();
-                ref.read(canvasProvider.notifier).addBlock(blockId, _lastTapPosition);
+                final blockID = FirestoreIdGenerator.generate();
+                ref.read(canvasProvider.notifier).addBlock(blockID, _lastTapPosition);
               },
               child: Container(
                 width: 7000,
@@ -83,15 +91,12 @@ class _OrgCanvasState extends ConsumerState<OrgCanvas> {
                       },
                     ),
 
-                    ...ref
-                        .watch(canvasProvider)
-                        .map(
-                          (blockId) => Block(
-                            key: ValueKey(blockId),
-                            blockId: blockId,
-                            initialPosition: ref.read(canvasProvider.notifier).initialPositions[blockId]!,
-                          ),
-                        ),
+                    ...canvasState.map(
+                      (blockID) => Block(
+                        key: ValueKey(blockID),
+                        blockID: blockID,
+                      ),
+                    ),
                   ],
                 ),
               ),

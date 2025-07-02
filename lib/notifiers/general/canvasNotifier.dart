@@ -1,23 +1,26 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:platform_v2/dataClasses/connection.dart';
 import 'package:platform_v2/notifiers/general/connectionsManager.dart';
 import 'package:platform_v2/services/firestoreService.dart';
-import 'package:platform_v2/config/provider.dart';
 import 'dart:async';
 
 // Takes care of What blocks are being built and displayed on canvas.
 // Responsible for add and delete functions
+
 class CanvasNotifier extends StateNotifier<Set<String>> {
   String? orgId;
-  Map<String, Offset> initialPositions = {}; //This is a workaround to get over some issues haha
+  Map<String, Offset> _initialPositions = {}; //This is a workaround to get over some issues haha
   StreamSubscription? _blocksSubscription;
   ConnectionManager connectionManager;
+  bool _isInitialLoadComplete = false;
 
   CanvasNotifier({required this.orgId, required this.connectionManager}) : super({}) {
     subscribeToBlocks();
   }
+
+  bool get isInitialLoadComplete => _isInitialLoadComplete;
+  Map<String, Offset> get initialPositions => _initialPositions;
 
   void subscribeToBlocks() {
     print("Subscribe to: $orgId");
@@ -42,16 +45,17 @@ class CanvasNotifier extends StateNotifier<Set<String>> {
           // Only update state if there were additions or deletions. Not if there are changes to position
           if (hasAdditionsOrDeletions) {
             Set<String> ids = {};
-            Map<String, Offset> initialPositionsT = {};
+            Map<String, Offset> initialPositions = {};
             for (final doc in snapshot.docs) {
-              initialPositionsT[doc.id] = Offset(doc['position']['x'], doc['position']['y']);
+              initialPositions[doc.id] = Offset(doc['position']['x'], doc['position']['y']);
               ids.add(doc.id);
             }
-            initialPositions = initialPositionsT;
+            _initialPositions = initialPositions;
+            _isInitialLoadComplete = true;
             state = ids;
 
             // Initialize block positions for connectionManager. This should always be up to date
-            connectionManager.setBlockPositions(initialPositionsT);
+            // connectionManager.setBlockPositions(initialPositions);
           }
         },
         onError: (error) {
@@ -67,20 +71,20 @@ class CanvasNotifier extends StateNotifier<Set<String>> {
     super.dispose();
   }
 
-  void addBlock(String blockId, Offset position) async {
+  void addBlock(String blockID, Offset position) async {
     await FirestoreService.addBlock(orgId!, {
-      'blockId': blockId,
+      'blockID': blockID,
       'position': {'x': position.dx, 'y': position.dy},
     });
-    state = {...state, blockId}; //Add Id to state
-    initialPositions[blockId] = position; //Add initial position
+    state = {...state, blockID}; //Add Id to state
+    initialPositions[blockID] = position; //Add initial position
   }
 
-  void deleteBlock(String blockId) async {
+  void deleteBlock(String blockID) async {
     if (orgId != null) {
-      await FirestoreService.deleteBlock(orgId!, blockId); //Delete from Firestore first.
+      await FirestoreService.deleteBlock(orgId!, blockID); //Delete from Firestore first.
     }
-    state = Set<String>.from(state)..remove(blockId);
-    initialPositions.remove(blockId);
+    state = Set<String>.from(state)..remove(blockID);
+    initialPositions.remove(blockID);
   }
 }

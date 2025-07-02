@@ -6,12 +6,12 @@ import 'package:platform_v2/services/firestoreService.dart';
 
 // Individual block notifier. Responsible for block state: position, data and connections
 class BlockNotifier extends ChangeNotifier {
-  final String blockId;
+  final String blockID;
   final String? orgId;
   Offset _position;
   BlockData? _blockData;
-  bool _connectionMode;
-  final Function(String blockId, Offset position)? onPositionChanged;
+  bool _connectionMode = false;
+  final Function(String blockID, Offset position) onPositionChanged;
 
   // Add StreamSubscription to track subscription to the blocks doc
   StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>? _streamSubscription;
@@ -22,20 +22,14 @@ class BlockNotifier extends ChangeNotifier {
   static const Duration _debounceDuration = Duration(milliseconds: 500);
 
   BlockNotifier({
-    required this.blockId,
+    required this.blockID,
     required this.orgId,
-    BlockData? blockData,
-    this.onPositionChanged,
-    Offset position = Offset.zero,
-    String name = '',
-    String department = '',
-    bool connectionMode = false,
-  }) : _position = position,
-       _blockData = blockData,
-       _connectionMode = connectionMode {
+    required Offset initialPosition,
+    required this.onPositionChanged,
+  }) : _position = initialPosition {
     // Get Block doc stream and listen to fields
     if (orgId != null) {
-      blockStream = FirestoreService.getBlockStream(orgId!, blockId);
+      blockStream = FirestoreService.getBlockStream(orgId!, blockID);
 
       _streamSubscription = blockStream.listen(
         (snapshot) {
@@ -74,38 +68,29 @@ class BlockNotifier extends ChangeNotifier {
       notifyListeners();
 
       // call ConnectionManager
-      onPositionChanged?.call(blockId, newPosition);
+      onPositionChanged?.call(blockID, newPosition);
 
       _debounceTimer?.cancel();
 
       // Debounce before saving to firestore
       _debounceTimer = Timer(_debounceDuration, () async {
         if (orgId != null) {
-          await FirestoreService.updatePosition(orgId!, blockId, {'x': newPosition.dx, 'y': newPosition.dy});
+          await FirestoreService.updatePosition(orgId!, blockID, {'x': newPosition.dx, 'y': newPosition.dy});
         }
       });
     }
   }
 
-  void toggleConnectionMode() {
-    if (!_connectionMode) {
-      debugPrint('BlockNotifier: Enabling connection mode for $blockId');
-      _connectionMode = true;
-      notifyListeners();
-      Timer(const Duration(seconds: 2), () {
-        debugPrint('BlockNotifier: Disabling connection mode for $blockId');
-        _connectionMode = false;
-        notifyListeners();
-      });
-    }
+  void connectionModeEnable() {
+    debugPrint('BlockNotifier: Enabling connection mode for $blockID');
+    _connectionMode = true;
+    notifyListeners();
   }
 
   void connectionModeDisable() {
-    if (_connectionMode) {
-      debugPrint('BlockNotifier: Disabling connection mode for $blockId');
-      _connectionMode = false;
-      notifyListeners();
-    }
+    debugPrint('BlockNotifier: Disabling connection mode for $blockID');
+    _connectionMode = false;
+    notifyListeners();
   }
 
   void updatePositionFromStream(Offset newPosition) {
@@ -115,7 +100,7 @@ class BlockNotifier extends ChangeNotifier {
       notifyListeners();
 
       // call ConnectionManager
-      onPositionChanged?.call(blockId, newPosition);
+      onPositionChanged?.call(blockID, newPosition);
     }
   }
 
@@ -134,7 +119,7 @@ class BlockNotifier extends ChangeNotifier {
       if (orgId != null) {
         FirestoreService.updateData(
           orgId!,
-          blockId,
+          blockID,
           newData,
         );
       }

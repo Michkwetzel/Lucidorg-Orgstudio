@@ -30,9 +30,9 @@ class ConnectionsState {
 class ConnectionManager extends StateNotifier<ConnectionsState> {
   StreamSubscription? _connectionSubscription;
   String? orgId;
-  late ConnectionType _connectionFrom;
-  late String _fromBlockId;
-  bool _connectionMode = false;
+  late ConnectionType _firstSelectedBlockType;
+  late String _initiatingBlockId;
+  bool _isInConnectionMode = false;
 
   ConnectionManager({required this.orgId}) : super(ConnectionsState()) {
     _subscribeToConnections();
@@ -45,18 +45,15 @@ class ConnectionManager extends StateNotifier<ConnectionsState> {
   }
 
   void _subscribeToConnections() {
+    print("Subscribe to connections coll");
     _connectionSubscription?.cancel();
-    print("1");
-    if (orgId != null) {
+    if (false) {
       _connectionSubscription = FirestoreService.getConnectionsStream(orgId!).listen(
         (snapshot) {
-          print("2");
           List<Connection> updatedConnections = [];
           for (final doc in snapshot.docs) {
-            print("3");
             updatedConnections.add(Connection.fromFirestore(doc));
           }
-          print(updatedConnections);
           state = state.copyWith(connections: updatedConnections);
         },
         onError: (error) {
@@ -66,25 +63,26 @@ class ConnectionManager extends StateNotifier<ConnectionsState> {
     }
   }
 
-  bool get connectionMode => _connectionMode;
+  bool get isInConnectionMode => _isInConnectionMode;
+  String get initiatingBlockId => _initiatingBlockId;
 
-  void connectionModeEnable(String blockId, ConnectionType connectionType) {
-    _connectionFrom = connectionType;
-    _fromBlockId = blockId;
-    _connectionMode = true;
+  void connectionModeEnable(String initiatingBlockId, ConnectionType firstSelectedBlockType) {
+    _firstSelectedBlockType = firstSelectedBlockType;
+    _initiatingBlockId = initiatingBlockId;
+    _isInConnectionMode = true;
   }
 
   void connectionModeDisable() {
-    _connectionMode = false;
+    _isInConnectionMode = false;
   }
 
   void createConnection(String toBlockId) {
-    if (_connectionMode) {
+    if (_isInConnectionMode) {
       Connection newConnection;
-      if (_connectionFrom == ConnectionType.parent) {
-        newConnection = Connection(FirestoreIdGenerator.generate(), parentId: _fromBlockId, childId: toBlockId);
+      if (_firstSelectedBlockType == ConnectionType.parent) {
+        newConnection = Connection(FirestoreIdGenerator.generate(), parentId: _initiatingBlockId, childId: toBlockId);
       } else {
-        newConnection = Connection(FirestoreIdGenerator.generate(), parentId: toBlockId, childId: _fromBlockId);
+        newConnection = Connection(FirestoreIdGenerator.generate(), parentId: toBlockId, childId: _initiatingBlockId);
       }
       connectionModeDisable();
       state = state.copyWith(connections: [...state.connections, newConnection]);
@@ -101,9 +99,9 @@ class ConnectionManager extends StateNotifier<ConnectionsState> {
     );
   }
 
-  void updateBlockPosition(String blockId, Offset newPosition) {
+  void updateBlockPosition(String blockID, Offset newPosition) {
     final updatedPositions = Map<String, Offset>.from(state.blockPositions);
-    updatedPositions[blockId] = newPosition;
+    updatedPositions[blockID] = newPosition;
     state = state.copyWith(blockPositions: updatedPositions);
   }
 

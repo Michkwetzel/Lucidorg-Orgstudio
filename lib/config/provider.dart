@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:platform_v2/dataClasses/blockId.dart';
+import 'package:platform_v2/dataClasses/blockID.dart';
 import 'package:platform_v2/notifiers/general/appStateNotifier.dart';
 import 'package:platform_v2/notifiers/general/authNotifier.dart';
 import 'package:platform_v2/notifiers/general/blockNotifier.dart';
@@ -41,15 +41,17 @@ final canvasProvider = StateNotifierProvider.autoDispose<CanvasNotifier, Set<Str
   return CanvasNotifier(orgId: orgId, connectionManager: connectionManager);
 });
 
-final blockNotifierProvider = ChangeNotifierProvider.family.autoDispose<BlockNotifier, BlockID>((ref, params) {
+final blockNotifierProvider = ChangeNotifierProvider.family.autoDispose<BlockNotifier, String>((ref, blockID) {
   final String? orgId = ref.read(appStateProvider).orgId;
 
+  Map<String, Offset> initialPositions = ref.read(canvasProvider.notifier).initialPositions;
+
   return BlockNotifier(
-    blockId: params.blockId,
+    blockID: blockID,
     orgId: orgId ?? 'null',
-    position: params.initialPosition ?? Offset.zero,
-    onPositionChanged: (blockId, position) {
-      ref.read(connectionManagerProvider.notifier).updateBlockPosition(blockId, position);
+    position: initialPositions[blockID]!,
+    onPositionChanged: (blockID, position) {
+      ref.read(connectionManagerProvider.notifier).updateBlockPosition(blockID, position);
     },
   );
 });

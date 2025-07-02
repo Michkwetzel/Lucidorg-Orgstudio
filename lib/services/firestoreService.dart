@@ -21,26 +21,26 @@ class FirestoreService {
   static FirebaseFirestore get instance => _instance;
 
   static Future<void> addBlock(String orgId, Map<String, dynamic> blockData) async {
-    await _instance.collection('orgs').doc(orgId).collection('blocks').doc(blockData['blockId']).set({
+    await _instance.collection('orgs').doc(orgId).collection('blocks').doc(blockData['blockID']).set({
       ...blockData,
       'createdAt': FieldValue.serverTimestamp(),
       'updatedAt': FieldValue.serverTimestamp(),
     });
   }
 
-  static Future<void> deleteBlock(String orgId, String blockId) async {
-    await _instance.collection('orgs').doc(orgId).collection('blocks').doc(blockId).delete();
+  static Future<void> deleteBlock(String orgId, String blockID) async {
+    await _instance.collection('orgs').doc(orgId).collection('blocks').doc(blockID).delete();
   }
 
-  static Future<void> updatePosition(String orgId, String blockId, Map<String, double> position) async {
-    await _instance.collection('orgs').doc(orgId).collection('blocks').doc(blockId).update({
+  static Future<void> updatePosition(String orgId, String blockID, Map<String, double> position) async {
+    await _instance.collection('orgs').doc(orgId).collection('blocks').doc(blockID).update({
       'position': position,
       'updatedAt': FieldValue.serverTimestamp(),
     });
   }
 
-  static Future<void> updateData(String orgId, String blockId, BlockData blockData) async {
-    await _instance.collection('orgs').doc(orgId).collection('blocks').doc(blockId).update({
+  static Future<void> updateData(String orgId, String blockID, BlockData blockData) async {
+    await _instance.collection('orgs').doc(orgId).collection('blocks').doc(blockID).update({
       'name' : blockData.name,
       'role' : blockData.role,
       'department' : blockData.department,
@@ -50,8 +50,8 @@ class FirestoreService {
   }
 
   // 1 Block. BlockNotifier subscribes to this
-  static Stream<DocumentSnapshot<Map<String, dynamic>>> getBlockStream(String orgId, String blockId) {
-    return _instance.collection('orgs').doc(orgId).collection('blocks').doc(blockId).snapshots();
+  static Stream<DocumentSnapshot<Map<String, dynamic>>> getBlockStream(String orgId, String blockID) {
+    return _instance.collection('orgs').doc(orgId).collection('blocks').doc(blockID).snapshots();
   }
 
   // All blocks in Collection

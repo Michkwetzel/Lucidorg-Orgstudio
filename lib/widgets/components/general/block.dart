@@ -3,38 +3,23 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:platform_v2/config/constants.dart';
 import 'package:platform_v2/config/enums.dart';
 import 'package:platform_v2/config/provider.dart';
-import 'package:platform_v2/dataClasses/blockId.dart';
 import 'package:platform_v2/dataClasses/blockData.dart';
 import 'package:platform_v2/services/uiServices/overLayService.dart';
 
-class Block extends ConsumerStatefulWidget {
-  final String blockId;
-  final Offset initialPosition;
+class Block extends ConsumerWidget {
+  final String blockID;
 
   const Block({
     super.key,
-    required this.blockId,
-    this.initialPosition = Offset.zero,
+    required this.blockID,
   });
 
   @override
-  ConsumerState<Block> createState() => _BlockState();
-}
-
-class _BlockState extends ConsumerState<Block> {
-  late final BlockID blockID;
-
-  @override
-  void initState() {
-    super.initState();
-    // Create BlockID once in initState to prevent recreation on every build
-    blockID = BlockID(widget.blockId, widget.initialPosition);
-  }
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final blockNotifier = ref.watch(blockNotifierProvider(blockID));
     final BlockData? blockData = blockNotifier.blockData;
+
+    print("Build block $blockID at position ${blockNotifier.position}");
 
     return Positioned(
       left: blockNotifier.position.dx,
@@ -42,12 +27,15 @@ class _BlockState extends ConsumerState<Block> {
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onLongPress: () {
-          debugPrint('Long press - enabling connection mode for ${widget.blockId}');
-          ref.read(blockNotifierProvider(blockID).notifier).toggleConnectionMode();
-          ref.read(connectionManagerProvider.notifier).connectionModeEnable(widget.blockId, ConnectionType.parent);
+          ref.read(blockNotifierProvider(blockID).notifier).connectionModeEnable();
+          ref.read(connectionManagerProvider.notifier).connectionModeEnable(blockID, ConnectionType.parent);
         },
         onTap: () {
-          ref.read(connectionManagerProvider.notifier).createConnection(widget.blockId);
+          if (ref.read(connectionManagerProvider.notifier).isInConnectionMode) {
+            ref.read(connectionManagerProvider.notifier).createConnection(blockID);
+            // String iniatiatingblockID = ref.read(connectionManagerProvider.notifier).initiatingblockID;
+            // ref.read(blockNotifierProvider(blockID(iniatiatingblockID, Offset.zero)).notifier).connectionModeEnable();
+          }
         },
         onDoubleTapDown: (details) {
           OverlayService.openBlockInputBox(
@@ -55,9 +43,7 @@ class _BlockState extends ConsumerState<Block> {
             onSave: (data) {
               ref.read(blockNotifierProvider(blockID).notifier).updateData(data);
             },
-            onClose: () {
-              debugPrint('Close pressed - handle cleanup if needed');
-            },
+            onClose: () {},
           );
         },
         onPanUpdate: (details) {
@@ -108,7 +94,7 @@ class _BlockState extends ConsumerState<Block> {
                   padding: const EdgeInsets.all(4),
                   onSelected: (value) {
                     if (value == 'delete') {
-                      ref.read(canvasProvider.notifier).deleteBlock(widget.blockId);
+                      ref.read(canvasProvider.notifier).deleteBlock(blockID);
                     }
                   },
                   itemBuilder: (BuildContext context) => [
