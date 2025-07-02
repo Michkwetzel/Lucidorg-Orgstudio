@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:platform_v2/config/constants.dart';
+import 'package:platform_v2/config/enums.dart';
 import 'package:platform_v2/config/provider.dart';
 import 'package:platform_v2/dataClasses/blockId.dart';
 import 'package:platform_v2/dataClasses/blockData.dart';
 import 'package:platform_v2/services/uiServices/overLayService.dart';
 
-class Block extends ConsumerWidget {
+class Block extends ConsumerStatefulWidget {
   final String blockId;
   final Offset initialPosition;
 
@@ -17,8 +18,21 @@ class Block extends ConsumerWidget {
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final blockID = BlockID(blockId, initialPosition); // initial position is added here cause only way to pass that to BlockNotifier on 1st build
+  ConsumerState<Block> createState() => _BlockState();
+}
+
+class _BlockState extends ConsumerState<Block> {
+  late final BlockID blockID;
+
+  @override
+  void initState() {
+    super.initState();
+    // Create BlockID once in initState to prevent recreation on every build
+    blockID = BlockID(widget.blockId, widget.initialPosition);
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final blockNotifier = ref.watch(blockNotifierProvider(blockID));
     final BlockData? blockData = blockNotifier.blockData;
 
@@ -27,6 +41,14 @@ class Block extends ConsumerWidget {
       top: blockNotifier.position.dy,
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
+        onLongPress: () {
+          debugPrint('Long press - enabling connection mode for ${widget.blockId}');
+          ref.read(blockNotifierProvider(blockID).notifier).toggleConnectionMode();
+          ref.read(connectionManagerProvider.notifier).connectionModeEnable(widget.blockId, ConnectionType.parent);
+        },
+        onTap: () {
+          ref.read(connectionManagerProvider.notifier).createConnection(widget.blockId);
+        },
         onDoubleTapDown: (details) {
           OverlayService.openBlockInputBox(
             context,
@@ -34,7 +56,7 @@ class Block extends ConsumerWidget {
               ref.read(blockNotifierProvider(blockID).notifier).updateData(data);
             },
             onClose: () {
-              print('Close pressed - handle cleanup if needed');
+              debugPrint('Close pressed - handle cleanup if needed');
             },
           );
         },
@@ -53,14 +75,14 @@ class Block extends ConsumerWidget {
         child: Container(
           width: 120,
           height: 100,
-          decoration: kboxShadowNormal,
+          decoration: blockNotifier.connectionMode ? kRedBox : kboxShadowNormal,
           child: Stack(
             children: [
               Positioned.fill(
                 child: Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: blockData == null
-                      ? Center(child: Text("New Block"))
+                      ? const Center(child: Text("New Block"))
                       : Column(
                           spacing: 4,
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -86,7 +108,7 @@ class Block extends ConsumerWidget {
                   padding: const EdgeInsets.all(4),
                   onSelected: (value) {
                     if (value == 'delete') {
-                      ref.read(canvasProvider.notifier).deleteBlock(blockId);
+                      ref.read(canvasProvider.notifier).deleteBlock(widget.blockId);
                     }
                   },
                   itemBuilder: (BuildContext context) => [

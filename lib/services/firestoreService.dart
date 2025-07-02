@@ -59,6 +59,11 @@ class FirestoreService {
     return _instance.collection('orgs').doc(orgId).collection('blocks').snapshots();
   }
 
+   // All blocks in Collection
+  static Stream<QuerySnapshot> getConnectionsStream(String orgId) {
+    return _instance.collection('orgs').doc(orgId).collection('connections').snapshots();
+  }
+
   static Future<void> dispose() async {
     for (final subscription in _subscriptions) {
       await subscription.cancel();

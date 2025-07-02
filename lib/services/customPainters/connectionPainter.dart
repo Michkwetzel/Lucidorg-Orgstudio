@@ -15,13 +15,19 @@ class ConnectionsPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     for (final connection in connections) {
-      final parentPos = blockPositions[connection.parentBlockId];
-      final childPos = blockPositions[connection.childBlockId];
+      final parentPos = blockPositions[connection.parentId];
+      final childPos = blockPositions[connection.childId];
+
+      print("Connection ${connection.id}: parent=${connection.parentId} at $parentPos, child=${connection.childId} at $childPos");
 
       // Skip if either block position is unknown
-      if (parentPos == null || childPos == null) continue;
+      if (parentPos == null || childPos == null) {
+        print("Skipping connection - missing positions");
+        continue;
+      }
 
       _drawConnection(canvas, connection, parentPos, childPos);
+      print("Drew connection from $parentPos to $childPos");
     }
   }
 

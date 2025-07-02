@@ -1,7 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:platform_v2/dataClasses/connection.dart';
+import 'package:platform_v2/notifiers/general/connectionsManager.dart';
 import 'package:platform_v2/services/firestoreService.dart';
+import 'package:platform_v2/config/provider.dart';
 import 'dart:async';
 
 // Takes care of What blocks are being built and displayed on canvas.
@@ -10,8 +13,9 @@ class CanvasNotifier extends StateNotifier<Set<String>> {
   String? orgId;
   Map<String, Offset> initialPositions = {}; //This is a workaround to get over some issues haha
   StreamSubscription? _blocksSubscription;
+  ConnectionManager connectionManager;
 
-  CanvasNotifier({required this.orgId}) : super({}) {
+  CanvasNotifier({required this.orgId, required this.connectionManager}) : super({}) {
     subscribeToBlocks();
   }
 
@@ -35,7 +39,7 @@ class CanvasNotifier extends StateNotifier<Set<String>> {
             // Ignore DocumentChangeType.modified
           }
 
-          // Only update state if there were additions or deletions
+          // Only update state if there were additions or deletions. Not if there are changes to position
           if (hasAdditionsOrDeletions) {
             Set<String> ids = {};
             Map<String, Offset> initialPositionsT = {};
@@ -45,6 +49,9 @@ class CanvasNotifier extends StateNotifier<Set<String>> {
             }
             initialPositions = initialPositionsT;
             state = ids;
+
+            // Initialize block positions for connectionManager. This should always be up to date
+            connectionManager.setBlockPositions(initialPositionsT);
           }
         },
         onError: (error) {
@@ -71,7 +78,7 @@ class CanvasNotifier extends StateNotifier<Set<String>> {
 
   void deleteBlock(String blockId) async {
     if (orgId != null) {
-     await FirestoreService.deleteBlock(orgId!, blockId); //Delete from Firestore first.
+      await FirestoreService.deleteBlock(orgId!, blockId); //Delete from Firestore first.
     }
     state = Set<String>.from(state)..remove(blockId);
     initialPositions.remove(blockId);

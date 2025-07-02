@@ -9,26 +9,30 @@ class BlockNotifier extends ChangeNotifier {
   final String blockId;
   final String? orgId;
   Offset _position;
-  BlockData? blockData;
+  BlockData? _blockData;
+  bool _connectionMode;
   final Function(String blockId, Offset position)? onPositionChanged;
 
-  // Add StreamSubscription to track subscription tp the blocks doc
+  // Add StreamSubscription to track subscription to the blocks doc
   StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>? _streamSubscription;
   late final Stream<DocumentSnapshot<Map<String, dynamic>>> blockStream;
 
-  //Timers for debouncing
+  // Timers for debouncing
   Timer? _debounceTimer;
   static const Duration _debounceDuration = Duration(milliseconds: 500);
 
   BlockNotifier({
     required this.blockId,
     required this.orgId,
-    this.blockData,
+    BlockData? blockData,
     this.onPositionChanged,
     Offset position = Offset.zero,
     String name = '',
     String department = '',
-  }) : _position = position {
+    bool connectionMode = false,
+  }) : _position = position,
+       _blockData = blockData,
+       _connectionMode = connectionMode {
     // Get Block doc stream and listen to fields
     if (orgId != null) {
       blockStream = FirestoreService.getBlockStream(orgId!, blockId);
@@ -59,49 +63,81 @@ class BlockNotifier extends ChangeNotifier {
     }
   }
 
+  // Getters with proper encapsulation
   Offset get position => _position;
+  BlockData? get blockData => _blockData;
+  bool get connectionMode => _connectionMode;
 
   void updatePosition(Offset newPosition) async {
-    _position = newPosition;
-    notifyListeners();
+    if (_position != newPosition) {
+      _position = newPosition;
+      notifyListeners();
 
-    // call ConnetionManager
-    onPositionChanged?.call(blockId, newPosition);
+      // call ConnectionManager
+      onPositionChanged?.call(blockId, newPosition);
 
-    _debounceTimer?.cancel();
+      _debounceTimer?.cancel();
 
-    // Debounce before saving to firestore
-    _debounceTimer = Timer(_debounceDuration, () async {
-      if (orgId != null) {
-        await FirestoreService.updatePosition(orgId!, blockId, {'x': newPosition.dx, 'y': newPosition.dy});
-      }
-    });
+      // Debounce before saving to firestore
+      _debounceTimer = Timer(_debounceDuration, () async {
+        if (orgId != null) {
+          await FirestoreService.updatePosition(orgId!, blockId, {'x': newPosition.dx, 'y': newPosition.dy});
+        }
+      });
+    }
+  }
+
+  void toggleConnectionMode() {
+    if (!_connectionMode) {
+      debugPrint('BlockNotifier: Enabling connection mode for $blockId');
+      _connectionMode = true;
+      notifyListeners();
+      Timer(const Duration(seconds: 2), () {
+        debugPrint('BlockNotifier: Disabling connection mode for $blockId');
+        _connectionMode = false;
+        notifyListeners();
+      });
+    }
+  }
+
+  void connectionModeDisable() {
+    if (_connectionMode) {
+      debugPrint('BlockNotifier: Disabling connection mode for $blockId');
+      _connectionMode = false;
+      notifyListeners();
+    }
   }
 
   void updatePositionFromStream(Offset newPosition) {
-    //UI update only. Otherwise forever loop
-    _position = newPosition;
-    notifyListeners();
+    // UI update only. Otherwise forever loop
+    if (_position != newPosition) {
+      _position = newPosition;
+      notifyListeners();
 
-    // call ConnetionManager
-    onPositionChanged?.call(blockId, newPosition);
+      // call ConnectionManager
+      onPositionChanged?.call(blockId, newPosition);
+    }
   }
 
   void updateDataFromStream(BlockData blockData) {
-    //UI update only
-    this.blockData = blockData;
-    notifyListeners();
+    // UI update only
+    if (_blockData != blockData) {
+      _blockData = blockData;
+      notifyListeners();
+    }
   }
 
   void updateData(BlockData newData) {
-    blockData = newData;
-    notifyListeners();
-    if (orgId != null) {
-      FirestoreService.updateData(
-        orgId!,
-        blockId,
-        newData,
-      );
+    if (_blockData != newData) {
+      _blockData = newData;
+      notifyListeners();
+      if (orgId != null) {
+        FirestoreService.updateData(
+          orgId!,
+          blockId,
+          newData,
+        );
+      }
     }
   }
 

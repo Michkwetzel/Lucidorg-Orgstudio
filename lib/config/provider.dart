@@ -36,7 +36,9 @@ final appStateProvider = StateNotifierProvider<AppStateNotifier, AppState>((ref)
 
 final canvasProvider = StateNotifierProvider.autoDispose<CanvasNotifier, Set<String>>((ref) {
   final String? orgId = ref.watch(appStateProvider).orgId;
-  return CanvasNotifier(orgId: orgId);
+  final ConnectionManager connectionManager = ref.read(connectionManagerProvider.notifier);
+
+  return CanvasNotifier(orgId: orgId, connectionManager: connectionManager);
 });
 
 final blockNotifierProvider = ChangeNotifierProvider.family.autoDispose<BlockNotifier, BlockID>((ref, params) {
@@ -53,7 +55,9 @@ final blockNotifierProvider = ChangeNotifierProvider.family.autoDispose<BlockNot
 });
 
 final connectionManagerProvider = StateNotifierProvider<ConnectionManager, ConnectionsState>((ref) {
-  return ConnectionManager();
+  final String? orgId = ref.watch(appStateProvider).orgId;
+
+  return ConnectionManager(orgId: orgId);
 });
 
 final canvasScaleProvider = StateProvider<double>((ref) => 1.0);
