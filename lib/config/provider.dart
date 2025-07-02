@@ -44,12 +44,9 @@ final canvasProvider = StateNotifierProvider.autoDispose<CanvasNotifier, Set<Str
 final blockNotifierProvider = ChangeNotifierProvider.family.autoDispose<BlockNotifier, String>((ref, blockID) {
   final String? orgId = ref.read(appStateProvider).orgId;
 
-  Map<String, Offset> initialPositions = ref.read(canvasProvider.notifier).initialPositions;
-
   return BlockNotifier(
     blockID: blockID,
     orgId: orgId ?? 'null',
-    position: initialPositions[blockID]!,
     onPositionChanged: (blockID, position) {
       ref.read(connectionManagerProvider.notifier).updateBlockPosition(blockID, position);
     },

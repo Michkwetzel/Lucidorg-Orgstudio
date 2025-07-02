@@ -93,7 +93,7 @@ class _OrgCanvasState extends ConsumerState<OrgCanvas> {
 
                     ...canvasState.map(
                       (blockID) => Block(
-                        key: ValueKey(blockID),
+                        key: Key('block_$blockID'),
                         blockID: blockID,
                       ),
                     ),

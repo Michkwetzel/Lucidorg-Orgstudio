@@ -23,7 +23,7 @@ class CanvasNotifier extends StateNotifier<Set<String>> {
   Map<String, Offset> get initialPositions => _initialPositions;
 
   void subscribeToBlocks() {
-    print("Subscribe to: $orgId");
+    print("Subscribe to: $orgId blocks Collection");
     if (orgId != null) {
       _blocksSubscription?.cancel();
 
@@ -52,6 +52,7 @@ class CanvasNotifier extends StateNotifier<Set<String>> {
             }
             _initialPositions = initialPositions;
             _isInitialLoadComplete = true;
+            print("Block data loading done");
             state = ids;
 
             // Initialize block positions for connectionManager. This should always be up to date
@@ -72,12 +73,12 @@ class CanvasNotifier extends StateNotifier<Set<String>> {
   }
 
   void addBlock(String blockID, Offset position) async {
+    state = {...state, blockID}; //Add Id to state
+    initialPositions[blockID] = position; //Add initial position
     await FirestoreService.addBlock(orgId!, {
       'blockID': blockID,
       'position': {'x': position.dx, 'y': position.dy},
     });
-    state = {...state, blockID}; //Add Id to state
-    initialPositions[blockID] = position; //Add initial position
   }
 
   void deleteBlock(String blockID) async {

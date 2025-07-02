@@ -8,7 +8,8 @@ import 'package:platform_v2/services/firestoreService.dart';
 class BlockNotifier extends ChangeNotifier {
   final String blockID;
   final String? orgId;
-  Offset _position;
+  late Offset _position;
+  bool positionLoaded = false;
   BlockData? _blockData;
   bool _connectionMode = false;
   final Function(String blockID, Offset position) onPositionChanged;
@@ -24,9 +25,8 @@ class BlockNotifier extends ChangeNotifier {
   BlockNotifier({
     required this.blockID,
     required this.orgId,
-    required Offset initialPosition,
     required this.onPositionChanged,
-  }) : _position = initialPosition {
+  }) {
     // Get Block doc stream and listen to fields
     if (orgId != null) {
       blockStream = FirestoreService.getBlockStream(orgId!, blockID);
@@ -37,17 +37,42 @@ class BlockNotifier extends ChangeNotifier {
           // Check if document exists before accessing data
           if (doc.exists && doc.data() != null) {
             final data = doc.data()!;
-            // Update Position
-            if (data['position'] != null) {
-              updatePositionFromStream(Offset(data['position']['x'], data['position']['y']));
-            }
-            // Update block data
+
+            // Get new position from Firestore
+            Offset newPosition = Offset(data['position']['x'] ?? 0, data['position']['y'] ?? 0);
+
+            // Check if position has changed (only if position was previously loaded)
+            bool positionChanged = positionLoaded && (_position != newPosition);
+
+            // Check if block data has changed
             String name = data['name'] ?? '';
             String role = data['role'] ?? '';
             String department = data['department'] ?? '';
             List<String> emails = List<String>.from(data['emails'] ?? []);
-            BlockData blockData = BlockData(name: name, role: role, department: department, emails: emails);
-            updateDataFromStream(blockData);
+            BlockData newBlockData = BlockData(name: name, role: role, department: department, emails: emails);
+            bool dataChanged = _blockData != null && (_blockData != newBlockData);
+
+            // Update if something actually changed or if this is the first load
+            if (positionChanged || dataChanged || !positionLoaded) {
+              if (!positionLoaded || positionChanged) {
+                _position = newPosition;
+                print("Position for block $blockID updated");
+              }
+
+              if (_blockData == null || dataChanged) {
+                _blockData = newBlockData;
+                print("Data for block $blockID updated");
+              }
+
+              if (!positionLoaded) {
+                positionLoaded = true;
+                print("Initial load completed for block $blockID");
+              }
+
+              notifyListeners();
+            } else {
+              print("No changes detected for block $blockID - skipping update");
+            }
           }
         },
         onError: (error) {
@@ -94,22 +119,16 @@ class BlockNotifier extends ChangeNotifier {
   }
 
   void updatePositionFromStream(Offset newPosition) {
-    // UI update only. Otherwise forever loop
-    if (_position != newPosition) {
-      _position = newPosition;
-      notifyListeners();
-
-      // call ConnectionManager
-      onPositionChanged?.call(blockID, newPosition);
-    }
+    // Dont notifiry listeners yet
+    _position = newPosition;
+    // // call ConnectionManager
+    // onPositionChanged.call(blockID, newPosition);
   }
 
   void updateDataFromStream(BlockData blockData) {
     // UI update only
-    if (_blockData != blockData) {
-      _blockData = blockData;
-      notifyListeners();
-    }
+    _blockData = blockData;
+    //notifyListeners();
   }
 
   void updateData(BlockData newData) {

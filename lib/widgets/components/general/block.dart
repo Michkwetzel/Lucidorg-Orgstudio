@@ -19,7 +19,11 @@ class Block extends ConsumerWidget {
     final blockNotifier = ref.watch(blockNotifierProvider(blockID));
     final BlockData? blockData = blockNotifier.blockData;
 
-    print("Build block $blockID at position ${blockNotifier.position}");
+    if (blockNotifier.positionLoaded == false) {
+      print("Not building block yet $blockID ");
+      return const SizedBox.shrink();
+    }
+    print("Build block $blockID at position ${blockNotifier.position} ");
 
     return Positioned(
       left: blockNotifier.position.dx,

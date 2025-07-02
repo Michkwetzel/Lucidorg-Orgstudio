@@ -21,7 +21,7 @@ class BotleftHudState {
 }
 
 class BotLeftHudNotifier extends StateNotifier<BotleftHudState> {
-  BotLeftHudNotifier() : super(BotleftHudState(show: false, showOrgsButton: false));
+  BotLeftHudNotifier() : super(BotleftHudState(show: true, showOrgsButton: true));
 
   void toggleHud(bool show) {
     state = state.copyWith(show: show);
