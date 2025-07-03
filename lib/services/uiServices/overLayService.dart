@@ -9,6 +9,7 @@ class OverlayService {
     BuildContext context, {
     Function(BlockData)? onSave,
     VoidCallback? onClose,
+    BlockData? initialData,
   }) {
     final overlay = Overlay.of(context);
 
@@ -19,6 +20,7 @@ class OverlayService {
 
     overlayEntry = OverlayEntry(
       builder: (context) => BlockInputOverlay(
+        initialData: initialData,
         onSave: (data) {
           overlayEntry.remove();
           _currentOverlay = null;
@@ -40,11 +42,13 @@ class OverlayService {
 class BlockInputOverlay extends StatefulWidget {
   final Function(BlockData)? onSave;
   final VoidCallback? onClose;
+  final BlockData? initialData;
 
   const BlockInputOverlay({
     super.key,
     this.onSave,
     this.onClose,
+    this.initialData,
   });
 
   @override
@@ -60,6 +64,42 @@ class _BlockInputOverlayState extends State<BlockInputOverlay> {
   bool isMultipleEmails = false;
   List<String> csvEmails = [];
   bool csvError = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeWithData();
+  }
+
+  void _initializeWithData() {
+    final data = widget.initialData;
+    if (data != null) {
+      nameController.text = data.name;
+      roleController.text = data.role;
+      departmentController.text = data.department;
+      
+      // Handle emails
+      if (data.emails.length > 1) {
+        isMultipleEmails = true;
+        emailController.text = data.emails.join(', ');
+      } else if (data.emails.isNotEmpty) {
+        isMultipleEmails = false;
+        emailController.text = data.emails.first;
+      }
+    }
+  }
+
+  void _clearAllData() {
+    setState(() {
+      nameController.clear();
+      roleController.clear();
+      departmentController.clear();
+      emailController.clear();
+      isMultipleEmails = false;
+      csvEmails.clear();
+      csvError = false;
+    });
+  }
 
   void _handleSave() {
     List<String> emails = [];
@@ -120,7 +160,7 @@ class _BlockInputOverlayState extends State<BlockInputOverlay> {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Header with close button
+                    // Header with clear and close buttons
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -131,12 +171,25 @@ class _BlockInputOverlayState extends State<BlockInputOverlay> {
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        IconButton(
-                          onPressed: widget.onClose,
-                          icon: const Icon(Icons.close),
-                          iconSize: 20,
-                          constraints: const BoxConstraints(),
-                          padding: EdgeInsets.zero,
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              onPressed: _clearAllData,
+                              icon: const Icon(Icons.clear_all),
+                              iconSize: 20,
+                              constraints: const BoxConstraints(),
+                              padding: const EdgeInsets.all(4),
+                              tooltip: 'Clear all fields',
+                            ),
+                            IconButton(
+                              onPressed: widget.onClose,
+                              icon: const Icon(Icons.close),
+                              iconSize: 20,
+                              constraints: const BoxConstraints(),
+                              padding: EdgeInsets.zero,
+                            ),
+                          ],
                         ),
                       ],
                     ),

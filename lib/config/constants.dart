@@ -44,7 +44,7 @@ const double kLogoScale = 3.15;
 //Block Dimensions
 const double kBlockWidth = 120;
 const double kBlockHeight = 100;
-const double kSelectionDotSize = kBlockWidth*0.15;
+const double kSelectionDotSize = kBlockWidth*0.3;
 
 
 // Button TextStyles

@@ -15,6 +15,17 @@ class Block extends ConsumerWidget {
     required this.blockID,
   });
 
+  // Helper function to find parent of current block
+  String? _findParentOfBlock(WidgetRef ref, String blockID) {
+    final connections = ref.read(connectionManagerProvider).connections;
+    for (final connection in connections) {
+      if (connection.childId == blockID) {
+        return connection.parentId;
+      }
+    }
+    return null;
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final blockNotifier = ref.watch(blockNotifierProvider(blockID));
@@ -47,6 +58,7 @@ class Block extends ConsumerWidget {
         onDoubleTapDown: (details) {
           OverlayService.openBlockInputBox(
             context,
+            initialData: blockData,
             onSave: (data) {
               ref.read(blockNotifierProvider(blockID).notifier).updateData(data);
             },
@@ -128,10 +140,21 @@ class Block extends ConsumerWidget {
                 // Top center dot
                 Positioned(
                   left: (hitboxWidth / 2) - (kSelectionDotSize / 2),
-                  top: 0,
+                  top: -15,
                   child: _SelectionDot(
                     onTap: () {
-                      // TODO: Add top center tap functionality
+                      String newBlockID = FirestoreIdGenerator.generate();
+                      // Position 300px above
+                      Offset newPosition = Offset(blockNotifier.position.dx, blockNotifier.position.dy - 300);
+                      
+                      ref.read(canvasProvider.notifier).addBlock(newBlockID, newPosition);
+                      
+                      // Create parent-child connection: new block (parent) → current block (child)
+                      ref.read(connectionManagerProvider.notifier).createDirectConnection(
+                        parentBlockID: newBlockID, 
+                        childBlockID: blockID
+                      );
+                      ref.read(blockNotifierProvider(blockID).notifier).selectionModeDisable();
                     },
                     onLongPress: () {
                       // TODO: Add top center long press functionality
@@ -142,13 +165,14 @@ class Block extends ConsumerWidget {
                 // Bottom center dot
                 Positioned(
                   left: (hitboxWidth / 2) - (kSelectionDotSize / 2),
-                  bottom: 0,
+                  bottom: -15,
                   child: _SelectionDot(
-                    onTap: () async {
+                    onTap: () {
                       // print('Bottom dot button clicked');
                       String newBlockID = FirestoreIdGenerator.generate();
                       ref.read(canvasProvider.notifier).addBlock(newBlockID, Offset(blockNotifier.position.dx, blockNotifier.position.dy + 300));
                       ref.read(connectionManagerProvider.notifier).createDirectConnection(parentBlockID: blockID, childBlockID: newBlockID);
+                      ref.read(blockNotifierProvider(blockID).notifier).selectionModeDisable();
                     },
                     onLongPress: () {
                       // TODO: Add bottom center long press functionality
@@ -158,11 +182,23 @@ class Block extends ConsumerWidget {
 
                 // Right center dot
                 Positioned(
-                  right: 0,
+                  right: -15,
                   top: (hitboxHeight / 2) - (kSelectionDotSize / 2),
                   child: _SelectionDot(
                     onTap: () {
-                      // TODO: Add right center tap functionality
+                      String newBlockID = FirestoreIdGenerator.generate();
+                      // Position 300px to the right
+                      Offset newPosition = Offset(blockNotifier.position.dx + 300, blockNotifier.position.dy);
+
+                      ref.read(canvasProvider.notifier).addBlock(newBlockID, newPosition);
+
+                      // Find parent of current block
+                      String? parentID = _findParentOfBlock(ref, blockID);
+                      if (parentID != null) {
+                        // Create sibling connection: parent → new block
+                        ref.read(connectionManagerProvider.notifier).createDirectConnection(parentBlockID: parentID, childBlockID: newBlockID);
+                      }
+                      ref.read(blockNotifierProvider(blockID).notifier).selectionModeDisable();
                     },
                     onLongPress: () {
                       // TODO: Add right center long press functionality
@@ -172,11 +208,23 @@ class Block extends ConsumerWidget {
 
                 // Left center dot
                 Positioned(
-                  left: 0,
+                  left: -15,
                   top: (hitboxHeight / 2) - (kSelectionDotSize / 2),
                   child: _SelectionDot(
                     onTap: () {
-                      // TODO: Add left center tap functionality
+                      String newBlockID = FirestoreIdGenerator.generate();
+                      // Position 300px to the left
+                      Offset newPosition = Offset(blockNotifier.position.dx - 300, blockNotifier.position.dy);
+
+                      ref.read(canvasProvider.notifier).addBlock(newBlockID, newPosition);
+
+                      // Find parent of current block
+                      String? parentID = _findParentOfBlock(ref, blockID);
+                      if (parentID != null) {
+                        // Create sibling connection: parent → new block
+                        ref.read(connectionManagerProvider.notifier).createDirectConnection(parentBlockID: parentID, childBlockID: newBlockID);
+                      }
+                      ref.read(blockNotifierProvider(blockID).notifier).selectionModeDisable();
                     },
                     onLongPress: () {
                       // TODO: Add left center long press functionality
@@ -203,14 +251,13 @@ class _SelectionDot extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    return InkWell(
       onTap: onTap,
       onLongPress: onLongPress,
       child: Container(
         width: kSelectionDotSize,
         height: kSelectionDotSize,
         decoration: BoxDecoration(
-          color: Colors.blue,
           shape: BoxShape.circle,
           border: Border.all(color: Colors.white, width: 1),
           boxShadow: [

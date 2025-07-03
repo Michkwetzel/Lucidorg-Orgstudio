@@ -64,7 +64,6 @@ class CanvasNotifier extends StateNotifier<Set<String>> {
               ids.add(doc.id);
             }
             _initialPositions = initialPositions;
-            _isInitialLoadComplete = true;
             state = ids;
             connectionManager.setBlockPositions(initialPositions);
           }
@@ -73,6 +72,7 @@ class CanvasNotifier extends StateNotifier<Set<String>> {
           logger.severe("Error subscribing to blocks: $error");
         },
       );
+      _isInitialLoadComplete = true;
     }
   }
 
