@@ -1,9 +1,11 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:logging/logging.dart';
 import 'package:platform_v2/dataClasses/connection.dart';
 
 // Simple ConnectionsPainter
 class ConnectionsPainter extends CustomPainter {
+  final Logger logger = Logger('ConnectionsPainter');
   final List<Connection> connections;
   final Map<String, Offset> blockPositions;
 
@@ -14,13 +16,14 @@ class ConnectionsPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    print("!!!Paint Connections");
+    logger.info("Paint Connections");
     for (final connection in connections) {
       final parentPos = blockPositions[connection.parentId];
       final childPos = blockPositions[connection.childId];
 
       // Skip if either block position is unknown
       if (parentPos == null || childPos == null) {
+        logger.info("block positions unknown");
         continue;
       }
 

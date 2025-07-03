@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:logging/logging.dart';
 import 'package:platform_v2/config/constants.dart';
+
+final Logger logger = Logger('googleSignInButton.dart');
 
 class GoogleSignInButton extends StatelessWidget {
   final VoidCallback onPressed;

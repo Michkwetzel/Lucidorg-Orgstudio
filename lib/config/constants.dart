@@ -33,13 +33,19 @@ const kTextHeading2R = TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.w
 const kTextHeading1L = TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.w300, fontSize: 48, color: Colors.black87);
 const kTextHeading1R = TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.w400, fontSize: 48, color: Colors.black87);
 
-//*************************************************************************************************
+//******************************* Dimenstions ******************************************************************
 
 //Button dimensions
 const double kButtonHeight = 40;
 
 //Logo Scale
 const double kLogoScale = 3.15;
+
+//Block Dimensions
+const double kBlockWidth = 120;
+const double kBlockHeight = 100;
+const double kSelectionDotSize = kBlockWidth*0.15;
+
 
 // Button TextStyles
 const kCallToActionButtonTextStyle = TextStyle(fontFamily: "OpenSans", fontWeight: FontWeight.w400, fontSize: 14, color: Colors.white);

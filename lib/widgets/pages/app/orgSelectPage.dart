@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:logging/logging.dart';
 import 'package:platform_v2/config/enums.dart';
 import 'package:platform_v2/config/provider.dart';
 import 'package:platform_v2/dataClasses/org.dart';
@@ -14,11 +15,13 @@ class OrgSelectPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final Logger logger = Logger('orgSelectPage.dart');
+
     final List<Org> orgs = ref.watch(orgsScreenProvider.select((state) => state.orgs));
     final bool isLoading = ref.watch(orgsScreenProvider.select((state) => state.isLoading));
     final String loadingMessage = ref.watch(orgsScreenProvider.select((state) => state.loadingMessage));
 
-    print("org Screen, Build run");
+    logger.info("org Screen, Build run");
 
     return Padding(
       padding: const EdgeInsets.only(left: 32, right: 32, top: 105, bottom: 32),

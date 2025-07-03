@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dropzone/flutter_dropzone.dart';
 import 'package:dotted_border/dotted_border.dart';
-import 'package:logging/logging.dart';
 
 class UploadCSVWidget extends StatefulWidget {
   final Function(List<String>, bool error) onDataExtracted;
@@ -14,7 +13,6 @@ class UploadCSVWidget extends StatefulWidget {
 }
 
 class _UploadCSVWidgetState extends State<UploadCSVWidget> {
-  Logger logger = Logger('UploadCSVWidget');
   List<String> validEmails = [];
   String displayText = "Click or drag CSV file here";
   late DropzoneViewController controller;
@@ -98,7 +96,6 @@ class _UploadCSVWidgetState extends State<UploadCSVWidget> {
         success = true;
       });
     } catch (e) {
-      print(e);
       widget.onDataExtracted([], true);
       setState(() {
         if (e is CSVValidationException) {
@@ -106,7 +103,6 @@ class _UploadCSVWidgetState extends State<UploadCSVWidget> {
         } else if (e is NoEmailsFoundException) {
           displayText = e.message; // Use message property instead of toString()
         } else {
-          print('Unexpected error: $e');
           displayText = 'Invalid CSV file';
         }
         success = false;

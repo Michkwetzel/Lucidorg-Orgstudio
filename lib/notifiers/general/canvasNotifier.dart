@@ -1,14 +1,17 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:logging/logging.dart';
 import 'package:platform_v2/notifiers/general/connectionsManager.dart';
 import 'package:platform_v2/services/firestoreService.dart';
 import 'dart:async';
 
 // Takes care of What blocks are being built and displayed on canvas.
 // Responsible for add and delete functions
+// Canvas does not watch Block position. BlockNotifier does
 
 class CanvasNotifier extends StateNotifier<Set<String>> {
+  final Logger logger = Logger('CanvasNotifier');
   String? orgId;
   Map<String, Offset> _initialPositions = {}; //This is a workaround to get over some issues haha
   StreamSubscription? _blocksSubscription;
@@ -22,8 +25,11 @@ class CanvasNotifier extends StateNotifier<Set<String>> {
   bool get isInitialLoadComplete => _isInitialLoadComplete;
   Map<String, Offset> get initialPositions => _initialPositions;
 
+  // Track pending operations to avoid duplicate updates
+  Set<String> _pendingAdditions = {};
+  Set<String> _pendingDeletions = {};
+
   void subscribeToBlocks() {
-    print("Subscribe to: $orgId blocks Collection");
     if (orgId != null) {
       _blocksSubscription?.cancel();
 
@@ -33,16 +39,23 @@ class CanvasNotifier extends StateNotifier<Set<String>> {
 
           for (final change in snapshot.docChanges) {
             if (change.type == DocumentChangeType.added) {
-              // print("Document added: ${change.doc.id}");
+              // Skip if this was a local addition we're expecting
+              if (_pendingAdditions.contains(change.doc.id)) {
+                _pendingAdditions.remove(change.doc.id);
+                continue;
+              }
               hasAdditionsOrDeletions = true;
             } else if (change.type == DocumentChangeType.removed) {
-              print("Document removed: ${change.doc.id}");
+              // Skip if this was a local deletion we're expecting
+              if (_pendingDeletions.contains(change.doc.id)) {
+                _pendingDeletions.remove(change.doc.id);
+                continue;
+              }
+              logger.info("Deletion detected");
               hasAdditionsOrDeletions = true;
             }
-            // Ignore DocumentChangeType.modified
           }
 
-          // Only update state if there were additions or deletions. Not if there are changes to position
           if (hasAdditionsOrDeletions) {
             Set<String> ids = {};
             Map<String, Offset> initialPositions = {};
@@ -52,15 +65,12 @@ class CanvasNotifier extends StateNotifier<Set<String>> {
             }
             _initialPositions = initialPositions;
             _isInitialLoadComplete = true;
-            print("Block data loading done");
             state = ids;
-
-            // Initialize block positions for connectionManager. This should always be up to date
             connectionManager.setBlockPositions(initialPositions);
           }
         },
         onError: (error) {
-          print("Error subscribing to blocks: $error");
+          logger.severe("Error subscribing to blocks: $error");
         },
       );
     }
@@ -72,25 +82,47 @@ class CanvasNotifier extends StateNotifier<Set<String>> {
     super.dispose();
   }
 
-  void addBlock(String blockID, Offset position) async {
-    state = {...state, blockID}; //Add Id to state
-    initialPositions[blockID] = position; //Add initial position
-    await FirestoreService.addBlock(orgId!, {
-      'blockID': blockID,
-      'position': {'x': position.dx, 'y': position.dy},
-    });
+  Future<void> addBlock(String blockID, Offset position) async {
+    // Mark as pending addition
+    _pendingAdditions.add(blockID);
+
+    // Update UI immediately
+    state = {...state, blockID};
+    _initialPositions[blockID] = position;
+
+    try {
+      await FirestoreService.addBlock(orgId!, {
+        'blockID': blockID,
+        'position': {'x': position.dx, 'y': position.dy},
+      });
+    } catch (e) {
+      // If Firestore operation fails, revert UI changes
+      _pendingAdditions.remove(blockID);
+      state = Set<String>.from(state)..remove(blockID);
+      _initialPositions.remove(blockID);
+      rethrow;
+    }
   }
 
   void deleteBlock(String blockID) async {
-    //Delete from Firestore first.
-    if (orgId != null) {
-      await FirestoreService.deleteBlock(orgId!, blockID);
-    }
-    //Delete connection
-    connectionManager.onBlockDelete(blockID);
-    //Finally Delete block from UI
+    // Mark as pending deletion
+    _pendingDeletions.add(blockID);
+
+    // Update UI immediately
     state = Set<String>.from(state)..remove(blockID);
-    
-    initialPositions.remove(blockID);
+    _initialPositions.remove(blockID);
+    connectionManager.onBlockDelete(blockID);
+
+    try {
+      if (orgId != null) {
+        await FirestoreService.deleteBlock(orgId!, blockID);
+      }
+    } catch (e) {
+      // If Firestore operation fails, revert UI changes
+      _pendingDeletions.remove(blockID);
+      state = {...state, blockID};
+      // Note: You'd need to restore the position too
+      rethrow;
+    }
   }
 }

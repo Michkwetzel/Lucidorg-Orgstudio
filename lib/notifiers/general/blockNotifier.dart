@@ -12,7 +12,6 @@ class BlockNotifier extends ChangeNotifier {
   bool positionLoaded = false;
   BlockData? _blockData;
   bool _selectionMode = false;
-  final Function(String blockID, Offset position) onPositionChanged;
 
   // Add StreamSubscription to track subscription to the blocks doc
   StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>? _streamSubscription;
@@ -25,7 +24,6 @@ class BlockNotifier extends ChangeNotifier {
   BlockNotifier({
     required this.blockID,
     required this.orgId,
-    required this.onPositionChanged,
   }) {
     // Get Block doc stream and listen to fields
     if (orgId != null) {
@@ -91,10 +89,7 @@ class BlockNotifier extends ChangeNotifier {
     if (_position != newPosition) {
       _position = newPosition;
       notifyListeners();
-
-      // call ConnectionManager
-      onPositionChanged?.call(blockID, newPosition);
-
+      
       _debounceTimer?.cancel();
 
       // Debounce before saving to firestore
@@ -107,13 +102,11 @@ class BlockNotifier extends ChangeNotifier {
   }
 
   void selectionModeEnable() {
-    debugPrint('BlockNotifier: Enabling selection mode for $blockID');
     _selectionMode = true;
     notifyListeners();
   }
 
   void selectionModeDisable() {
-    debugPrint('BlockNotifier: Disabling selection mode for $blockID');
     _selectionMode = false;
     notifyListeners();
   }

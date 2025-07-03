@@ -4,6 +4,7 @@ import 'package:platform_v2/config/constants.dart';
 import 'package:platform_v2/config/enums.dart';
 import 'package:platform_v2/config/provider.dart';
 import 'package:platform_v2/dataClasses/blockData.dart';
+import 'package:platform_v2/services/firestoreIdGenerator.dart';
 import 'package:platform_v2/services/uiServices/overLayService.dart';
 
 class Block extends ConsumerWidget {
@@ -23,9 +24,16 @@ class Block extends ConsumerWidget {
       return const SizedBox.shrink();
     }
 
+    // Calculate the expanded size to include selection dots when in selection mode
+    const dotOverhang = 25.0; // How far the dots extend beyond the block
+    final isSelectionMode = blockNotifier.selectionMode;
+    final hitboxOffset = isSelectionMode ? dotOverhang : 0.0;
+    final hitboxWidth = kBlockWidth + (hitboxOffset * 2);
+    final hitboxHeight = kBlockHeight + (hitboxOffset * 2);
+
     return Positioned(
-      left: blockNotifier.position.dx,
-      top: blockNotifier.position.dy,
+      left: blockNotifier.position.dx - hitboxOffset,
+      top: blockNotifier.position.dy - hitboxOffset,
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: () {
@@ -58,82 +66,69 @@ class Block extends ConsumerWidget {
           }
         },
         child: SizedBox(
-          width: 140, // Increased to accommodate dots
-          height: 120, // Increased to accommodate dots
+          width: hitboxWidth,
+          height: hitboxHeight,
           child: Stack(
+            clipBehavior: Clip.none,
             children: [
-              // Main block container
+              // Main block container - positioned at the center of the hitbox area
               Positioned(
-                left: 10,
-                top: 10,
+                left: hitboxOffset,
+                top: hitboxOffset,
                 child: Container(
-                  width: 120,
-                  height: 100,
-                  decoration: blockNotifier.selectionMode 
-                      ? kboxShadowNormal.copyWith(
-                          border: Border.all(color: Colors.blue, width: 2)
-                        )
-                      : kboxShadowNormal,
-                  child: Stack(
+                  width: kBlockWidth,
+                  height: kBlockHeight,
+                  decoration: blockNotifier.selectionMode ? kboxShadowNormal.copyWith(border: Border.all(color: Colors.blue, width: 2)) : kboxShadowNormal,
+                  child: Column(
+                    spacing: 4,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      Positioned.fill(
-                        child: Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: blockData == null
-                              ? const Center(child: Text("New Block"))
-                              : Column(
-                                  spacing: 4,
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  crossAxisAlignment: CrossAxisAlignment.center,
-                                  children: [
-                                    Text(blockData.name),
-                                    Text(blockData.role),
-                                    Text(blockData.department),
-                                  ],
-                                ),
-                        ),
-                      ),
-                      Positioned(
-                        top: 0,
-                        right: 0,
-                        child: PopupMenuButton<String>(
-                          icon: const Icon(
-                            Icons.more_horiz,
-                            size: 16,
-                            color: Colors.grey,
-                          ),
-                          iconSize: 16,
-                          padding: const EdgeInsets.all(4),
-                          onSelected: (value) {
-                            if (value == 'delete') {
-                              ref.read(canvasProvider.notifier).deleteBlock(blockID);
-                            }
-                          },
-                          itemBuilder: (BuildContext context) => [
-                            const PopupMenuItem<String>(
-                              value: 'delete',
-                              child: Row(
-                                children: [
-                                  Icon(Icons.delete_outline, size: 16, color: Colors.red),
-                                  SizedBox(width: 8),
-                                  Text('Delete', style: TextStyle(color: Colors.red)),
-                                ],
-                              ),
-                            ),
+                      Text(blockData?.name ?? ""),
+                      Text(blockData?.role ?? ""),
+                      Text(blockData?.department ?? ""),
+                    ],
+                  ),
+                ),
+              ),
+
+              if (blockNotifier.selectionMode) ...[
+                // Menu button
+                Positioned(
+                  top: hitboxOffset,
+                  right: hitboxOffset,
+                  child: PopupMenuButton<String>(
+                    icon: const Icon(
+                      Icons.more_horiz,
+                      size: 16,
+                      color: Colors.grey,
+                    ),
+                    iconSize: 16,
+                    padding: const EdgeInsets.all(4),
+                    onSelected: (value) {
+                      if (value == 'delete') {
+                        ref.read(canvasProvider.notifier).deleteBlock(blockID);
+                      }
+                    },
+                    itemBuilder: (BuildContext context) => [
+                      const PopupMenuItem<String>(
+                        value: 'delete',
+                        child: Row(
+                          children: [
+                            Icon(Icons.delete_outline, size: 16, color: Colors.red),
+                            SizedBox(width: 8),
+                            Text('Delete', style: TextStyle(color: Colors.red)),
                           ],
                         ),
                       ),
                     ],
                   ),
                 ),
-              ),
-              
-              // Selection dots - only show when in selection mode
-              if (blockNotifier.selectionMode) ...[
-                // Top center
+
+                // Top center dot
                 Positioned(
-                  left: 70 - 4, // Center horizontally
-                  top: 10 - 4 - 6, // 6 pixels above the block
+                  left: (hitboxWidth / 2) - (kSelectionDotSize / 2),
+                  top: 0,
                   child: _SelectionDot(
                     onTap: () {
                       // TODO: Add top center tap functionality
@@ -143,11 +138,28 @@ class Block extends ConsumerWidget {
                     },
                   ),
                 ),
-                
-                // Right center
+
+                // Bottom center dot
                 Positioned(
-                  left: 130 - 4 + 6, // 6 pixels to the right of the block
-                  top: 60 - 4, // Center vertically
+                  left: (hitboxWidth / 2) - (kSelectionDotSize / 2),
+                  bottom: 0,
+                  child: _SelectionDot(
+                    onTap: () async {
+                      // print('Bottom dot button clicked');
+                      String newBlockID = FirestoreIdGenerator.generate();
+                      ref.read(canvasProvider.notifier).addBlock(newBlockID, Offset(blockNotifier.position.dx, blockNotifier.position.dy + 300));
+                      ref.read(connectionManagerProvider.notifier).createDirectConnection(parentBlockID: blockID, childBlockID: newBlockID);
+                    },
+                    onLongPress: () {
+                      // TODO: Add bottom center long press functionality
+                    },
+                  ),
+                ),
+
+                // Right center dot
+                Positioned(
+                  right: 0,
+                  top: (hitboxHeight / 2) - (kSelectionDotSize / 2),
                   child: _SelectionDot(
                     onTap: () {
                       // TODO: Add right center tap functionality
@@ -157,25 +169,11 @@ class Block extends ConsumerWidget {
                     },
                   ),
                 ),
-                
-                // Bottom center
+
+                // Left center dot
                 Positioned(
-                  left: 70 - 4, // Center horizontally
-                  top: 110 - 4 + 6, // 6 pixels below the block
-                  child: _SelectionDot(
-                    onTap: () {
-                      // TODO: Add bottom center tap functionality
-                    },
-                    onLongPress: () {
-                      // TODO: Add bottom center long press functionality
-                    },
-                  ),
-                ),
-                
-                // Left center
-                Positioned(
-                  left: 10 - 4 - 6, // 6 pixels to the left of the block
-                  top: 60 - 4, // Center vertically
+                  left: 0,
+                  top: (hitboxHeight / 2) - (kSelectionDotSize / 2),
                   child: _SelectionDot(
                     onTap: () {
                       // TODO: Add left center tap functionality
@@ -209,8 +207,8 @@ class _SelectionDot extends StatelessWidget {
       onTap: onTap,
       onLongPress: onLongPress,
       child: Container(
-        width: 8,
-        height: 8,
+        width: kSelectionDotSize,
+        height: kSelectionDotSize,
         decoration: BoxDecoration(
           color: Colors.blue,
           shape: BoxShape.circle,

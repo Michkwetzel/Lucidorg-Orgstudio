@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:logging/logging.dart';
 import 'package:platform_v2/config/constants.dart';
 import 'package:platform_v2/services/uiServices/navigationService.dart';
+
 
 class InputDialogService {
   // Generic form dialog - handles any field configuration

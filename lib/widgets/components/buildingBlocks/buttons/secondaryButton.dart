@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:logging/logging.dart';
 import 'package:platform_v2/config/constants.dart';
+
+final Logger logger = Logger('secondaryButton.dart');
 
 class Secondarybutton extends StatelessWidget {
   final VoidCallback onPressed;

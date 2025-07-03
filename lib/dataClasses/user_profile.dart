@@ -34,12 +34,7 @@ class UserProfile {
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
-    return other is UserProfile &&
-        other.userUID == userUID &&
-        other.email == email &&
-        other.orgUID == orgUID &&
-        other.permission == permission &&
-        other.latestSurveyDocName == latestSurveyDocName;
+    return other is UserProfile && other.userUID == userUID && other.email == email && other.orgUID == orgUID && other.permission == permission && other.latestSurveyDocName == latestSurveyDocName;
   }
 
   @override

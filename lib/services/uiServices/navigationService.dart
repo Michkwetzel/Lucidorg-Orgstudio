@@ -1,4 +1,7 @@
 import 'package:go_router/go_router.dart';
+import 'package:logging/logging.dart';
+
+final Logger logger = Logger('navigationService.dart');
 
 class NavigationService {
   // This static variable will hold our router instance

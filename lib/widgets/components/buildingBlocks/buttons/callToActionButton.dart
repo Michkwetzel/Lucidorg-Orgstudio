@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:logging/logging.dart';
 import 'package:platform_v2/config/constants.dart';
+
+final Logger logger = Logger('callToActionButton.dart');
 
 class CallToActionButton extends ConsumerWidget {
   final VoidCallback? onPressed;

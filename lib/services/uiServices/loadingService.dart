@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:platform_v2/widgets/components/general/loadingAnimation.dart';
 
+
 class LoadingService {
   static OverlayEntry? _overlayEntry;
 

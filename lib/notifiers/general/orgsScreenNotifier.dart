@@ -29,12 +29,6 @@ class OrgsScreenNotifier extends StateNotifier<OrgsScreenState> {
     getOrgs();
   }
 
-  @override
-  void dispose() {
-    print("disposing orgSelectPage");
-    super.dispose();
-  }
-
   void getOrgs() async {
     try {
       state = state.copyWith(isLoading: true, loadingMessage: "Getting orgs...");

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:logging/logging.dart';
 import 'package:platform_v2/widgets/pages/app/appScaffold.dart';
 import 'package:platform_v2/widgets/pages/app/orgSelectPage.dart';
 import 'package:platform_v2/widgets/pages/app/orgCanvas.dart';
@@ -7,6 +8,8 @@ import 'package:platform_v2/widgets/pages/auth/appEntryLayout.dart';
 import 'package:platform_v2/widgets/pages/auth/logInScreen.dart';
 
 GoRouter setupRouter() {
+  final Logger logger = Logger('setup_router.dart');
+
   return GoRouter(
     initialLocation: '/auth/landingPage',
     routerNeglect: true,

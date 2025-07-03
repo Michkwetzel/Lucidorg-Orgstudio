@@ -1,10 +1,12 @@
 import 'dart:async';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:logging/logging.dart';
 import 'package:platform_v2/config/enums.dart';
 import 'package:platform_v2/dataClasses/connection.dart';
-import 'package:platform_v2/services/firestoreIdGenerator.dart';
+import 'package:platform_v2/services/firestoreIDGenerator.dart';
 import 'package:platform_v2/services/firestoreService.dart';
 
 class ConnectionsState {
@@ -28,11 +30,17 @@ class ConnectionsState {
 }
 
 class ConnectionManager extends StateNotifier<ConnectionsState> {
+  Logger logger = Logger('ConnectionManager');
+
   StreamSubscription? _connectionSubscription;
   String? orgId;
   late ConnectionType _firstSelectedBlockType;
   late String _initiatingBlockID;
   bool _connectionMode = false;
+
+  // Track pending operations to avoid duplicate updates
+  Set<String> _pendingAdditions = {};
+  Set<String> _pendingDeletions = {};
 
   ConnectionManager({required this.orgId}) : super(ConnectionsState()) {
     _subscribeToConnections();
@@ -45,48 +53,53 @@ class ConnectionManager extends StateNotifier<ConnectionsState> {
   }
 
   void _subscribeToConnections() {
-    print("Getting Connections from Firestore");
+    logger.info("Subscribing to connections");
     _connectionSubscription?.cancel();
     if (orgId != null) {
       _connectionSubscription = FirestoreService.getConnectionsStream(orgId!).listen(
         (snapshot) {
-          List<Connection> updatedConnections = [];
-          for (final doc in snapshot.docs) {
-            updatedConnections.add(Connection.fromFirestore(doc));
+          bool hasRelevantChanges = false;
+
+          // Process document changes efficiently
+          for (final change in snapshot.docChanges) {
+            final docId = change.doc.id;
+            logger.info("Doc change type: ${change.type} for doc: $docId");
+
+            if (change.type == DocumentChangeType.added) {
+              // Skip if this was a local addition we're expecting
+              if (_pendingAdditions.contains(docId)) {
+                _pendingAdditions.remove(docId);
+                continue;
+              }
+              hasRelevantChanges = true;
+            } else if (change.type == DocumentChangeType.removed) {
+              // Skip if this was a local deletion we're expecting
+              if (_pendingDeletions.contains(docId)) {
+                _pendingDeletions.remove(docId);
+                continue;
+              }
+              hasRelevantChanges = true;
+            } else if (change.type == DocumentChangeType.modified) {
+              // Handle modifications - these are real changes from other users
+              hasRelevantChanges = true;
+            }
           }
 
-          // Check if the connections have actually changed before updating state
-          if (_connectionsHaveChanged(state.connections, updatedConnections)) {
+          // Only update state if there were relevant changes
+          if (hasRelevantChanges) {
+            logger.info("Updating connections state");
+            List<Connection> updatedConnections = [];
+            for (final doc in snapshot.docs) {
+              updatedConnections.add(Connection.fromFirestore(doc));
+            }
             state = state.copyWith(connections: updatedConnections);
           }
         },
         onError: (error) {
-          print("Error subscribing to connections: $error");
+          logger.severe("Error subscribing to connections: $error");
         },
       );
     }
-  }
-
-  bool _connectionsHaveChanged(List<Connection> current, List<Connection> updated) {
-    // Quick length check first
-    if (current.length != updated.length) {
-      return true;
-    }
-
-    // If lengths are the same, create a Set from current IDs for O(1) lookups
-    final currentIds = <String>{};
-    for (final connection in current) {
-      currentIds.add(connection.id);
-    }
-
-    // Check if all updated IDs exist in current - early exit on first difference
-    for (final connection in updated) {
-      if (!currentIds.contains(connection.id)) {
-        return true;
-      }
-    }
-
-    return false;
   }
 
   bool get connectionMode => _connectionMode;
@@ -112,9 +125,39 @@ class ConnectionManager extends StateNotifier<ConnectionsState> {
       }
       connectionModeDisable();
 
-      FirestoreService.addConnection(orgId!, newConnection);
+      // Track pending addition and update UI immediately
+      _pendingAdditions.add(newConnection.id);
       state = state.copyWith(connections: [...state.connections, newConnection]);
+
+      // Then update Firestore
+      FirestoreService.addConnection(orgId!, newConnection).catchError((error) {
+        // If Firestore operation fails, revert UI changes
+        _pendingAdditions.remove(newConnection.id);
+        state = state.copyWith(
+          connections: state.connections.where((conn) => conn.id != newConnection.id).toList(),
+        );
+        logger.severe("Failed to add connection: $error");
+      });
     }
+  }
+
+  void createDirectConnection({required String childBlockID, required String parentBlockID}) {
+    logger.info("Create Direct connection");
+    Connection newConnection = Connection(FirestoreIdGenerator.generate(), parentId: parentBlockID, childId: childBlockID);
+
+    // Track pending addition and update UI immediately
+    _pendingAdditions.add(newConnection.id);
+    state = state.copyWith(connections: [...state.connections, newConnection]);
+
+    // Then update Firestore
+    FirestoreService.addConnection(orgId!, newConnection).catchError((error) {
+      // If Firestore operation fails, revert UI changes
+      _pendingAdditions.remove(newConnection.id);
+      state = state.copyWith(
+        connections: state.connections.where((conn) => conn.id != newConnection.id).toList(),
+      );
+      logger.severe("Failed to add direct connection: $error");
+    });
   }
 
   void addConnection(Connection newConnection) {
@@ -122,19 +165,34 @@ class ConnectionManager extends StateNotifier<ConnectionsState> {
   }
 
   void onBlockDelete(String blockID) {
-    //Check if block has a connection if yes then delete
+    // Find connections to delete
+    List<String> connectionsToDelete = [];
     for (var connection in state.connections) {
       if (connection.parentId == blockID || connection.childId == blockID) {
-        removeConnection(connection.id);
+        connectionsToDelete.add(connection.id);
       }
+    }
+
+    // Delete each connection
+    for (String connectionId in connectionsToDelete) {
+      removeConnection(connectionId);
     }
   }
 
   void removeConnection(String connectionId) {
-    FirestoreService.deleteConnection(orgId!, connectionId);
+    // Track pending deletion and update UI immediately
+    _pendingDeletions.add(connectionId);
     state = state.copyWith(
       connections: state.connections.where((conn) => conn.id != connectionId).toList(),
     );
+
+    // Then update Firestore
+    FirestoreService.deleteConnection(orgId!, connectionId).catchError((error) {
+      // If Firestore operation fails, revert UI changes
+      _pendingDeletions.remove(connectionId);
+      // Note: Would need to restore the connection here - you'd need to keep a reference
+      logger.severe("Failed to delete connection: $error");
+    });
   }
 
   void updateBlockPosition(String blockID, Offset newPosition) {

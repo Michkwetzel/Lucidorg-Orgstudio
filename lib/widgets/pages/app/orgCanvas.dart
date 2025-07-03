@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:logging/logging.dart';
 import 'package:platform_v2/config/provider.dart';
+import 'package:platform_v2/notifiers/general/canvasNotifier.dart';
 import 'package:platform_v2/services/customPainters/connectionPainter.dart';
 import 'package:platform_v2/services/firestoreIdGenerator.dart';
 import 'package:platform_v2/widgets/components/general/block.dart';
@@ -13,6 +15,8 @@ class OrgCanvas extends ConsumerStatefulWidget {
 }
 
 class _OrgCanvasState extends ConsumerState<OrgCanvas> {
+  Logger logger = Logger('Canvas');
+
   final TransformationController _transformationController = TransformationController();
   late Offset _lastTapPosition;
 
@@ -38,11 +42,10 @@ class _OrgCanvasState extends ConsumerState<OrgCanvas> {
     final canvasNotifier = ref.read(canvasProvider.notifier);
 
     if (canvasNotifier.isInitialLoadComplete == false) {
-      print("Busy Loading Initial Canvas");
       return const Center(child: CircularProgressIndicator());
     }
 
-    print("Build orgCanvas");
+    logger.info("Building Canvas");
     return SizedBox.expand(
       child: InteractiveViewer(
         transformationController: _transformationController,
@@ -83,7 +86,7 @@ class _OrgCanvasState extends ConsumerState<OrgCanvas> {
                           child: CustomPaint(
                             painter: ConnectionsPainter(
                               connections: connectionState.connections,
-                              blockPositions: connectionState.blockPositions,
+                              blockPositions: ref.watch(blockPositionsProvider),
                             ),
                             size: const Size(7000, 7000),
                           ),
