@@ -20,7 +20,6 @@ class Block extends ConsumerWidget {
     final BlockData? blockData = blockNotifier.blockData;
 
     if (blockNotifier.positionLoaded == false) {
-      print("Not building block yet $blockID ");
       return const SizedBox.shrink();
     }
 
