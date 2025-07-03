@@ -11,15 +11,15 @@ class Connection {
     final data = doc.data() as Map<String, dynamic>;
     return Connection(
       doc.id,
-      parentId: data['parentId'] as String,
-      childId: data['childId'] as String,
+      parentId: data['parentID'] as String,
+      childId: data['childID'] as String,
     );
   }
 
   Map<String, dynamic> toFirestore() {
     return {
-      'parentId': parentId,
-      'childId': childId,
+      'parentID': parentId,
+      'childID': childId,
     };
   }
 }

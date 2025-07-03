@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:platform_v2/dataClasses/blockData.dart';
+import 'package:platform_v2/dataClasses/connection.dart';
 
 class FirestoreService {
   static late final FirebaseFirestore _instance;
@@ -41,10 +42,10 @@ class FirestoreService {
 
   static Future<void> updateData(String orgId, String blockID, BlockData blockData) async {
     await _instance.collection('orgs').doc(orgId).collection('blocks').doc(blockID).update({
-      'name' : blockData.name,
-      'role' : blockData.role,
-      'department' : blockData.department,
-      'emails' : blockData.emails,
+      'name': blockData.name,
+      'role': blockData.role,
+      'department': blockData.department,
+      'emails': blockData.emails,
       'updatedAt': FieldValue.serverTimestamp(),
     });
   }
@@ -59,9 +60,22 @@ class FirestoreService {
     return _instance.collection('orgs').doc(orgId).collection('blocks').snapshots();
   }
 
-   // All blocks in Collection
+  // All blocks in Collection
   static Stream<QuerySnapshot> getConnectionsStream(String orgId) {
     return _instance.collection('orgs').doc(orgId).collection('connections').snapshots();
+  }
+
+  static Future<void> addConnection(String orgId, Connection connection) async {
+    await _instance.collection('orgs').doc(orgId).collection('connections').doc(connection.id).set({
+      'id': connection.id,
+      'parentID': connection.parentId,
+      'childID': connection.childId,
+      'createdAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  static Future<void> deleteConnection(String orgId, String connectionId) async {
+    await _instance.collection('orgs').doc(orgId).collection('connections').doc(connectionId).delete();
   }
 
   static Future<void> dispose() async {

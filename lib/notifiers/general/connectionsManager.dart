@@ -31,8 +31,8 @@ class ConnectionManager extends StateNotifier<ConnectionsState> {
   StreamSubscription? _connectionSubscription;
   String? orgId;
   late ConnectionType _firstSelectedBlockType;
-  late String _initiatingBlockId;
-  bool _isInConnectionMode = false;
+  late String _initiatingBlockID;
+  bool _connectionMode = false;
 
   ConnectionManager({required this.orgId}) : super(ConnectionsState()) {
     _subscribeToConnections();
@@ -45,16 +45,20 @@ class ConnectionManager extends StateNotifier<ConnectionsState> {
   }
 
   void _subscribeToConnections() {
-    print("Subscribe to connections coll");
+    print("Getting Connections from Firestore");
     _connectionSubscription?.cancel();
-    if (false) {
+    if (orgId != null) {
       _connectionSubscription = FirestoreService.getConnectionsStream(orgId!).listen(
         (snapshot) {
           List<Connection> updatedConnections = [];
           for (final doc in snapshot.docs) {
             updatedConnections.add(Connection.fromFirestore(doc));
           }
-          state = state.copyWith(connections: updatedConnections);
+
+          // Check if the connections have actually changed before updating state
+          if (_connectionsHaveChanged(state.connections, updatedConnections)) {
+            state = state.copyWith(connections: updatedConnections);
+          }
         },
         onError: (error) {
           print("Error subscribing to connections: $error");
@@ -63,28 +67,52 @@ class ConnectionManager extends StateNotifier<ConnectionsState> {
     }
   }
 
-  bool get isInConnectionMode => _isInConnectionMode;
-  String get initiatingBlockId => _initiatingBlockId;
+  bool _connectionsHaveChanged(List<Connection> current, List<Connection> updated) {
+    // Quick length check first
+    if (current.length != updated.length) {
+      return true;
+    }
+
+    // If lengths are the same, create a Set from current IDs for O(1) lookups
+    final currentIds = <String>{};
+    for (final connection in current) {
+      currentIds.add(connection.id);
+    }
+
+    // Check if all updated IDs exist in current - early exit on first difference
+    for (final connection in updated) {
+      if (!currentIds.contains(connection.id)) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  bool get connectionMode => _connectionMode;
+  String get initiatingBlockID => _initiatingBlockID;
 
   void connectionModeEnable(String initiatingBlockId, ConnectionType firstSelectedBlockType) {
     _firstSelectedBlockType = firstSelectedBlockType;
-    _initiatingBlockId = initiatingBlockId;
-    _isInConnectionMode = true;
+    _initiatingBlockID = initiatingBlockId;
+    _connectionMode = true;
   }
 
   void connectionModeDisable() {
-    _isInConnectionMode = false;
+    _connectionMode = false;
   }
 
   void createConnection(String toBlockId) {
-    if (_isInConnectionMode) {
+    if (_connectionMode) {
       Connection newConnection;
       if (_firstSelectedBlockType == ConnectionType.parent) {
-        newConnection = Connection(FirestoreIdGenerator.generate(), parentId: _initiatingBlockId, childId: toBlockId);
+        newConnection = Connection(FirestoreIdGenerator.generate(), parentId: _initiatingBlockID, childId: toBlockId);
       } else {
-        newConnection = Connection(FirestoreIdGenerator.generate(), parentId: toBlockId, childId: _initiatingBlockId);
+        newConnection = Connection(FirestoreIdGenerator.generate(), parentId: toBlockId, childId: _initiatingBlockID);
       }
       connectionModeDisable();
+
+      FirestoreService.addConnection(orgId!, newConnection);
       state = state.copyWith(connections: [...state.connections, newConnection]);
     }
   }
@@ -93,7 +121,17 @@ class ConnectionManager extends StateNotifier<ConnectionsState> {
     state = state.copyWith(connections: [...state.connections, newConnection]);
   }
 
+  void onBlockDelete(String blockID) {
+    //Check if block has a connection if yes then delete
+    for (var connection in state.connections) {
+      if (connection.parentId == blockID || connection.childId == blockID) {
+        removeConnection(connection.id);
+      }
+    }
+  }
+
   void removeConnection(String connectionId) {
+    FirestoreService.deleteConnection(orgId!, connectionId);
     state = state.copyWith(
       connections: state.connections.where((conn) => conn.id != connectionId).toList(),
     );

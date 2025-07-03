@@ -14,15 +14,13 @@ class ConnectionsPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
+    print("!!!Paint Connections");
     for (final connection in connections) {
       final parentPos = blockPositions[connection.parentId];
       final childPos = blockPositions[connection.childId];
 
-      // print("Connection ${connection.id}: parent=${connection.parentId} at $parentPos, child=${connection.childId} at $childPos");
-
       // Skip if either block position is unknown
       if (parentPos == null || childPos == null) {
-        print("Skipping connection - missing positions");
         continue;
       }
 
@@ -32,12 +30,12 @@ class ConnectionsPainter extends CustomPainter {
   }
 
   void _drawConnection(Canvas canvas, Connection connection, Offset parentPos, Offset childPos) {
-    // Calculate connection points (assuming 200x100 block size - adjust as needed)
+    // Calculate connection points (assuming 120x100 block size)
     const blockWidth = 120.0;
     const blockHeight = 100.0;
 
-    final startPoint = _getConnectionPoint(parentPos, childPos, blockWidth, blockHeight, isParent: true);
-    final endPoint = _getConnectionPoint(childPos, parentPos, blockWidth, blockHeight, isParent: false);
+    final startPoint = _getConnectionPoint(parentPos, blockWidth, blockHeight, isParent: true);
+    final endPoint = _getConnectionPoint(childPos, blockWidth, blockHeight, isParent: false);
 
     // Create paint style
     final paint = Paint()
@@ -53,32 +51,13 @@ class ConnectionsPainter extends CustomPainter {
     _drawArrowhead(canvas, startPoint, endPoint, paint);
   }
 
-  Offset _getConnectionPoint(Offset blockPos, Offset otherBlockPos, double blockWidth, double blockHeight, {required bool isParent}) {
-    final blockCenter = blockPos + Offset(blockWidth / 2, blockHeight / 2);
-    final otherCenter = otherBlockPos + Offset(blockWidth / 2, blockHeight / 2);
-
-    // Calculate which edge to connect to based on relative position
-    final dx = otherCenter.dx - blockCenter.dx;
-    final dy = otherCenter.dy - blockCenter.dy;
-
-    if (dx.abs() > dy.abs()) {
-      // Connect to left or right edge
-      if (dx > 0) {
-        // Connect to right edge
-        return Offset(blockPos.dx + blockWidth, blockPos.dy + blockHeight / 2);
-      } else {
-        // Connect to left edge
-        return Offset(blockPos.dx, blockPos.dy + blockHeight / 2);
-      }
+  Offset _getConnectionPoint(Offset blockPos, double blockWidth, double blockHeight, {required bool isParent}) {
+    if (isParent) {
+      // Parent: always connect from bottom center
+      return Offset(blockPos.dx + blockWidth / 2, blockPos.dy + blockHeight);
     } else {
-      // Connect to top or bottom edge
-      if (dy > 0) {
-        // Connect to bottom edge
-        return Offset(blockPos.dx + blockWidth / 2, blockPos.dy + blockHeight);
-      } else {
-        // Connect to top edge
-        return Offset(blockPos.dx + blockWidth / 2, blockPos.dy);
-      }
+      // Child: always connect to top center
+      return Offset(blockPos.dx + blockWidth / 2, blockPos.dy);
     }
   }
 
@@ -86,12 +65,13 @@ class ConnectionsPainter extends CustomPainter {
     final path = Path();
     path.moveTo(start.dx, start.dy);
 
-    // Create a smooth horizontal curve
-    final distance = (end.dx - start.dx).abs();
+    // Create a smooth vertical curve since we're connecting bottom to top
+    final distance = (end.dy - start.dy).abs();
     final curveOffset = distance * 0.4; // Adjust curve intensity
 
-    final controlPoint1 = Offset(start.dx + curveOffset, start.dy);
-    final controlPoint2 = Offset(end.dx - curveOffset, end.dy);
+    // Use vertical control points for better parent-child connections
+    final controlPoint1 = Offset(start.dx, start.dy + curveOffset);
+    final controlPoint2 = Offset(end.dx, end.dy - curveOffset);
 
     path.cubicTo(
       controlPoint1.dx,
@@ -109,8 +89,8 @@ class ConnectionsPainter extends CustomPainter {
     const arrowLength = 12.0;
     const arrowAngle = 0.5; // radians (~30 degrees)
 
-    // Calculate arrow direction
-    final direction = atan2(end.dy - start.dy, end.dx - start.dx);
+    // Always face down (π/2 radians = 90 degrees)
+    final direction = pi / 2;
 
     // Calculate arrowhead points
     final arrowPoint1 = Offset(
@@ -122,9 +102,19 @@ class ConnectionsPainter extends CustomPainter {
       end.dy - arrowLength * sin(direction + arrowAngle),
     );
 
-    // Draw arrowhead lines
-    canvas.drawLine(end, arrowPoint1, paint);
-    canvas.drawLine(end, arrowPoint2, paint);
+    // Create filled arrowhead triangle
+    final arrowPath = Path();
+    arrowPath.moveTo(end.dx, end.dy);
+    arrowPath.lineTo(arrowPoint1.dx, arrowPoint1.dy);
+    arrowPath.lineTo(arrowPoint2.dx, arrowPoint2.dy);
+    arrowPath.close();
+
+    // Create fill paint for arrowhead
+    final arrowPaint = Paint()
+      ..color = Colors.grey.shade400
+      ..style = PaintingStyle.fill;
+
+    canvas.drawPath(arrowPath, arrowPaint);
   }
 
   @override

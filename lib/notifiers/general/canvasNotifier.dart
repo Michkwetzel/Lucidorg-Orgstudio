@@ -56,7 +56,7 @@ class CanvasNotifier extends StateNotifier<Set<String>> {
             state = ids;
 
             // Initialize block positions for connectionManager. This should always be up to date
-            // connectionManager.setBlockPositions(initialPositions);
+            connectionManager.setBlockPositions(initialPositions);
           }
         },
         onError: (error) {
@@ -82,10 +82,15 @@ class CanvasNotifier extends StateNotifier<Set<String>> {
   }
 
   void deleteBlock(String blockID) async {
+    //Delete from Firestore first.
     if (orgId != null) {
-      await FirestoreService.deleteBlock(orgId!, blockID); //Delete from Firestore first.
+      await FirestoreService.deleteBlock(orgId!, blockID);
     }
+    //Delete connection
+    connectionManager.onBlockDelete(blockID);
+    //Finally Delete block from UI
     state = Set<String>.from(state)..remove(blockID);
+    
     initialPositions.remove(blockID);
   }
 }

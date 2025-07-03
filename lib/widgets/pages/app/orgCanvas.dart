@@ -70,7 +70,7 @@ class _OrgCanvasState extends ConsumerState<OrgCanvas> {
               child: Container(
                 width: 7000,
                 height: 7000,
-                color: Colors.transparent,
+                color: Colors.grey,
                 child: Stack(
                   children: [
                     // Connections layer with tap detection (isolated consumer)
@@ -85,7 +85,7 @@ class _OrgCanvasState extends ConsumerState<OrgCanvas> {
                               connections: connectionState.connections,
                               blockPositions: connectionState.blockPositions,
                             ),
-                            size: const Size(3000, 3000),
+                            size: const Size(7000, 7000),
                           ),
                         );
                       },
@@ -93,7 +93,7 @@ class _OrgCanvasState extends ConsumerState<OrgCanvas> {
 
                     ...canvasState.map(
                       (blockID) => Block(
-                        key: Key('block_$blockID'),
+                        key: ValueKey(blockID), // ValueKey for widget stability
                         blockID: blockID,
                       ),
                     ),

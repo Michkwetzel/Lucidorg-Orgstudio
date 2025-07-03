@@ -4,14 +4,14 @@ import 'package:flutter/material.dart';
 import 'package:platform_v2/dataClasses/blockData.dart';
 import 'package:platform_v2/services/firestoreService.dart';
 
-// Individual block notifier. Responsible for block state: position, data and connections
+// Individual block notifier. Responsible for block state: position, data and selection
 class BlockNotifier extends ChangeNotifier {
   final String blockID;
   final String? orgId;
   late Offset _position;
   bool positionLoaded = false;
   BlockData? _blockData;
-  bool _connectionMode = false;
+  bool _selectionMode = false;
   final Function(String blockID, Offset position) onPositionChanged;
 
   // Add StreamSubscription to track subscription to the blocks doc
@@ -56,22 +56,22 @@ class BlockNotifier extends ChangeNotifier {
             if (positionChanged || dataChanged || !positionLoaded) {
               if (!positionLoaded || positionChanged) {
                 _position = newPosition;
-                print("Position for block $blockID updated");
+                // print("Position for block $blockID updated");
               }
 
               if (_blockData == null || dataChanged) {
                 _blockData = newBlockData;
-                print("Data for block $blockID updated");
+                // print("Data for block $blockID updated");
               }
 
               if (!positionLoaded) {
                 positionLoaded = true;
-                print("Initial load completed for block $blockID");
+                // print("Initial load completed for block $blockID");
               }
 
               notifyListeners();
             } else {
-              print("No changes detected for block $blockID - skipping update");
+              // print("No changes detected for block $blockID - skipping update");
             }
           }
         },
@@ -85,7 +85,7 @@ class BlockNotifier extends ChangeNotifier {
   // Getters with proper encapsulation
   Offset get position => _position;
   BlockData? get blockData => _blockData;
-  bool get connectionMode => _connectionMode;
+  bool get selectionMode => _selectionMode;
 
   void updatePosition(Offset newPosition) async {
     if (_position != newPosition) {
@@ -106,29 +106,16 @@ class BlockNotifier extends ChangeNotifier {
     }
   }
 
-  void connectionModeEnable() {
-    debugPrint('BlockNotifier: Enabling connection mode for $blockID');
-    _connectionMode = true;
+  void selectionModeEnable() {
+    debugPrint('BlockNotifier: Enabling selection mode for $blockID');
+    _selectionMode = true;
     notifyListeners();
   }
 
-  void connectionModeDisable() {
-    debugPrint('BlockNotifier: Disabling connection mode for $blockID');
-    _connectionMode = false;
+  void selectionModeDisable() {
+    debugPrint('BlockNotifier: Disabling selection mode for $blockID');
+    _selectionMode = false;
     notifyListeners();
-  }
-
-  void updatePositionFromStream(Offset newPosition) {
-    // Dont notifiry listeners yet
-    _position = newPosition;
-    // // call ConnectionManager
-    // onPositionChanged.call(blockID, newPosition);
-  }
-
-  void updateDataFromStream(BlockData blockData) {
-    // UI update only
-    _blockData = blockData;
-    //notifyListeners();
   }
 
   void updateData(BlockData newData) {
