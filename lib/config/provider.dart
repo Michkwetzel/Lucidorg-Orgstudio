@@ -76,6 +76,7 @@ final blockPositionsProvider = Provider<Map<String, Offset>>((ref) {
   );
 });
 
+
 final connectionManagerProvider = StateNotifierProvider<ConnectionManager, ConnectionsState>((ref) {
   final String orgId = ref.watch(appStateProvider).orgId!;
 

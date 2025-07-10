@@ -38,11 +38,13 @@ class ConnectionManager extends StateNotifier<ConnectionsState> {
   Set<String> _pendingDeletions = {};
 
   //Quick lookup for children
-  late Map<String, Set<String>> _parentToChildren; //Quick lookup to find child of parent
+  late Map<String, Set<String>> _parentAndChildren; //Quick lookup to find child of parent
 
   ConnectionManager({required this.orgId}) : super(ConnectionsState()) {
     _subscribeToConnections();
   }
+
+  Map<String, Set<String>> get parentAndChildren => _parentAndChildren;
 
   @override
   void dispose() {
@@ -51,11 +53,9 @@ class ConnectionManager extends StateNotifier<ConnectionsState> {
   }
 
   void _subscribeToConnections() {
-    logger.info("Subscribing to connections");
     _connectionSubscription?.cancel();
     _connectionSubscription = FirestoreService.getConnectionsStream(orgId).listen(
       (snapshot) {
-        print("Change occured");
         bool hasRelevantChanges = false;
 
         // Process document changes efficiently
@@ -89,8 +89,8 @@ class ConnectionManager extends StateNotifier<ConnectionsState> {
             updatedConnections.add(Connection.fromFirestore(doc));
           }
           state = state.copyWith(connections: updatedConnections);
-          _parentToChildren = _buildParentToChildrenMap(updatedConnections);
-          logger.info(_parentToChildren.toString());
+          _parentAndChildren = _buildParentToChildrenMap(updatedConnections);
+          logger.info(_parentAndChildren.toString());
         }
       },
       onError: (error) {

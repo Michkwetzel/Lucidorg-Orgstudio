@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/material.dart';
 import 'package:platform_v2/dataClasses/blockData.dart';
 import 'package:platform_v2/dataClasses/connection.dart';
 
@@ -71,6 +72,20 @@ class FirestoreService {
 
   static Future<void> deleteConnection(String orgId, String connectionId) async {
     await _instance.collection('orgs').doc(orgId).collection('connections').doc(connectionId).delete();
+  }
+
+  static Future<void> batchUpdatePositions(String orgId, Map<String, Offset> positions) async {
+    print("Do batch update to Firestore!!");
+    WriteBatch batch = _instance.batch();
+
+    for (String blockID in positions.keys) {
+      final docRef = _instance.collection('orgs').doc(orgId).collection('blocks').doc(blockID);
+      batch.update(docRef, {
+        'position': {'x': positions[blockID]!.dx, 'y': positions[blockID]!.dy},
+      });
+    }
+
+    await batch.commit();
   }
 
   static Future<void> dispose() async {

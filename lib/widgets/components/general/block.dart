@@ -15,6 +15,25 @@ class Block extends ConsumerWidget {
     required this.blockID,
   });
 
+  Set<String> _getAllDescendants(String blockID, Map<String, Set<String>> parentAndChildren) {
+    Set<String> allDescendants = {};
+    Set<String> visited = {};
+    
+    void collectDescendants(String currentBlockID) {
+      if (visited.contains(currentBlockID)) return; // Prevent circular references
+      visited.add(currentBlockID);
+      
+      Set<String> descendants = parentAndChildren[currentBlockID] ?? {};
+      for (var descendant in descendants) {
+        allDescendants.add(descendant);
+        collectDescendants(descendant);
+      }
+    }
+
+    collectDescendants(blockID);
+    return allDescendants;
+  }
+
   // Helper function to find parent of current block
   String? _findParentOfBlock(WidgetRef ref, String blockID) {
     final connections = ref.read(connectionManagerProvider).connections;
@@ -55,12 +74,15 @@ class Block extends ConsumerWidget {
         behavior: HitTestBehavior.opaque,
         onTap: () {
           // Toggle selection mode
-          if (blockNotifier.selectionMode) {
+          if (isSelectionMode) {
             ref.read(blockNotifierProvider(blockID).notifier).selectionModeDisable();
             ref.read(selectedBlockProvider.notifier).state = null;
           } else {
+            //Enable selectionMode for block and update SelectedBLockProvider
             ref.read(blockNotifierProvider(blockID).notifier).selectionModeEnable();
             ref.read(selectedBlockProvider.notifier).state = blockID;
+            //Find descendants off block if any
+            blockNotifier.updateDescendants(_getAllDescendants(blockID, ref.read(connectionManagerProvider.notifier).parentAndChildren));
           }
         },
         onDoubleTapDown: (details) {
@@ -75,15 +97,43 @@ class Block extends ConsumerWidget {
         },
         onPanUpdate: (details) {
           // Convert global position to local canvas position
-          final RenderBox? canvasBox = context.findAncestorRenderObjectOfType<RenderBox>();
-          if (canvasBox != null) {
-            final localPosition = canvasBox.globalToLocal(details.globalPosition);
-            final adjustedPosition = Offset(
-              localPosition.dx - 60,
-              localPosition.dy - 50,
-            );
-            ref.read(blockNotifierProvider(blockID).notifier).updatePosition(adjustedPosition);
+          Offset? getNewPosition() {
+            final RenderBox? canvasBox = context.findAncestorRenderObjectOfType<RenderBox>();
+            if (canvasBox != null) {
+              final localPosition = canvasBox.globalToLocal(details.globalPosition);
+              return Offset(
+                localPosition.dx - 60,
+                localPosition.dy - 50,
+              );
+            }
+            return null;
           }
+
+          if (isSelectionMode) {
+            Set<String> descendants = blockNotifier.descendants;
+            final currentPosition = blockNotifier.position;
+            final newPostion = getNewPosition();
+            if (newPostion != null) {
+              final delta = newPostion - currentPosition;
+              
+              // Update UI immediately for all descendants
+              for (var descendant in descendants) {
+                final notifier = ref.read(blockNotifierProvider(descendant).notifier);
+                final currentPos = notifier.position;
+                notifier.updatePositionWithoutFirestore(currentPos + delta);
+              }
+              
+              // Batch update to Firestore (debounced)
+              Map<String, Offset> positions = {blockID: newPostion};
+              for (var descendant in descendants) {
+                positions[descendant] = ref.read(blockNotifierProvider(descendant).notifier).position;
+              }
+              blockNotifier.batchUpdateDescendantPositions(positions);
+            }
+          }
+
+          final adjustedPosition = getNewPosition();
+          if (adjustedPosition != null) ref.read(blockNotifierProvider(blockID).notifier).updatePosition(adjustedPosition);
         },
         child: SizedBox(
           width: hitboxWidth,
@@ -160,9 +210,6 @@ class Block extends ConsumerWidget {
                       ref.read(connectionManagerProvider.notifier).createDirectConnection(parentBlockID: newBlockID, childBlockID: blockID);
                       ref.read(blockNotifierProvider(blockID).notifier).selectionModeDisable();
                     },
-                    onLongPress: () {
-                      // TODO: Add top center long press functionality
-                    },
                   ),
                 ),
 
@@ -177,9 +224,6 @@ class Block extends ConsumerWidget {
                       ref.read(canvasProvider.notifier).addBlock(newBlockID, Offset(blockNotifier.position.dx, blockNotifier.position.dy + 300));
                       ref.read(connectionManagerProvider.notifier).createDirectConnection(parentBlockID: blockID, childBlockID: newBlockID);
                       ref.read(blockNotifierProvider(blockID).notifier).selectionModeDisable();
-                    },
-                    onLongPress: () {
-                      // TODO: Add bottom center long press functionality
                     },
                   ),
                 ),
@@ -204,9 +248,6 @@ class Block extends ConsumerWidget {
                       }
                       ref.read(blockNotifierProvider(blockID).notifier).selectionModeDisable();
                     },
-                    onLongPress: () {
-                      // TODO: Add right center long press functionality
-                    },
                   ),
                 ),
 
@@ -230,9 +271,6 @@ class Block extends ConsumerWidget {
                       }
                       ref.read(blockNotifierProvider(blockID).notifier).selectionModeDisable();
                     },
-                    onLongPress: () {
-                      // TODO: Add left center long press functionality
-                    },
                   ),
                 ),
               ],
@@ -246,18 +284,15 @@ class Block extends ConsumerWidget {
 
 class _SelectionDot extends StatelessWidget {
   final VoidCallback onTap;
-  final VoidCallback onLongPress;
 
   const _SelectionDot({
     required this.onTap,
-    required this.onLongPress,
   });
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      onLongPress: onLongPress,
       child: Container(
         width: kSelectionDotSize,
         height: kSelectionDotSize,
