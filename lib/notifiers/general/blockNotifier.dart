@@ -7,7 +7,7 @@ import 'package:platform_v2/services/firestoreService.dart';
 // Individual block notifier. Responsible for block state: position, data and selection
 class BlockNotifier extends ChangeNotifier {
   final String blockID;
-  final String? orgId;
+  final String orgId;
   late Offset _position;
   bool positionLoaded = false;
   BlockData? _blockData;
@@ -26,8 +26,7 @@ class BlockNotifier extends ChangeNotifier {
     required this.orgId,
   }) {
     // Get Block doc stream and listen to fields
-    if (orgId != null) {
-      blockStream = FirestoreService.getBlockStream(orgId!, blockID);
+    blockStream = FirestoreService.getBlockStream(orgId, blockID);
 
       _streamSubscription = blockStream.listen(
         (snapshot) {
@@ -77,7 +76,6 @@ class BlockNotifier extends ChangeNotifier {
           debugPrint('BlockNotifier stream error: $error');
         },
       );
-    }
   }
 
   // Getters with proper encapsulation
@@ -94,9 +92,7 @@ class BlockNotifier extends ChangeNotifier {
 
       // Debounce before saving to firestore
       _debounceTimer = Timer(_debounceDuration, () async {
-        if (orgId != null) {
-          await FirestoreService.updatePosition(orgId!, blockID, {'x': newPosition.dx, 'y': newPosition.dy});
-        }
+        await FirestoreService.updatePosition(orgId, blockID, {'x': newPosition.dx, 'y': newPosition.dy});
       });
     }
   }
@@ -115,13 +111,11 @@ class BlockNotifier extends ChangeNotifier {
     if (_blockData != newData) {
       _blockData = newData;
       notifyListeners();
-      if (orgId != null) {
-        FirestoreService.updateData(
-          orgId!,
-          blockID,
-          newData,
-        );
-      }
+      FirestoreService.updateData(
+        orgId,
+        blockID,
+        newData,
+      );
     }
   }
 

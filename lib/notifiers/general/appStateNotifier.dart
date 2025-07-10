@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 // Notifier Holding Main app state like which screen, Selected org, Selected Assessment, etc.
 class AppState {
   final bool isLoading;
+  final bool isInitialized;
   final Screen screen;
   final String? orgId;
   final String? orgName;
@@ -13,6 +14,7 @@ class AppState {
 
   const AppState({
     this.isLoading = false,
+    this.isInitialized = false,
     this.screen = Screen.logIn,
     this.orgId,
     this.orgName,
@@ -22,6 +24,7 @@ class AppState {
 
   AppState copyWith({
     bool? isLoading,
+    bool? isInitialized,
     Screen? screen,
     String? orgId,
     String? orgName,
@@ -35,6 +38,7 @@ class AppState {
   }) {
     return AppState(
       isLoading: isLoading ?? this.isLoading,
+      isInitialized: isInitialized ?? this.isInitialized,
       screen: screen ?? this.screen,
       orgId: clearOrgId ? null : (orgId ?? this.orgId),
       orgName: clearOrgName ? null : (orgName ?? this.orgName),
@@ -48,6 +52,7 @@ class AppState {
     if (identical(this, other)) return true;
     return other is AppState &&
         other.isLoading == isLoading &&
+        other.isInitialized == isInitialized &&
         other.screen == screen &&
         other.orgId == orgId &&
         other.orgName == orgName &&
@@ -59,6 +64,7 @@ class AppState {
   int get hashCode {
     return Object.hash(
       isLoading,
+      isInitialized,
       screen,
       orgId,
       orgName,
@@ -69,7 +75,7 @@ class AppState {
 
   @override
   String toString() {
-    return 'AppState(isLoading: $isLoading, screen: $screen, orgId: $orgId, orgName: $orgName, assessmentID: $assessmentID, assessmentName: $assessmentName)';
+    return 'AppState(isLoading: $isLoading, isInitialized: $isInitialized, screen: $screen, orgId: $orgId, orgName: $orgName, assessmentID: $assessmentID, assessmentName: $assessmentName)';
   }
 }
 
@@ -84,11 +90,15 @@ class AppStateNotifier extends StateNotifier<AppState> {
     final orgName = prefs.getString('orgName');
 
     if (orgId != null) {
-      state = state.copyWith(orgId: orgId, orgName: orgName);
+      state = state.copyWith(orgId: orgId, orgName: orgName, isInitialized: true);
+    } else {
+      // No saved org, but still mark as initialized so app can show org selection
+      state = state.copyWith(isInitialized: true);
     }
   }
 
   void setOrg(String? orgId, String? orgName) {
+    print('OrgID: $orgId, OrgName: $orgName');
     state = state.copyWith(orgId: orgId, orgName: orgName);
     _persistOrg(orgId, orgName);
   }
@@ -141,4 +151,5 @@ class AppStateNotifier extends StateNotifier<AppState> {
   String? get assessmentName => state.assessmentName;
   Screen get currentScreen => state.screen;
   bool get isLoading => state.isLoading;
+  bool get isInitialized => state.isInitialized;
 }

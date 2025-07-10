@@ -16,14 +16,12 @@ class ConnectionsPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    logger.info("Paint Connections");
     for (final connection in connections) {
       final parentPos = blockPositions[connection.parentId];
       final childPos = blockPositions[connection.childId];
 
       // Skip if either block position is unknown
       if (parentPos == null || childPos == null) {
-        logger.info("block positions unknown");
         continue;
       }
 

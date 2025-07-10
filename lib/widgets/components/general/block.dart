@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:platform_v2/config/constants.dart';
-import 'package:platform_v2/config/enums.dart';
 import 'package:platform_v2/config/provider.dart';
 import 'package:platform_v2/dataClasses/blockData.dart';
 import 'package:platform_v2/services/firestoreIdGenerator.dart';
 import 'package:platform_v2/services/uiServices/overLayService.dart';
+import 'package:platform_v2/widgets/pages/app/orgStructPage.dart';
 
 class Block extends ConsumerWidget {
   final String blockID;
@@ -31,12 +31,18 @@ class Block extends ConsumerWidget {
     final blockNotifier = ref.watch(blockNotifierProvider(blockID));
     final BlockData? blockData = blockNotifier.blockData;
 
+    ref.listen<String?>(selectedBlockProvider, (previous, next) {
+      if (next != blockID && blockNotifier.selectionMode) {
+        blockNotifier.selectionModeDisable();
+      }
+    });
+
     if (blockNotifier.positionLoaded == false) {
       return const SizedBox.shrink();
     }
 
     // Calculate the expanded size to include selection dots when in selection mode
-    const dotOverhang = 25.0; // How far the dots extend beyond the block
+    const dotOverhang = 38.0; // How far the dots extend beyond the block
     final isSelectionMode = blockNotifier.selectionMode;
     final hitboxOffset = isSelectionMode ? dotOverhang : 0.0;
     final hitboxWidth = kBlockWidth + (hitboxOffset * 2);
@@ -51,8 +57,10 @@ class Block extends ConsumerWidget {
           // Toggle selection mode
           if (blockNotifier.selectionMode) {
             ref.read(blockNotifierProvider(blockID).notifier).selectionModeDisable();
+            ref.read(selectedBlockProvider.notifier).state = null;
           } else {
             ref.read(blockNotifierProvider(blockID).notifier).selectionModeEnable();
+            ref.read(selectedBlockProvider.notifier).state = blockID;
           }
         },
         onDoubleTapDown: (details) {
@@ -105,7 +113,6 @@ class Block extends ConsumerWidget {
               ),
 
               if (blockNotifier.selectionMode) ...[
-                // Menu button
                 Positioned(
                   top: hitboxOffset,
                   right: hitboxOffset,
@@ -140,20 +147,17 @@ class Block extends ConsumerWidget {
                 // Top center dot
                 Positioned(
                   left: (hitboxWidth / 2) - (kSelectionDotSize / 2),
-                  top: -15,
+                  top: 0,
                   child: _SelectionDot(
                     onTap: () {
                       String newBlockID = FirestoreIdGenerator.generate();
                       // Position 300px above
                       Offset newPosition = Offset(blockNotifier.position.dx, blockNotifier.position.dy - 300);
-                      
+
                       ref.read(canvasProvider.notifier).addBlock(newBlockID, newPosition);
-                      
+
                       // Create parent-child connection: new block (parent) → current block (child)
-                      ref.read(connectionManagerProvider.notifier).createDirectConnection(
-                        parentBlockID: newBlockID, 
-                        childBlockID: blockID
-                      );
+                      ref.read(connectionManagerProvider.notifier).createDirectConnection(parentBlockID: newBlockID, childBlockID: blockID);
                       ref.read(blockNotifierProvider(blockID).notifier).selectionModeDisable();
                     },
                     onLongPress: () {
@@ -165,7 +169,7 @@ class Block extends ConsumerWidget {
                 // Bottom center dot
                 Positioned(
                   left: (hitboxWidth / 2) - (kSelectionDotSize / 2),
-                  bottom: -15,
+                  bottom: 0,
                   child: _SelectionDot(
                     onTap: () {
                       // print('Bottom dot button clicked');
@@ -182,7 +186,7 @@ class Block extends ConsumerWidget {
 
                 // Right center dot
                 Positioned(
-                  right: -15,
+                  right: 0,
                   top: (hitboxHeight / 2) - (kSelectionDotSize / 2),
                   child: _SelectionDot(
                     onTap: () {
@@ -208,7 +212,7 @@ class Block extends ConsumerWidget {
 
                 // Left center dot
                 Positioned(
-                  left: -15,
+                  left: 0,
                   top: (hitboxHeight / 2) - (kSelectionDotSize / 2),
                   child: _SelectionDot(
                     onTap: () {

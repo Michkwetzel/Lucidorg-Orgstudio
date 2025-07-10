@@ -8,6 +8,7 @@ import 'package:platform_v2/services/firestoreService.dart';
 import 'package:platform_v2/services/uiServices/navigationService.dart';
 import 'package:platform_v2/services/uiServices/snackBarService.dart';
 import 'package:platform_v2/config/setup_router.dart';
+import 'package:platform_v2/config/provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -31,11 +32,37 @@ void main() async {
   }
 }
 
-class App extends StatelessWidget {
+class App extends ConsumerWidget {
   const App({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isInitialized = ref.watch(appStateProvider.select((state) => state.isInitialized));
+    
+    // Show loading screen until initialization completes
+    if (!isInitialized) {
+      return MaterialApp(
+        title: "LucidORG",
+        home: Scaffold(
+          backgroundColor: Colors.grey.shade100,
+          body: const Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                CircularProgressIndicator(),
+                SizedBox(height: 16),
+                Text(
+                  'Initializing...',
+                  style: TextStyle(fontSize: 16, color: Colors.grey),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    // Show main app once initialized (router will handle orgId logic)
     return MaterialApp.router(
       theme: ThemeData(),
       title: "LucidORG",

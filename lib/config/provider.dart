@@ -3,8 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:platform_v2/notifiers/general/appStateNotifier.dart';
 import 'package:platform_v2/notifiers/general/authNotifier.dart';
 import 'package:platform_v2/notifiers/general/blockNotifier.dart';
-import 'package:platform_v2/notifiers/general/blockRegistry.dart';
-import 'package:platform_v2/notifiers/general/canvasNotifier.dart';
+import 'package:platform_v2/notifiers/general/orgCanvasNotifier.dart';
 import 'package:platform_v2/notifiers/general/connectionsManager.dart';
 import 'package:platform_v2/notifiers/general/orgsScreenNotifier.dart';
 import 'package:platform_v2/notifiers/huds/botLeftHudNotifier.dart';
@@ -34,19 +33,19 @@ final appStateProvider = StateNotifierProvider<AppStateNotifier, AppState>((ref)
   return AppStateNotifier();
 });
 
-final canvasProvider = StateNotifierProvider.autoDispose<CanvasNotifier, Set<String>>((ref) {
-  final String? orgId = ref.watch(appStateProvider).orgId;
+final canvasProvider = StateNotifierProvider.autoDispose<OrgCanvasNotifier, Set<String>>((ref) {
+  final String orgId = ref.watch(appStateProvider).orgId!;
   final ConnectionManager connectionManager = ref.read(connectionManagerProvider.notifier);
 
-  return CanvasNotifier(orgId: orgId, connectionManager: connectionManager);
+  return OrgCanvasNotifier(orgId: orgId, connectionManager: connectionManager);
 });
 
 final blockNotifierProvider = ChangeNotifierProvider.family.autoDispose<BlockNotifier, String>((ref, blockID) {
-  final String? orgId = ref.read(appStateProvider).orgId;
+  final String orgId = ref.read(appStateProvider).orgId!;
 
   final notifier = BlockNotifier(
     blockID: blockID,
-    orgId: orgId ?? 'null',
+    orgId: orgId,
   );
 
   return notifier;
@@ -56,18 +55,19 @@ final blockNotifierProvider = ChangeNotifierProvider.family.autoDispose<BlockNot
 final blockPositionsProvider = Provider<Map<String, Offset>>((ref) {
   final activeBlocks = ref.watch(canvasProvider);
   final canvasNotifier = ref.read(canvasProvider.notifier);
-  
+
   if (!canvasNotifier.isInitialLoadComplete) {
     return {};
   }
-  
+
   // Get live positions from individual block notifiers, with fallback to initial positions
   return Map.fromEntries(
     activeBlocks.map((blockID) {
-      final blockNotifier = ref.watch(blockNotifierProvider(blockID));
-      if (blockNotifier.positionLoaded) {
+      final bool postionsLoaded = ref.watch(blockNotifierProvider(blockID).select((state) => state.positionLoaded));
+      if (postionsLoaded) {
         // Use live position from block notifier
-        return MapEntry(blockID, blockNotifier.position);
+        final Offset blockPosition = ref.watch(blockNotifierProvider(blockID).select((state) => state.position));
+        return MapEntry(blockID, blockPosition);
       } else {
         // Fallback to initial position until block notifier loads
         return MapEntry(blockID, canvasNotifier.initialPositions[blockID] ?? Offset.zero);
@@ -77,9 +77,11 @@ final blockPositionsProvider = Provider<Map<String, Offset>>((ref) {
 });
 
 final connectionManagerProvider = StateNotifierProvider<ConnectionManager, ConnectionsState>((ref) {
-  final String? orgId = ref.watch(appStateProvider).orgId;
+  final String orgId = ref.watch(appStateProvider).orgId!;
 
   return ConnectionManager(orgId: orgId);
 });
+
+final selectedBlockProvider = StateProvider<String?>((ref) => null);
 
 final canvasScaleProvider = StateProvider<double>((ref) => 1.0);

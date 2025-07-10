@@ -24,8 +24,6 @@ class FirestoreService {
   static Future<void> addBlock(String orgId, Map<String, dynamic> blockData) async {
     await _instance.collection('orgs').doc(orgId).collection('blocks').doc(blockData['blockID']).set({
       ...blockData,
-      'createdAt': FieldValue.serverTimestamp(),
-      'updatedAt': FieldValue.serverTimestamp(),
     });
   }
 
@@ -36,7 +34,6 @@ class FirestoreService {
   static Future<void> updatePosition(String orgId, String blockID, Map<String, double> position) async {
     await _instance.collection('orgs').doc(orgId).collection('blocks').doc(blockID).update({
       'position': position,
-      'updatedAt': FieldValue.serverTimestamp(),
     });
   }
 
@@ -46,7 +43,6 @@ class FirestoreService {
       'role': blockData.role,
       'department': blockData.department,
       'emails': blockData.emails,
-      'updatedAt': FieldValue.serverTimestamp(),
     });
   }
 
@@ -70,7 +66,6 @@ class FirestoreService {
       'id': connection.id,
       'parentID': connection.parentId,
       'childID': connection.childId,
-      'createdAt': FieldValue.serverTimestamp(),
     });
   }
 

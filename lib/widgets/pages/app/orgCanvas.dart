@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logging/logging.dart';
 import 'package:platform_v2/config/provider.dart';
-import 'package:platform_v2/notifiers/general/canvasNotifier.dart';
 import 'package:platform_v2/services/customPainters/connectionPainter.dart';
 import 'package:platform_v2/services/firestoreIdGenerator.dart';
 import 'package:platform_v2/widgets/components/general/block.dart';
@@ -76,7 +75,6 @@ class _OrgCanvasState extends ConsumerState<OrgCanvas> {
                 color: Colors.grey,
                 child: Stack(
                   children: [
-                    // Connections layer with tap detection (isolated consumer)
                     // Connections layer (isolated consumer - doesn't affect blocks)
                     Consumer(
                       builder: (context, ref, child) {

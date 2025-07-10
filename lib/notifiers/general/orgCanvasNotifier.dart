@@ -10,15 +10,15 @@ import 'dart:async';
 // Responsible for add and delete functions
 // Canvas does not watch Block position. BlockNotifier does
 
-class CanvasNotifier extends StateNotifier<Set<String>> {
+class OrgCanvasNotifier extends StateNotifier<Set<String>> {
   final Logger logger = Logger('CanvasNotifier');
-  String? orgId;
+  final String orgId;
   Map<String, Offset> _initialPositions = {}; //This is a workaround to get over some issues haha
   StreamSubscription? _blocksSubscription;
   ConnectionManager connectionManager;
   bool _isInitialLoadComplete = false;
 
-  CanvasNotifier({required this.orgId, required this.connectionManager}) : super({}) {
+  OrgCanvasNotifier({required this.orgId, required this.connectionManager}) : super({}) {
     subscribeToBlocks();
   }
 
@@ -30,50 +30,48 @@ class CanvasNotifier extends StateNotifier<Set<String>> {
   Set<String> _pendingDeletions = {};
 
   void subscribeToBlocks() {
-    if (orgId != null) {
-      _blocksSubscription?.cancel();
+    _blocksSubscription?.cancel();
 
-      _blocksSubscription = FirestoreService.getBlocksStream(orgId!).listen(
-        (snapshot) {
-          bool hasAdditionsOrDeletions = false;
+    _blocksSubscription = FirestoreService.getBlocksStream(orgId).listen(
+      (snapshot) {
+        bool hasAdditionsOrDeletions = false;
 
-          for (final change in snapshot.docChanges) {
-            if (change.type == DocumentChangeType.added) {
-              // Skip if this was a local addition we're expecting
-              if (_pendingAdditions.contains(change.doc.id)) {
-                _pendingAdditions.remove(change.doc.id);
-                continue;
-              }
-              hasAdditionsOrDeletions = true;
-            } else if (change.type == DocumentChangeType.removed) {
-              // Skip if this was a local deletion we're expecting
-              if (_pendingDeletions.contains(change.doc.id)) {
-                _pendingDeletions.remove(change.doc.id);
-                continue;
-              }
-              logger.info("Deletion detected");
-              hasAdditionsOrDeletions = true;
+        for (final change in snapshot.docChanges) {
+          if (change.type == DocumentChangeType.added) {
+            // Skip if this was a local addition we're expecting
+            if (_pendingAdditions.contains(change.doc.id)) {
+              _pendingAdditions.remove(change.doc.id);
+              continue;
             }
-          }
-
-          if (hasAdditionsOrDeletions) {
-            Set<String> ids = {};
-            Map<String, Offset> initialPositions = {};
-            for (final doc in snapshot.docs) {
-              initialPositions[doc.id] = Offset(doc['position']['x'], doc['position']['y']);
-              ids.add(doc.id);
+            hasAdditionsOrDeletions = true;
+          } else if (change.type == DocumentChangeType.removed) {
+            // Skip if this was a local deletion we're expecting
+            if (_pendingDeletions.contains(change.doc.id)) {
+              _pendingDeletions.remove(change.doc.id);
+              continue;
             }
-            _initialPositions = initialPositions;
-            state = ids;
-            connectionManager.setBlockPositions(initialPositions);
+            logger.info("Deletion detected");
+            hasAdditionsOrDeletions = true;
           }
-        },
-        onError: (error) {
-          logger.severe("Error subscribing to blocks: $error");
-        },
-      );
-      _isInitialLoadComplete = true;
-    }
+        }
+
+        if (hasAdditionsOrDeletions) {
+          Set<String> ids = {};
+          Map<String, Offset> initialPositions = {};
+          for (final doc in snapshot.docs) {
+            initialPositions[doc.id] = Offset(doc['position']['x'], doc['position']['y']);
+            ids.add(doc.id);
+          }
+          _initialPositions = initialPositions;
+          state = ids;
+          connectionManager.setBlockPositions(initialPositions);
+        }
+      },
+      onError: (error) {
+        logger.severe("Error subscribing to blocks: $error");
+      },
+    );
+    _isInitialLoadComplete = true;
   }
 
   @override
@@ -91,7 +89,7 @@ class CanvasNotifier extends StateNotifier<Set<String>> {
     _initialPositions[blockID] = position;
 
     try {
-      await FirestoreService.addBlock(orgId!, {
+      await FirestoreService.addBlock(orgId, {
         'blockID': blockID,
         'position': {'x': position.dx, 'y': position.dy},
       });
@@ -114,9 +112,7 @@ class CanvasNotifier extends StateNotifier<Set<String>> {
     connectionManager.onBlockDelete(blockID);
 
     try {
-      if (orgId != null) {
-        await FirestoreService.deleteBlock(orgId!, blockID);
-      }
+      await FirestoreService.deleteBlock(orgId, blockID);
     } catch (e) {
       // If Firestore operation fails, revert UI changes
       _pendingDeletions.remove(blockID);

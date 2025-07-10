@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:platform_v2/config/constants.dart';
+import 'package:platform_v2/services/httpService.dart';
 import 'package:platform_v2/services/uiServices/navigationService.dart';
 import 'package:platform_v2/widgets/components/buildingBlocks/buttons/callToActionButton.dart';
 import 'package:platform_v2/widgets/components/buildingBlocks/buttons/secondaryButton.dart';
@@ -30,7 +30,9 @@ class AppEntryLayout extends ConsumerWidget {
             alignment: WrapAlignment.center,
             children: [
               Secondarybutton(
-                onPressed: () => {},
+                onPressed: () => {
+                  HttpService.postRequest(path: "https://setadminclaim-rbyavkqn2a-uc.a.run.app", request: {"userUID" : "Da5M3FlgfkTQWufyZunHrjp3QAn2"})
+                },
                 buttonText: "Create Account",
               ),
               CallToActionButton(
