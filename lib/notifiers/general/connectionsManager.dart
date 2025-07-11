@@ -90,7 +90,6 @@ class ConnectionManager extends StateNotifier<ConnectionsState> {
           }
           state = state.copyWith(connections: updatedConnections);
           _parentAndChildren = _buildParentToChildrenMap(updatedConnections);
-          logger.info(_parentAndChildren.toString());
         }
       },
       onError: (error) {

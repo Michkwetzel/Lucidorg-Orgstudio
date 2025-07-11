@@ -11,7 +11,7 @@ import 'dart:async';
 // Canvas does not watch Block position. BlockNotifier does
 
 class OrgCanvasNotifier extends StateNotifier<Set<String>> {
-  final Logger logger = Logger('CanvasNotifier');
+  final Logger logger = Logger('OrgCanvasNotifier');
   final String orgId;
   Map<String, Offset> _initialPositions = {}; //This is a workaround to get over some issues haha
   StreamSubscription? _blocksSubscription;
@@ -56,6 +56,7 @@ class OrgCanvasNotifier extends StateNotifier<Set<String>> {
         }
 
         if (hasAdditionsOrDeletions) {
+          logger.info("State update firestore");
           Set<String> ids = {};
           Map<String, Offset> initialPositions = {};
           for (final doc in snapshot.docs) {
@@ -80,7 +81,7 @@ class OrgCanvasNotifier extends StateNotifier<Set<String>> {
     super.dispose();
   }
 
-  Future<void> addBlock(String blockID, Offset position) async {
+  Future<void> addBlock(String blockID, Offset position, {String? department}) async {
     // Mark as pending addition
     _pendingAdditions.add(blockID);
 
@@ -92,6 +93,7 @@ class OrgCanvasNotifier extends StateNotifier<Set<String>> {
       await FirestoreService.addBlock(orgId, {
         'blockID': blockID,
         'position': {'x': position.dx, 'y': position.dy},
+        if (department != null) 'department': department,
       });
     } catch (e) {
       // If Firestore operation fails, revert UI changes

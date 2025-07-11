@@ -88,6 +88,29 @@ class FirestoreService {
     await batch.commit();
   }
 
+  static Future<void> createOrg(String orgName) async {
+    final orgref = _instance.collection('orgs').doc();
+    orgref.set({
+      'orgName': orgName,
+      'dateCreated': FieldValue.serverTimestamp(),
+    });
+
+    final docRef1 = _instance.collection('orgs').doc(orgref.id).collection('blocks').doc();
+    await docRef1.set({
+      'position': {'x': 200, 'y': 200},
+    });
+
+    final docRef2 = _instance.collection('orgs').doc(orgref.id).collection('blocks').doc();
+    await docRef2.set({
+      'position': {'x': 200, 'y': 500},
+    });
+
+    await _instance.collection('orgs').doc(orgref.id).collection('connections').doc().set({
+      'parentID': docRef1.id,
+      'childID': docRef2.id,
+    });
+  }
+
   static Future<void> dispose() async {
     for (final subscription in _subscriptions) {
       await subscription.cancel();

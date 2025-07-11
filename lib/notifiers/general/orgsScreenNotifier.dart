@@ -52,7 +52,8 @@ class OrgsScreenNotifier extends StateNotifier<OrgsScreenState> {
   void createorg(String orgName) async {
     try {
       state = state.copyWith(isLoading: true, loadingMessage: "Creating org...");
-      await FirestoreService.instance.collection('orgs').add({"orgName": orgName, "dateCreated": DateTime.now().toIso8601String()});
+
+      await FirestoreService.createOrg(orgName);
       SnackBarService.showMessage("org created successfully", Colors.green);
       getOrgs();
     } catch (e) {

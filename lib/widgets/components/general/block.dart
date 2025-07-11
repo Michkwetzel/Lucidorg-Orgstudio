@@ -18,11 +18,11 @@ class Block extends ConsumerWidget {
   Set<String> _getAllDescendants(String blockID, Map<String, Set<String>> parentAndChildren) {
     Set<String> allDescendants = {};
     Set<String> visited = {};
-    
+
     void collectDescendants(String currentBlockID) {
       if (visited.contains(currentBlockID)) return; // Prevent circular references
       visited.add(currentBlockID);
-      
+
       Set<String> descendants = parentAndChildren[currentBlockID] ?? {};
       for (var descendant in descendants) {
         allDescendants.add(descendant);
@@ -47,6 +47,10 @@ class Block extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    String getDepartment() {
+      return ref.read(blockNotifierProvider(blockID).notifier).blockData?.department ?? '';
+    }
+
     final blockNotifier = ref.watch(blockNotifierProvider(blockID));
     final BlockData? blockData = blockNotifier.blockData;
 
@@ -109,20 +113,21 @@ class Block extends ConsumerWidget {
             return null;
           }
 
+          // if block selected, move all descendants
           if (isSelectionMode) {
             Set<String> descendants = blockNotifier.descendants;
             final currentPosition = blockNotifier.position;
             final newPostion = getNewPosition();
             if (newPostion != null) {
               final delta = newPostion - currentPosition;
-              
+
               // Update UI immediately for all descendants
               for (var descendant in descendants) {
                 final notifier = ref.read(blockNotifierProvider(descendant).notifier);
                 final currentPos = notifier.position;
                 notifier.updatePositionWithoutFirestore(currentPos + delta);
               }
-              
+
               // Batch update to Firestore (debounced)
               Map<String, Offset> positions = {blockID: newPostion};
               for (var descendant in descendants) {
@@ -131,7 +136,7 @@ class Block extends ConsumerWidget {
               blockNotifier.batchUpdateDescendantPositions(positions);
             }
           }
-
+          // Move block
           final adjustedPosition = getNewPosition();
           if (adjustedPosition != null) ref.read(blockNotifierProvider(blockID).notifier).updatePosition(adjustedPosition);
         },
@@ -148,7 +153,11 @@ class Block extends ConsumerWidget {
                 child: Container(
                   width: kBlockWidth,
                   height: kBlockHeight,
-                  decoration: blockNotifier.selectionMode ? kboxShadowNormal.copyWith(border: Border.all(color: Colors.blue, width: 2)) : kboxShadowNormal,
+                  decoration: blockNotifier.selectionMode
+                      ? kboxShadowNormal.copyWith(border: Border.all(color: Colors.blue, width: 2))
+                      : blockNotifier.blockData?.hasMultipleEmails ?? false
+                      ? kboxShadowNormal.copyWith(border: Border.all(color: Colors.black, width: 2))
+                      : kboxShadowNormal,
                   child: Column(
                     spacing: 4,
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -204,7 +213,7 @@ class Block extends ConsumerWidget {
                       // Position 300px above
                       Offset newPosition = Offset(blockNotifier.position.dx, blockNotifier.position.dy - 300);
 
-                      ref.read(canvasProvider.notifier).addBlock(newBlockID, newPosition);
+                      ref.read(canvasProvider.notifier).addBlock(newBlockID, newPosition, department: getDepartment());
 
                       // Create parent-child connection: new block (parent) → current block (child)
                       ref.read(connectionManagerProvider.notifier).createDirectConnection(parentBlockID: newBlockID, childBlockID: blockID);
@@ -221,7 +230,7 @@ class Block extends ConsumerWidget {
                     onTap: () {
                       // print('Bottom dot button clicked');
                       String newBlockID = FirestoreIdGenerator.generate();
-                      ref.read(canvasProvider.notifier).addBlock(newBlockID, Offset(blockNotifier.position.dx, blockNotifier.position.dy + 300));
+                      ref.read(canvasProvider.notifier).addBlock(newBlockID, Offset(blockNotifier.position.dx, blockNotifier.position.dy + 300), department: getDepartment());
                       ref.read(connectionManagerProvider.notifier).createDirectConnection(parentBlockID: blockID, childBlockID: newBlockID);
                       ref.read(blockNotifierProvider(blockID).notifier).selectionModeDisable();
                     },
@@ -238,7 +247,7 @@ class Block extends ConsumerWidget {
                       // Position 300px to the right
                       Offset newPosition = Offset(blockNotifier.position.dx + 300, blockNotifier.position.dy);
 
-                      ref.read(canvasProvider.notifier).addBlock(newBlockID, newPosition);
+                      ref.read(canvasProvider.notifier).addBlock(newBlockID, newPosition, department: getDepartment());
 
                       // Find parent of current block
                       String? parentID = _findParentOfBlock(ref, blockID);
@@ -261,7 +270,7 @@ class Block extends ConsumerWidget {
                       // Position 300px to the left
                       Offset newPosition = Offset(blockNotifier.position.dx - 300, blockNotifier.position.dy);
 
-                      ref.read(canvasProvider.notifier).addBlock(newBlockID, newPosition);
+                      ref.read(canvasProvider.notifier).addBlock(newBlockID, newPosition, department: getDepartment());
 
                       // Find parent of current block
                       String? parentID = _findParentOfBlock(ref, blockID);

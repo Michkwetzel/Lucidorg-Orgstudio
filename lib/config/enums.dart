@@ -1,14 +1,11 @@
-enum Pilar { alignment, people, process, leadership, none }
 
-enum BlockType { add, existing }
 
-enum ConnectionType { parent, child }
 
-enum Screen { logIn, selectorg, orgStructure, assessment }
+enum AppView { logIn, selectOrg, orgBuild, selectAssessment, assessment }
 
 enum Permission { admin, error }
 
-enum NavBarButtonType { home }
+enum Pilar { alignment, people, process, leadership, none }
 
 enum Benchmark {
   purposeDriven,

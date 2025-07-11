@@ -2,11 +2,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:platform_v2/config/enums.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-// Notifier Holding Main app state like which screen, Selected org, Selected Assessment, etc.
+// Notifier Holding Main app state like which appView, Selected org, Selected Assessment, etc.
 class AppState {
   final bool isLoading;
   final bool isInitialized;
-  final Screen screen;
+  final AppView appView;
   final String? orgId;
   final String? orgName;
   final String? assessmentID;
@@ -15,7 +15,7 @@ class AppState {
   const AppState({
     this.isLoading = false,
     this.isInitialized = false,
-    this.screen = Screen.logIn,
+    this.appView = AppView.logIn,
     this.orgId,
     this.orgName,
     this.assessmentID,
@@ -25,7 +25,7 @@ class AppState {
   AppState copyWith({
     bool? isLoading,
     bool? isInitialized,
-    Screen? screen,
+    AppView? appView,
     String? orgId,
     String? orgName,
     String? assessmentID,
@@ -39,7 +39,7 @@ class AppState {
     return AppState(
       isLoading: isLoading ?? this.isLoading,
       isInitialized: isInitialized ?? this.isInitialized,
-      screen: screen ?? this.screen,
+      appView: appView ?? this.appView,
       orgId: clearOrgId ? null : (orgId ?? this.orgId),
       orgName: clearOrgName ? null : (orgName ?? this.orgName),
       assessmentID: clearAssessmentID ? null : (assessmentID ?? this.assessmentID),
@@ -53,7 +53,7 @@ class AppState {
     return other is AppState &&
         other.isLoading == isLoading &&
         other.isInitialized == isInitialized &&
-        other.screen == screen &&
+        other.appView == appView &&
         other.orgId == orgId &&
         other.orgName == orgName &&
         other.assessmentID == assessmentID &&
@@ -65,7 +65,7 @@ class AppState {
     return Object.hash(
       isLoading,
       isInitialized,
-      screen,
+      appView,
       orgId,
       orgName,
       assessmentID,
@@ -75,7 +75,7 @@ class AppState {
 
   @override
   String toString() {
-    return 'AppState(isLoading: $isLoading, isInitialized: $isInitialized, screen: $screen, orgId: $orgId, orgName: $orgName, assessmentID: $assessmentID, assessmentName: $assessmentName)';
+    return 'AppState(isLoading: $isLoading, isInitialized: $isInitialized, appView: $appView, orgId: $orgId, orgName: $orgName, assessmentID: $assessmentID, assessmentName: $assessmentName)';
   }
 }
 
@@ -128,8 +128,8 @@ class AppStateNotifier extends StateNotifier<AppState> {
     state = state.copyWith(isLoading: isLoading);
   }
 
-  void setScreen(Screen screen) {
-    state = state.copyWith(screen: screen);
+  void setAppView(AppView appView) {
+    state = state.copyWith(appView: appView);
   }
 
   void setAssessment(String? assessmentID, String? assessmentName) {
@@ -144,12 +144,12 @@ class AppStateNotifier extends StateNotifier<AppState> {
     state = const AppState();
   }
 
-  // Getters for convenience
+  // Getters
   String? get orgId => state.orgId;
   String? get orgName => state.orgName;
   String? get assessmentID => state.assessmentID;
   String? get assessmentName => state.assessmentName;
-  Screen get currentScreen => state.screen;
+  AppView get currentAppView => state.appView;
   bool get isLoading => state.isLoading;
   bool get isInitialized => state.isInitialized;
 }
