@@ -6,6 +6,7 @@ import 'package:platform_v2/notifiers/general/blockNotifier.dart';
 import 'package:platform_v2/notifiers/general/orgCanvasNotifier.dart';
 import 'package:platform_v2/notifiers/general/connectionsManager.dart';
 import 'package:platform_v2/notifiers/general/orgsScreenNotifier.dart';
+import 'package:platform_v2/notifiers/general/assessmentScreenNotifier.dart';
 import 'package:platform_v2/notifiers/huds/botLeftHudNotifier.dart';
 import 'package:platform_v2/notifiers/huds/topLeftHudNotifier.dart';
 
@@ -27,6 +28,11 @@ final botLeftHudProvider = StateNotifierProvider<BotLeftHudNotifier, BotleftHudS
 
 final orgsScreenProvider = StateNotifierProvider.autoDispose<OrgsScreenNotifier, OrgsScreenState>((ref) {
   return OrgsScreenNotifier();
+});
+
+final assessmentScreenProvider = StateNotifierProvider.autoDispose<AssessmentScreenNotifier, AssessmentScreenState>((ref) {
+  final String orgId = ref.read(appStateProvider).orgId!;
+  return AssessmentScreenNotifier(orgId: orgId);
 });
 
 final appStateProvider = StateNotifierProvider<AppStateNotifier, AppState>((ref) {

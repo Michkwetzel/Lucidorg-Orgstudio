@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:platform_v2/config/constants.dart';
 import 'package:platform_v2/config/enums.dart';
 import 'package:platform_v2/config/provider.dart';
+import 'package:platform_v2/services/firestoreService.dart';
+import 'package:platform_v2/services/uiServices/navigationService.dart';
 
 class TopLeftHud extends ConsumerWidget {
   const TopLeftHud({super.key});
@@ -21,9 +23,12 @@ class TopLeftHud extends ConsumerWidget {
         ),
         SizedBox(width: 12),
         Text(appstate.orgName ?? "", style: kTextHeading2R),
-        if (appstate.appView == AppView.orgBuild) _buildDropdown(context, ref),
+        if (appstate.orgId != null && 
+            (appstate.appView == AppView.orgBuild || 
+             appstate.appView == AppView.selectAssessment || 
+             appstate.appView == AppView.assessment)) 
+          _buildDropdown(context, ref),
         if (appstate.assessmentName != null) Text(" - ${appstate.assessmentName}"),
-        if (appstate.assessmentName != null) _buildDropdown(context, ref),
       ],
     );
   }
@@ -33,12 +38,22 @@ class TopLeftHud extends ConsumerWidget {
       icon: Icon(Icons.arrow_drop_down, size: 16),
       padding: EdgeInsets.zero,
       onSelected: (value) {
+        final orgId = ref.read(appStateProvider).orgId;
+        if (orgId == null) {
+          print("Error: orgId is null when switching to org builder");
+          return;
+        }
+        
         switch (value) {
           case AppView.orgBuild:
+            // Set Firestore path for org builder
+            FirestoreService.setFirestorePathOrgBuilder(orgId);
             ref.read(appStateProvider.notifier).setAppView(AppView.orgBuild);
+            NavigationService.navigateTo("/app/orgStructure");
             break;
           case AppView.selectAssessment:
             ref.read(appStateProvider.notifier).setAppView(AppView.selectAssessment);
+            NavigationService.navigateTo("/app/assessmentSelect");
             break;
           default:
             break;

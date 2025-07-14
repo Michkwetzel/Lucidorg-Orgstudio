@@ -9,6 +9,7 @@ import 'dart:async';
 // Takes care of What blocks are being built and displayed on canvas.
 // Responsible for add and delete functions
 // Canvas does not watch Block position. BlockNotifier does
+// BlockIds are all that matters. This determines which blocks are built. FiresStoreService takes care of the correct collections.
 
 class OrgCanvasNotifier extends StateNotifier<Set<String>> {
   final Logger logger = Logger('OrgCanvasNotifier');
@@ -77,6 +78,7 @@ class OrgCanvasNotifier extends StateNotifier<Set<String>> {
 
   @override
   void dispose() {
+    logger.info("OrgCanvasNotifier disposed - orgId: $orgId");
     _blocksSubscription?.cancel();
     super.dispose();
   }

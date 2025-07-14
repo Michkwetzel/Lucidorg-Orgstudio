@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:platform_v2/config/provider.dart';
-import 'package:platform_v2/services/firestoreService.dart';
+import 'package:platform_v2/config/enums.dart';
 import 'package:platform_v2/services/uiServices/navigationService.dart';
 
 class BotLeftHud extends ConsumerWidget {
@@ -9,22 +9,31 @@ class BotLeftHud extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final appView = ref.watch(appStateProvider.select((state) => state.appView));
+    
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       spacing: 4,
       children: [
-        if (ref.watch(botLeftHudProvider.select((state) => state.showOrgsButton)))
+        if (appView == AppView.orgBuild || appView == AppView.assessment)
           FilledButton.tonal(
             onPressed: () {
-              ref.read(topleftHudProvider.notifier).setTitle('Orgs');
-              ref.read(botLeftHudProvider.notifier).toggleOrgsButton(false);
-              NavigationService.navigateTo('/app/orgs');
+              final currentAppView = ref.read(appStateProvider).appView;
+              
+              if (currentAppView == AppView.orgBuild) {
+                // From org builder, go back to org select
+                ref.read(appStateProvider.notifier).setAppView(AppView.selectOrg);
+                NavigationService.navigateTo('/app/orgs');
+              } else if (currentAppView == AppView.assessment) {
+                // From assessment, go back to assessment select
+                ref.read(appStateProvider.notifier).setAppView(AppView.selectAssessment);
+                NavigationService.navigateTo('/app/assessmentSelect');
+              }
             },
             child: Text("Back"),
           ),
         FilledButton.tonal(
           onPressed: () async {
-            await FirestoreService.dispose();
             ref.read(authProvider.notifier).signOutUser();
             NavigationService.navigateTo('/auth/landingPage');
           },

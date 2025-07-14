@@ -1,6 +1,4 @@
 
-
-
 enum AppView { logIn, selectOrg, orgBuild, selectAssessment, assessment }
 
 enum Permission { admin, error }
