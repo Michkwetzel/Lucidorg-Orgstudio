@@ -89,8 +89,26 @@ class BlockNotifier extends ChangeNotifier {
   bool get selectionMode => _selectionMode;
   Set<String> get descendants => _descendants;
 
-  void updateDescendants(Set<String> descendants) {
-    _descendants = descendants;
+  void updateDescendants(String blockID, Map<String, Set<String>> parentAndChildren) {
+    //Finds all decendants of current block and adds to internal state map
+    Set<String> allDescendants = {};
+    Set<String> visited = {};
+
+    // recursive function to get all descendants
+    void collectDescendants(String currentBlockID) {
+      if (visited.contains(currentBlockID)) return; // Prevent circular references
+      visited.add(currentBlockID);
+
+      Set<String> descendants = parentAndChildren[currentBlockID] ?? {};
+      for (var descendant in descendants) {
+        allDescendants.add(descendant);
+        collectDescendants(descendant);
+      }
+    }
+
+    collectDescendants(blockID);
+    print("updating descendants: $allDescendants");
+    _descendants = allDescendants;
   }
 
   void updatePosition(Offset newPosition) async {
@@ -102,6 +120,8 @@ class BlockNotifier extends ChangeNotifier {
 
       // Debounce before saving to firestore
       _debounceTimer = Timer(_debounceDuration, () async {
+        print("Single doc upload");
+
         await FirestoreService.updatePosition(orgId, blockID, {'x': newPosition.dx, 'y': newPosition.dy});
       });
     }

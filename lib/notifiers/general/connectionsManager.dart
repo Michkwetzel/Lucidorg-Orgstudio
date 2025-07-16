@@ -38,13 +38,11 @@ class ConnectionManager extends StateNotifier<ConnectionsState> {
   Set<String> _pendingDeletions = {};
 
   //Quick lookup for children
-  late Map<String, Set<String>> _parentAndChildren; //Quick lookup to find child of parent
+  Map<String, Set<String>> get parentAndChildren => _buildParentToChildrenMap(state.connections);
 
   ConnectionManager({required this.orgId}) : super(ConnectionsState()) {
     _subscribeToConnections();
   }
-
-  Map<String, Set<String>> get parentAndChildren => _parentAndChildren;
 
   @override
   void dispose() {
@@ -89,7 +87,6 @@ class ConnectionManager extends StateNotifier<ConnectionsState> {
             updatedConnections.add(Connection.fromFirestore(doc));
           }
           state = state.copyWith(connections: updatedConnections);
-          _parentAndChildren = _buildParentToChildrenMap(updatedConnections);
         }
       },
       onError: (error) {
@@ -119,26 +116,22 @@ class ConnectionManager extends StateNotifier<ConnectionsState> {
     // Then update Firestore
     FirestoreService.addConnection(orgId, newConnection).catchError((error) {
       // If Firestore operation fails, revert UI changes
+
       _pendingAdditions.remove(newConnection.id);
       state = state.copyWith(
         connections: state.connections.where((conn) => conn.id != newConnection.id).toList(),
       );
+
       logger.severe("Failed to add direct connection: $error");
     });
   }
 
   void onBlockDelete(String blockID) {
-    // Find connections to delete
-    List<String> connectionsToDelete = [];
+    // Find connections to delete and then delete
     for (var connection in state.connections) {
       if (connection.parentId == blockID || connection.childId == blockID) {
-        connectionsToDelete.add(connection.id);
+        removeConnection(connection.id);
       }
-    }
-
-    // Delete each connection
-    for (String connectionId in connectionsToDelete) {
-      removeConnection(connectionId);
     }
   }
 

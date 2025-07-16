@@ -5,7 +5,6 @@ import 'package:platform_v2/config/provider.dart';
 import 'package:platform_v2/dataClasses/blockData.dart';
 import 'package:platform_v2/services/firestoreIdGenerator.dart';
 import 'package:platform_v2/services/uiServices/overLayService.dart';
-import 'package:platform_v2/widgets/pages/app/orgStructPage.dart';
 
 class Block extends ConsumerWidget {
   final String blockID;
@@ -15,26 +14,7 @@ class Block extends ConsumerWidget {
     required this.blockID,
   });
 
-  Set<String> _getAllDescendants(String blockID, Map<String, Set<String>> parentAndChildren) {
-    Set<String> allDescendants = {};
-    Set<String> visited = {};
-
-    void collectDescendants(String currentBlockID) {
-      if (visited.contains(currentBlockID)) return; // Prevent circular references
-      visited.add(currentBlockID);
-
-      Set<String> descendants = parentAndChildren[currentBlockID] ?? {};
-      for (var descendant in descendants) {
-        allDescendants.add(descendant);
-        collectDescendants(descendant);
-      }
-    }
-
-    collectDescendants(blockID);
-    return allDescendants;
-  }
-
-  // Helper function to find parent of current block
+  // Helper function to find parent of current block. Used when creating a new block directly
   String? _findParentOfBlock(WidgetRef ref, String blockID) {
     final connections = ref.read(connectionManagerProvider).connections;
     for (final connection in connections) {
@@ -51,29 +31,30 @@ class Block extends ConsumerWidget {
       return ref.read(blockNotifierProvider(blockID).notifier).blockData?.department ?? '';
     }
 
-    final blockNotifier = ref.watch(blockNotifierProvider(blockID));
-    final BlockData? blockData = blockNotifier.blockData;
+    final blockState = ref.watch(blockNotifierProvider(blockID));
+    final blockNotifier = ref.read(blockNotifierProvider(blockID).notifier);
+    final BlockData? blockData = blockState.blockData;
 
     ref.listen<String?>(selectedBlockProvider, (previous, next) {
-      if (next != blockID && blockNotifier.selectionMode) {
+      if (next != blockID && blockState.selectionMode) {
         blockNotifier.selectionModeDisable();
       }
     });
 
-    if (blockNotifier.positionLoaded == false) {
+    if (blockState.positionLoaded == false) {
       return const SizedBox.shrink();
     }
 
     // Calculate the expanded size to include selection dots when in selection mode
     const dotOverhang = 38.0; // How far the dots extend beyond the block
-    final isSelectionMode = blockNotifier.selectionMode;
+    final isSelectionMode = blockState.selectionMode;
     final hitboxOffset = isSelectionMode ? dotOverhang : 0.0;
     final hitboxWidth = kBlockWidth + (hitboxOffset * 2);
     final hitboxHeight = kBlockHeight + (hitboxOffset * 2);
 
     return Positioned(
-      left: blockNotifier.position.dx - hitboxOffset,
-      top: blockNotifier.position.dy - hitboxOffset,
+      left: blockState.position.dx - hitboxOffset,
+      top: blockState.position.dy - hitboxOffset,
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: () {
@@ -85,8 +66,9 @@ class Block extends ConsumerWidget {
             //Enable selectionMode for block and update SelectedBLockProvider
             ref.read(blockNotifierProvider(blockID).notifier).selectionModeEnable();
             ref.read(selectedBlockProvider.notifier).state = blockID;
+
             //Find descendants off block if any
-            blockNotifier.updateDescendants(_getAllDescendants(blockID, ref.read(connectionManagerProvider.notifier).parentAndChildren));
+            blockNotifier.updateDescendants(blockID, ref.read(connectionManagerProvider.notifier).parentAndChildren);
           }
         },
         onDoubleTapDown: (details) {
@@ -105,40 +87,51 @@ class Block extends ConsumerWidget {
             final RenderBox? canvasBox = context.findAncestorRenderObjectOfType<RenderBox>();
             if (canvasBox != null) {
               final localPosition = canvasBox.globalToLocal(details.globalPosition);
+
+              // Account for the hitbox offset when calculating the actual block position
+              // The gesture detector is expanded, so we need to subtract the hitbox offset
+              // to get the correct block position
               return Offset(
-                localPosition.dx - 60,
-                localPosition.dy - 50,
+                localPosition.dx - hitboxOffset,
+                localPosition.dy - hitboxOffset,
               );
             }
             return null;
           }
 
-          // if block selected, move all descendants
-          if (isSelectionMode) {
+          // Get new position
+          final newPosition = getNewPosition();
+
+          // Early return if position calculation failed
+          if (newPosition == null) return;
+
+          // Check if block is selected and if it has any children. If yes then do batch move and batch firestore update
+          // If not just move block and one doc update
+          if (isSelectionMode && blockNotifier.descendants.isNotEmpty) {
             Set<String> descendants = blockNotifier.descendants;
             final currentPosition = blockNotifier.position;
-            final newPostion = getNewPosition();
-            if (newPostion != null) {
-              final delta = newPostion - currentPosition;
+            final delta = newPosition - currentPosition;
 
-              // Update UI immediately for all descendants
-              for (var descendant in descendants) {
-                final notifier = ref.read(blockNotifierProvider(descendant).notifier);
-                final currentPos = notifier.position;
-                notifier.updatePositionWithoutFirestore(currentPos + delta);
-              }
-
-              // Batch update to Firestore (debounced)
-              Map<String, Offset> positions = {blockID: newPostion};
-              for (var descendant in descendants) {
-                positions[descendant] = ref.read(blockNotifierProvider(descendant).notifier).position;
-              }
-              blockNotifier.batchUpdateDescendantPositions(positions);
+            // Update UI immediately for all descendants
+            for (var descendant in descendants) {
+              final notifier = ref.read(blockNotifierProvider(descendant).notifier);
+              final currentPos = notifier.position;
+              notifier.updatePositionWithoutFirestore(currentPos + delta);
             }
+
+            // Update the main block position immediately as well
+            ref.read(blockNotifierProvider(blockID).notifier).updatePositionWithoutFirestore(newPosition);
+
+            // Batch update to Firestore (debounced)
+            Map<String, Offset> positions = {blockID: newPosition};
+            for (var descendant in descendants) {
+              positions[descendant] = ref.read(blockNotifierProvider(descendant).notifier).position;
+            }
+            blockNotifier.batchUpdateDescendantPositions(positions);
+          } else {
+            // Single block movement
+            ref.read(blockNotifierProvider(blockID).notifier).updatePosition(newPosition);
           }
-          // Move block
-          final adjustedPosition = getNewPosition();
-          if (adjustedPosition != null) ref.read(blockNotifierProvider(blockID).notifier).updatePosition(adjustedPosition);
         },
         child: SizedBox(
           width: hitboxWidth,
@@ -153,9 +146,9 @@ class Block extends ConsumerWidget {
                 child: Container(
                   width: kBlockWidth,
                   height: kBlockHeight,
-                  decoration: blockNotifier.selectionMode
+                  decoration: isSelectionMode
                       ? kboxShadowNormal.copyWith(border: Border.all(color: Colors.blue, width: 2))
-                      : blockNotifier.blockData?.hasMultipleEmails ?? false
+                      : blockData?.hasMultipleEmails ?? false
                       ? kboxShadowNormal.copyWith(border: Border.all(color: Colors.black, width: 2))
                       : kboxShadowNormal,
                   child: Column(
@@ -171,36 +164,11 @@ class Block extends ConsumerWidget {
                 ),
               ),
 
-              if (blockNotifier.selectionMode) ...[
+              if (isSelectionMode) ...[
                 Positioned(
                   top: hitboxOffset,
                   right: hitboxOffset,
-                  child: PopupMenuButton<String>(
-                    icon: const Icon(
-                      Icons.more_horiz,
-                      size: 16,
-                      color: Colors.grey,
-                    ),
-                    iconSize: 16,
-                    padding: const EdgeInsets.all(4),
-                    onSelected: (value) {
-                      if (value == 'delete') {
-                        ref.read(canvasProvider.notifier).deleteBlock(blockID);
-                      }
-                    },
-                    itemBuilder: (BuildContext context) => [
-                      const PopupMenuItem<String>(
-                        value: 'delete',
-                        child: Row(
-                          children: [
-                            Icon(Icons.delete_outline, size: 16, color: Colors.red),
-                            SizedBox(width: 8),
-                            Text('Delete', style: TextStyle(color: Colors.red)),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
+                  child: _BlockDropdownMenu(blockID: blockID),
                 ),
 
                 // Top center dot
@@ -211,7 +179,7 @@ class Block extends ConsumerWidget {
                     onTap: () {
                       String newBlockID = FirestoreIdGenerator.generate();
                       // Position 300px above
-                      Offset newPosition = Offset(blockNotifier.position.dx, blockNotifier.position.dy - 300);
+                      Offset newPosition = Offset(blockState.position.dx, blockState.position.dy - 300);
 
                       ref.read(canvasProvider.notifier).addBlock(newBlockID, newPosition, department: getDepartment());
 
@@ -230,7 +198,7 @@ class Block extends ConsumerWidget {
                     onTap: () {
                       // print('Bottom dot button clicked');
                       String newBlockID = FirestoreIdGenerator.generate();
-                      ref.read(canvasProvider.notifier).addBlock(newBlockID, Offset(blockNotifier.position.dx, blockNotifier.position.dy + 300), department: getDepartment());
+                      ref.read(canvasProvider.notifier).addBlock(newBlockID, Offset(blockState.position.dx, blockState.position.dy + 300), department: getDepartment());
                       ref.read(connectionManagerProvider.notifier).createDirectConnection(parentBlockID: blockID, childBlockID: newBlockID);
                       ref.read(blockNotifierProvider(blockID).notifier).selectionModeDisable();
                     },
@@ -245,7 +213,7 @@ class Block extends ConsumerWidget {
                     onTap: () {
                       String newBlockID = FirestoreIdGenerator.generate();
                       // Position 300px to the right
-                      Offset newPosition = Offset(blockNotifier.position.dx + 300, blockNotifier.position.dy);
+                      Offset newPosition = Offset(blockState.position.dx + 300, blockState.position.dy);
 
                       ref.read(canvasProvider.notifier).addBlock(newBlockID, newPosition, department: getDepartment());
 
@@ -268,7 +236,7 @@ class Block extends ConsumerWidget {
                     onTap: () {
                       String newBlockID = FirestoreIdGenerator.generate();
                       // Position 300px to the left
-                      Offset newPosition = Offset(blockNotifier.position.dx - 300, blockNotifier.position.dy);
+                      Offset newPosition = Offset(blockState.position.dx - 300, blockState.position.dy);
 
                       ref.read(canvasProvider.notifier).addBlock(newBlockID, newPosition, department: getDepartment());
 
@@ -318,5 +286,46 @@ class _SelectionDot extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+class _BlockDropdownMenu extends ConsumerWidget {
+  final String blockID;
+
+  const _BlockDropdownMenu({required this.blockID});
+
+  // Static menu items - built once, reused for all instances
+  static const List<PopupMenuEntry<String>> _menuItems = [
+    PopupMenuItem<String>(
+      value: 'delete',
+      child: Row(
+        children: [
+          Icon(Icons.delete_outline, size: 16, color: Colors.red),
+          SizedBox(width: 8),
+          Text('Delete', style: TextStyle(color: Colors.red)),
+        ],
+      ),
+    ),
+  ];
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return PopupMenuButton<String>(
+      icon: const Icon(
+        Icons.more_horiz,
+        size: 16,
+        color: Colors.grey,
+      ),
+      iconSize: 16,
+      padding: const EdgeInsets.all(4),
+      onSelected: (value) => _handleSelection(value, ref),
+      itemBuilder: (context) => _menuItems,
+    );
+  }
+
+  void _handleSelection(String value, WidgetRef ref) {
+    if (value == 'delete') {
+      ref.read(canvasProvider.notifier).deleteBlock(blockID);
+    }
   }
 }

@@ -1,5 +1,6 @@
-
 enum AppView { logIn, selectOrg, orgBuild, selectAssessment, assessment }
+
+enum BlockMode { orgBuild, assessmentView, assessmentCreate }
 
 enum Permission { admin, error }
 

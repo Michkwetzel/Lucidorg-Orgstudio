@@ -4,7 +4,6 @@ import 'package:logging/logging.dart';
 import 'package:platform_v2/config/enums.dart';
 import 'package:platform_v2/config/provider.dart';
 import 'package:platform_v2/dataClasses/assessment.dart';
-import 'package:platform_v2/services/firestoreService.dart';
 import 'package:platform_v2/services/uiServices/inputDialogService.dart';
 import 'package:platform_v2/services/uiServices/navigationService.dart';
 import 'package:platform_v2/widgets/components/buildingBlocks/buttons/addButton.dart';
@@ -38,13 +37,7 @@ class AssessmentSelectPage extends ConsumerWidget {
                     (assessment) => SelectionButton(
                       heading: assessment.assessmentName,
                       data: assessment.id,
-                      onPressed: () {
-                        final appState = ref.read(appStateProvider);
-                        final orgId = appState.orgId!;
-                        
-                        // Set Firestore path for assessment
-                        FirestoreService.setFirestorePathAssessment(orgId, assessment.id);
-                        
+                      onPressed: () {                                                
                         // Update app state
                         ref.read(appStateProvider.notifier).setAssessment(assessment.id, assessment.assessmentName);
                         ref.read(appStateProvider.notifier).setAppView(AppView.assessment);

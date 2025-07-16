@@ -8,10 +8,6 @@ import 'package:platform_v2/dataClasses/connection.dart';
 class FirestoreService {
   static late final FirebaseFirestore _instance;
 
-  // Set the collection. These are set whenever you change from OrgBuilder to Assessment
-  static late CollectionReference<Map<String, dynamic>> _blocksCollection;
-  static late CollectionReference<Map<String, dynamic>> _connectionsCollection;
-
   static void initialize() {
     _instance = FirebaseFirestore.instanceFor(
       app: Firebase.app(),
@@ -25,34 +21,44 @@ class FirestoreService {
 
   static FirebaseFirestore get instance => _instance;
 
-  static void setFirestorePathOrgBuilder(String orgId) {
-    _blocksCollection = _instance.collection('orgs').doc(orgId).collection('blocks');
-    _connectionsCollection = _instance.collection('orgs').doc(orgId).collection('connections');
+  // Helper method to get the blocks collection based on context
+  static CollectionReference<Map<String, dynamic>> _getBlocksCollection(String orgId, {String? assessmentId}) {
+    if (assessmentId != null) {
+      return _instance.collection('orgs').doc(orgId).collection('assessments').doc(assessmentId).collection('blocks');
+    }
+    return _instance.collection('orgs').doc(orgId).collection('blocks');
   }
 
-  static void setFirestorePathAssessment(String orgId, String assessmentId) {
-    _blocksCollection = _instance.collection('orgs').doc(orgId).collection('assessments').doc(assessmentId).collection('blocks');
-    _connectionsCollection = _instance.collection('orgs').doc(orgId).collection('assessments').doc(assessmentId).collection('connections');
+  // Helper method to get the connections collection based on context
+  static CollectionReference<Map<String, dynamic>> _getConnectionsCollection(String orgId, {String? assessmentId}) {
+    if (assessmentId != null) {
+      return _instance.collection('orgs').doc(orgId).collection('assessments').doc(assessmentId).collection('connections');
+    }
+    return _instance.collection('orgs').doc(orgId).collection('connections');
   }
 
-  static Future<void> addBlock(String orgId, Map<String, dynamic> blockData) async {
-    await _blocksCollection.doc(blockData['blockID']).set({
+  static Future<void> addBlock(String orgId, Map<String, dynamic> blockData, {String? assessmentId}) async {
+    final collection = _getBlocksCollection(orgId, assessmentId: assessmentId);
+    await collection.doc(blockData['blockID']).set({
       ...blockData,
     });
   }
 
-  static Future<void> deleteBlock(String orgId, String blockID) async {
-    await _blocksCollection.doc(blockID).delete();
+  static Future<void> deleteBlock(String orgId, String blockID, {String? assessmentId}) async {
+    final collection = _getBlocksCollection(orgId, assessmentId: assessmentId);
+    await collection.doc(blockID).delete();
   }
 
-  static Future<void> updatePosition(String orgId, String blockID, Map<String, double> position) async {
-    await _blocksCollection.doc(blockID).update({
+  static Future<void> updatePosition(String orgId, String blockID, Map<String, double> position, {String? assessmentId}) async {
+    final collection = _getBlocksCollection(orgId, assessmentId: assessmentId);
+    await collection.doc(blockID).update({
       'position': position,
     });
   }
 
-  static Future<void> updateData(String orgId, String blockID, BlockData blockData) async {
-    await _blocksCollection.doc(blockID).update({
+  static Future<void> updateData(String orgId, String blockID, BlockData blockData, {String? assessmentId}) async {
+    final collection = _getBlocksCollection(orgId, assessmentId: assessmentId);
+    await collection.doc(blockID).update({
       'name': blockData.name,
       'role': blockData.role,
       'department': blockData.department,
@@ -61,39 +67,44 @@ class FirestoreService {
   }
 
   // 1 Block. BlockNotifier subscribes to this
-  static Stream<DocumentSnapshot<Map<String, dynamic>>> getBlockStream(String orgId, String blockID) {
-    return _blocksCollection.doc(blockID).snapshots();
+  static Stream<DocumentSnapshot<Map<String, dynamic>>> getBlockStream(String orgId, String blockID, {String? assessmentId}) {
+    final collection = _getBlocksCollection(orgId, assessmentId: assessmentId);
+    return collection.doc(blockID).snapshots();
   }
 
-  // All blocks
-  static Stream<QuerySnapshot> getBlocksStream(String orgId) {
-    return _blocksCollection.snapshots();
+  // All blocks in Collection
+  static Stream<QuerySnapshot> getBlocksStream(String orgId, {String? assessmentId}) {
+    final collection = _getBlocksCollection(orgId, assessmentId: assessmentId);
+    return collection.snapshots();
   }
 
-  // All Connections
-  static Stream<QuerySnapshot> getConnectionsStream(String orgId) {
-    return _connectionsCollection.snapshots();
+  // All connections in Collection
+  static Stream<QuerySnapshot> getConnectionsStream(String orgId, {String? assessmentId}) {
+    final collection = _getConnectionsCollection(orgId, assessmentId: assessmentId);
+    return collection.snapshots();
   }
 
-  static Future<void> addConnection(String orgId, Connection connection) async {
-    await _connectionsCollection.doc(connection.id).set({
+  static Future<void> addConnection(String orgId, Connection connection, {String? assessmentId}) async {
+    final collection = _getConnectionsCollection(orgId, assessmentId: assessmentId);
+    await collection.doc(connection.id).set({
       'id': connection.id,
       'parentID': connection.parentId,
       'childID': connection.childId,
     });
   }
 
-  static Future<void> deleteConnection(String orgId, String connectionId) async {
-    await _connectionsCollection.doc(connectionId).delete();
+  static Future<void> deleteConnection(String orgId, String connectionId, {String? assessmentId}) async {
+    final collection = _getConnectionsCollection(orgId, assessmentId: assessmentId);
+    await collection.doc(connectionId).delete();
   }
 
-  //Function used when moving multiple blocks at the same time
-  static Future<void> batchUpdatePositions(String orgId, Map<String, Offset> positions) async {
+  static Future<void> batchUpdatePositions(String orgId, Map<String, Offset> positions, {String? assessmentId}) async {
     print("Do batch update to Firestore!!");
     WriteBatch batch = _instance.batch();
 
+    final collection = _getBlocksCollection(orgId, assessmentId: assessmentId);
     for (String blockID in positions.keys) {
-      final docRef = _blocksCollection.doc(blockID);
+      final docRef = collection.doc(blockID);
       batch.update(docRef, {
         'position': {'x': positions[blockID]!.dx, 'y': positions[blockID]!.dy},
       });
@@ -109,7 +120,6 @@ class FirestoreService {
       'dateCreated': FieldValue.serverTimestamp(),
     });
 
-    // Create org collection and then create 2 blocks and 1 connection as starting point
     final docRef1 = _instance.collection('orgs').doc(orgref.id).collection('blocks').doc();
     await docRef1.set({
       'position': {'x': 200, 'y': 200},
