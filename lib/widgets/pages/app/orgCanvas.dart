@@ -95,7 +95,7 @@ class _OrgCanvasState extends ConsumerState<OrgCanvas> {
                     ...canvasState.map(
                       (blockID) => Block(
                         key: ValueKey(blockID), // ValueKey for widget stability
-                        blockID: blockID,
+                        blockId: blockID,
                       ),
                     ),
                   ],
