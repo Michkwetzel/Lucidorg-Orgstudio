@@ -15,7 +15,7 @@ class AppState {
   const AppState({
     this.isLoading = false,
     this.isInitialized = false,
-    this.appView = AppView.logIn,
+    this.appView = AppView.none,
     this.orgId,
     this.orgName,
     this.assessmentID,
@@ -88,12 +88,18 @@ class AppStateNotifier extends StateNotifier<AppState> {
     final prefs = await SharedPreferences.getInstance();
     final orgId = prefs.getString('orgId');
     final orgName = prefs.getString('orgName');
+    final appViewString = prefs.getString('appView');
+
+    AppView appView = AppView.none;
+    if (appViewString != null) {
+      appView = _parseAppView(appViewString);
+    }
 
     if (orgId != null) {
-      state = state.copyWith(orgId: orgId, orgName: orgName, isInitialized: true);
+      state = state.copyWith(orgId: orgId, orgName: orgName, appView: appView, isInitialized: true);
     } else {
       // No saved org, but still mark as initialized so app can show org selection
-      state = state.copyWith(isInitialized: true);
+      state = state.copyWith(appView: appView, isInitialized: true);
     }
   }
 
@@ -124,12 +130,40 @@ class AppStateNotifier extends StateNotifier<AppState> {
     await prefs.remove('orgName');
   }
 
+  Future<void> _persistAppView(AppView appView) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('appView', appView.toString());
+  }
+
+  Future<void> _clearPersistedAppView() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('appView');
+  }
+
+  AppView _parseAppView(String appViewString) {
+    switch (appViewString) {
+      case 'AppView.logIn':
+        return AppView.logIn;
+      case 'AppView.selectOrg':
+        return AppView.selectOrg;
+      case 'AppView.orgBuild':
+        return AppView.orgBuild;
+      case 'AppView.assessmentCreate':
+        return AppView.assessmentCreate;
+      case 'AppView.assessmentView':
+        return AppView.assessmentView;
+      default:
+        return AppView.none;
+    }
+  }
+
   void setLoading(bool isLoading) {
     state = state.copyWith(isLoading: isLoading);
   }
 
   void setAppView(AppView appView) {
     state = state.copyWith(appView: appView);
+    _persistAppView(appView);
   }
 
   void setAssessment(String? assessmentID, String? assessmentName) {
@@ -142,6 +176,7 @@ class AppStateNotifier extends StateNotifier<AppState> {
 
   void reset() {
     state = const AppState();
+    _clearPersistedAppView();
   }
 
   // Getters

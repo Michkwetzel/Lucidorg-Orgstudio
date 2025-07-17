@@ -19,7 +19,6 @@ class BlockContext {
     required this.dotOverhang,
   });
 
-  // Access notifiers via getters - much cleaner!
   BlockNotifier get blockNotifier => ref.read(blockNotifierProvider(blockId).notifier);
   OrgCanvasNotifier get orgCanvasNotifier => ref.read(canvasProvider.notifier);
   ConnectionManager get connectionManager => ref.read(connectionManagerProvider.notifier);

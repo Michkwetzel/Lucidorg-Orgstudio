@@ -15,7 +15,7 @@ class BotLeftHud extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       spacing: 4,
       children: [
-        if (appView == AppView.orgBuild || appView == AppView.assessment)
+        if (appView == AppView.orgBuild || appView == AppView.assessmentView)
           FilledButton.tonal(
             onPressed: () {
               final currentAppView = ref.read(appStateProvider).appView;
@@ -24,9 +24,9 @@ class BotLeftHud extends ConsumerWidget {
                 // From org builder, go back to org select
                 ref.read(appStateProvider.notifier).setAppView(AppView.selectOrg);
                 NavigationService.navigateTo('/app/orgs');
-              } else if (currentAppView == AppView.assessment) {
+              } else if (currentAppView == AppView.assessmentView) {
                 // From assessment, go back to assessment select
-                ref.read(appStateProvider.notifier).setAppView(AppView.selectAssessment);
+                ref.read(appStateProvider.notifier).setAppView(AppView.assessmentCreate);
                 NavigationService.navigateTo('/app/assessmentSelect');
               }
             },

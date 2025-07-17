@@ -9,6 +9,7 @@ import 'package:platform_v2/notifiers/general/orgsScreenNotifier.dart';
 import 'package:platform_v2/notifiers/general/assessmentScreenNotifier.dart';
 import 'package:platform_v2/notifiers/huds/botLeftHudNotifier.dart';
 import 'package:platform_v2/notifiers/huds/topLeftHudNotifier.dart';
+import 'package:platform_v2/notifiers/huds/topRightHudNotifier.dart';
 
 final authProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
   return AuthNotifier()..initState();
@@ -20,6 +21,10 @@ final topleftHudProvider = StateNotifierProvider<TopleftHudNotifier, TopleftHudS
 
 final botLeftHudProvider = StateNotifierProvider<BotLeftHudNotifier, BotleftHudState>((ref) {
   return BotLeftHudNotifier();
+});
+
+final topRightHudProvider = StateNotifierProvider<TopRightHudNotifier, bool>((ref) {
+  return TopRightHudNotifier();
 });
 
 // final toolBarHudProvider = StateNotifierProvider<ToolBarHudNotifier, ToolbarHudState>((ref) {
@@ -81,7 +86,6 @@ final blockPositionsProvider = Provider<Map<String, Offset>>((ref) {
     }),
   );
 });
-
 
 final connectionManagerProvider = StateNotifierProvider<ConnectionManager, ConnectionsState>((ref) {
   final String orgId = ref.watch(appStateProvider).orgId!;

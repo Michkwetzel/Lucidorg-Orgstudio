@@ -113,6 +113,58 @@ class FirestoreService {
     await batch.commit();
   }
 
+  static Future<String> createAssessment(String orgId, String assessmentName) async {
+    try {
+      final assessmentsRef = _instance.collection('orgs').doc(orgId).collection('assessments');
+
+      // Check for existing assessment
+      final existingQuery = await assessmentsRef.where('assessmentName', isEqualTo: assessmentName).get();
+
+      if (existingQuery.docs.isNotEmpty) {
+        throw Exception('Assessment with name "$assessmentName" already exists');
+      }
+
+      // Create assessment document
+      final assessmentDoc = assessmentsRef.doc();
+      await assessmentDoc.set({
+        'assessmentName': assessmentName,
+      });
+
+      // Helper function to copy collection with same IDs
+      Future<void> copyCollection({required CollectionReference sourceCollection, required CollectionReference targetCollection}) async {
+        final sourceDocs = await sourceCollection.get();
+
+        // Use batch for better performance
+        final batch = _instance.batch();
+
+        for (final doc in sourceDocs.docs) {
+          // Use same document ID
+          final targetDoc = targetCollection.doc(doc.id);
+          batch.set(targetDoc, doc.data());
+        }
+
+        await batch.commit();
+      }
+
+      // Copy blocks collection
+      await copyCollection(
+        sourceCollection: _instance.collection('orgs').doc(orgId).collection('blocks'),
+        targetCollection: assessmentDoc.collection('blocks'),
+      );
+
+      // Copy connections collection
+      await copyCollection(
+        sourceCollection: _instance.collection('orgs').doc(orgId).collection('connections'),
+        targetCollection: assessmentDoc.collection('connections'),
+      );
+
+      return assessmentsRef.id;
+    } catch (e) {
+      // Rethrow with more context for debugging
+      throw Exception('Failed to create assessment "$assessmentName": $e');
+    }
+  }
+
   static Future<void> createOrg(String orgName) async {
     final orgref = _instance.collection('orgs').doc();
     orgref.set({

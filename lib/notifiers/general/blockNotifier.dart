@@ -89,7 +89,7 @@ class BlockNotifier extends ChangeNotifier {
   bool get selectionMode => _selectionMode;
   Set<String> get descendants => _descendants;
 
-  void updateDescendants(String blockID, Map<String, Set<String>> parentAndChildren) {
+  void updateDescendants(Map<String, Set<String>> parentAndChildren) {
     //Finds all decendants of current block and adds to internal state map
     Set<String> allDescendants = {};
     Set<String> visited = {};

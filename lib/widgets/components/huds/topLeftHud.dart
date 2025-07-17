@@ -22,7 +22,7 @@ class TopLeftHud extends ConsumerWidget {
         ),
         SizedBox(width: 12),
         Text(appstate.orgName ?? "", style: kTextHeading2R),
-        if (appstate.orgId != null && (appstate.appView == AppView.orgBuild || appstate.appView == AppView.selectAssessment || appstate.appView == AppView.assessment)) _buildDropdown(context, ref),
+        if (appstate.orgId != null && (appstate.appView == AppView.orgBuild || appstate.appView == AppView.assessmentCreate || appstate.appView == AppView.assessmentView)) _buildDropdown(context, ref),
         if (appstate.assessmentName != null) Text(" - ${appstate.assessmentName}"),
       ],
     );
@@ -39,8 +39,8 @@ class TopLeftHud extends ConsumerWidget {
             ref.read(appStateProvider.notifier).setAppView(AppView.orgBuild);
             NavigationService.navigateTo("/app/orgStructure");
             break;
-          case AppView.selectAssessment:
-            ref.read(appStateProvider.notifier).setAppView(AppView.selectAssessment);
+          case AppView.assessmentCreate:
+            ref.read(appStateProvider.notifier).setAppView(AppView.assessmentCreate);
             NavigationService.navigateTo("/app/assessmentSelect");
             break;
           default:
@@ -49,7 +49,7 @@ class TopLeftHud extends ConsumerWidget {
       },
       itemBuilder: (context) => [
         PopupMenuItem(value: AppView.orgBuild, child: Text('Org Builder')),
-        PopupMenuItem(value: AppView.selectAssessment, child: Text('Assessments')),
+        PopupMenuItem(value: AppView.assessmentCreate, child: Text('Assessments')),
       ],
     );
   }
