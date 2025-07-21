@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logging/logging.dart';
+import 'package:platform_v2/dataClasses/firestoreContext.dart';
 import 'package:platform_v2/notifiers/general/connectionsManager.dart';
 import 'package:platform_v2/services/firestoreService.dart';
 import 'dart:async';
@@ -13,13 +14,13 @@ import 'dart:async';
 
 class OrgCanvasNotifier extends StateNotifier<Set<String>> {
   final Logger logger = Logger('OrgCanvasNotifier');
-  final String orgId;
+  final FirestoreContext context;
   Map<String, Offset> _initialPositions = {}; //This is a workaround to get over some issues haha
   StreamSubscription? _blocksSubscription;
   ConnectionManager connectionManager;
   bool _isInitialLoadComplete = false;
 
-  OrgCanvasNotifier({required this.orgId, required this.connectionManager}) : super({}) {
+  OrgCanvasNotifier({required this.context, required this.connectionManager}) : super({}) {
     subscribeToBlocks();
   }
 
@@ -33,7 +34,7 @@ class OrgCanvasNotifier extends StateNotifier<Set<String>> {
   void subscribeToBlocks() {
     _blocksSubscription?.cancel();
 
-    _blocksSubscription = FirestoreService.getBlocksStream(orgId).listen(
+    _blocksSubscription = FirestoreService.getBlocksStream(context).listen(
       (snapshot) {
         bool hasAdditionsOrDeletions = false;
 
@@ -78,7 +79,7 @@ class OrgCanvasNotifier extends StateNotifier<Set<String>> {
 
   @override
   void dispose() {
-    logger.info("OrgCanvasNotifier disposed - orgId: $orgId");
+    logger.info("OrgCanvasNotifier disposed - orgId: ${context.orgId}");
     _blocksSubscription?.cancel();
     super.dispose();
   }
@@ -92,7 +93,7 @@ class OrgCanvasNotifier extends StateNotifier<Set<String>> {
     _initialPositions[blockID] = position;
 
     try {
-      await FirestoreService.addBlock(orgId, {
+      await FirestoreService.addBlock(context, {
         'blockID': blockID,
         'position': {'x': position.dx, 'y': position.dy},
         if (department != null) 'department': department,
@@ -116,7 +117,7 @@ class OrgCanvasNotifier extends StateNotifier<Set<String>> {
     connectionManager.onBlockDelete(blockID);
 
     try {
-      await FirestoreService.deleteBlock(orgId, blockID);
+      await FirestoreService.deleteBlock(context, blockID);
     } catch (e) {
       // If Firestore operation fails, revert UI changes
       _pendingDeletions.remove(blockID);

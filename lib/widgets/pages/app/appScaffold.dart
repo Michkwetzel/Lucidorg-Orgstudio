@@ -23,7 +23,7 @@ class AppScaffold extends StatelessWidget {
                 child: TopLeftHud(),
               ),
               Positioned(
-                top: 24,
+                top: 12,
                 right: 24,
                 child: TopRightHud(),
               ),

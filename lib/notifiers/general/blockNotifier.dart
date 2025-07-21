@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:logging/logging.dart';
 import 'package:platform_v2/dataClasses/blockData.dart';
+import 'package:platform_v2/dataClasses/firestoreContext.dart';
 import 'package:platform_v2/services/firestoreService.dart';
 
 // Individual block notifier. Responsible for block state: position, data and selection
@@ -10,7 +11,7 @@ class BlockNotifier extends ChangeNotifier {
   Logger logger = Logger('BlockNotifier');
 
   final String blockID;
-  final String orgId;
+  final FirestoreContext context;
   late Offset _position;
   Set<String> _descendants = {};
   bool positionLoaded = false;
@@ -28,10 +29,10 @@ class BlockNotifier extends ChangeNotifier {
 
   BlockNotifier({
     required this.blockID,
-    required this.orgId,
+    required this.context,
   }) {
     // Get Block doc stream and listen to fields
-    blockStream = FirestoreService.getBlockStream(orgId, blockID);
+    blockStream = FirestoreService.getBlockStream(context, blockID);
 
     _streamSubscription = blockStream.listen(
       (snapshot) {
@@ -122,7 +123,7 @@ class BlockNotifier extends ChangeNotifier {
       _debounceTimer = Timer(_debounceDuration, () async {
         print("Single doc upload");
 
-        await FirestoreService.updatePosition(orgId, blockID, {'x': newPosition.dx, 'y': newPosition.dy});
+        await FirestoreService.updatePosition(context, blockID, {'x': newPosition.dx, 'y': newPosition.dy});
       });
     }
   }
@@ -138,7 +139,7 @@ class BlockNotifier extends ChangeNotifier {
     _batchDebounceTimer?.cancel();
 
     _batchDebounceTimer = Timer(_debounceDuration, () async {
-      await FirestoreService.batchUpdatePositions(orgId, positions);
+      await FirestoreService.batchUpdatePositions(context, positions);
     });
   }
 
@@ -157,7 +158,7 @@ class BlockNotifier extends ChangeNotifier {
       _blockData = newData;
       notifyListeners();
       FirestoreService.updateData(
-        orgId,
+        context,
         blockID,
         newData,
       );

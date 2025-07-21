@@ -37,24 +37,22 @@ class AssessmentSelectPage extends ConsumerWidget {
                     (assessment) => SelectionButton(
                       heading: assessment.assessmentName,
                       data: assessment.id,
-                      onPressed: () {                                                
+                      onPressed: () {
                         // Update app state
-                        ref.read(appStateProvider.notifier).setAssessment(assessment.id, assessment.assessmentName);
-                        ref.read(appStateProvider.notifier).setAppView(AppView.assessmentView);
-                        
-                        // Navigate to assessment canvas (placeholder for now)
-                        NavigationService.navigateTo("/app/orgStructure"); // Will be assessment canvas later
+                        ref.read(appStateProvider.notifier).toAssessmentView(assessment.id, assessment.assessmentName);
+
+                        NavigationService.navigateTo("/app/canvas");
                       },
                     ),
                   ),
-                  AddButton(
-                    onPressed: () async {
-                      Map<String, String>? newAssessmentInfo = await InputDialogService.showorgForm();
-                      if (newAssessmentInfo != null) {
-                        ref.read(assessmentScreenProvider.notifier).createAssessment(newAssessmentInfo['orgName']!);
-                      }
-                    },
-                  ),
+                  // AddButton(
+                  //   onPressed: () async {
+                  //     Map<String, String>? newAssessmentInfo = await InputDialogService.showorgForm();
+                  //     if (newAssessmentInfo != null) {
+                  //       ref.read(assessmentScreenProvider.notifier).createAssessment(newAssessmentInfo['orgName']!);
+                  //     }
+                  //   },
+                  // ),
                 ],
               ),
             ),

@@ -35,11 +35,12 @@ GoRouter setupRouter() {
         builder: (context, state, child) => AppScaffold(child: child),
         routes: [
           GoRoute(
-            path: '/app/orgs',
+            path: '/app/orgSelect',
             pageBuilder: (context, state) => NoTransitionPage(child: OrgSelectPage()),
           ),
           GoRoute(
-            path: '/app/orgStructure',
+            // path: '/app/orgStructure',
+            path: '/app/canvas',
             pageBuilder: (context, state) => NoTransitionPage(child: OrgCanvas()),
           ),
           GoRoute(

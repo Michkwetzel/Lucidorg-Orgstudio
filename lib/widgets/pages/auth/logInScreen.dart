@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logging/logging.dart';
 import 'package:platform_v2/config/constants.dart';
+import 'package:platform_v2/config/enums.dart';
 import 'package:platform_v2/config/provider.dart';
 import 'package:platform_v2/services/uiServices/navigationService.dart';
 import 'package:platform_v2/services/uiServices/snackBarService.dart';
@@ -25,7 +26,8 @@ class _LogInScreenState extends ConsumerState<LogInScreen> {
     final Logger logger = Logger("LogIn");
 
     void successfullyLogIn() {
-      NavigationService.navigateTo('/app/orgs');
+      ref.read(appStateProvider.notifier).toOrgSelect();
+      NavigationService.navigateTo('/app/orgSelect');
     }
 
     // Sign in with google. If new account. cancel and delete newly created OAuth account.

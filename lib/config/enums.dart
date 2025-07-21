@@ -1,4 +1,4 @@
-enum AppView { none, logIn, selectOrg, orgBuild, assessmentCreate, assessmentView }
+enum AppView { none, logIn, orgSelect, orgBuild, assessmentSelect, assessmentCreate, assessmentView }
 
 enum BlockMode { orgBuild, assessmentView, assessmentCreate }
 

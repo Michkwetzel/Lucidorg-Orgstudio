@@ -9,36 +9,28 @@ class BotLeftHud extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final appView = ref.watch(appStateProvider.select((state) => state.appView));
-    
+    final appView = ref.watch(appStateProvider).displayContext.appView;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       spacing: 4,
       children: [
-        if (appView == AppView.orgBuild || appView == AppView.assessmentView)
+        if (appView == AppView.assessmentView)
           FilledButton.tonal(
             onPressed: () {
-              final currentAppView = ref.read(appStateProvider).appView;
-              
-              if (currentAppView == AppView.orgBuild) {
-                // From org builder, go back to org select
-                ref.read(appStateProvider.notifier).setAppView(AppView.selectOrg);
-                NavigationService.navigateTo('/app/orgs');
-              } else if (currentAppView == AppView.assessmentView) {
-                // From assessment, go back to assessment select
-                ref.read(appStateProvider.notifier).setAppView(AppView.assessmentCreate);
-                NavigationService.navigateTo('/app/assessmentSelect');
-              }
+              ref.read(appStateProvider.notifier).toAssessmentSelect();
+              NavigationService.navigateTo('/app/assessmentSelect');
             },
-            child: Text("Back"),
+            child: Text("Assessments"),
           ),
-        FilledButton.tonal(
-          onPressed: () async {
-            ref.read(authProvider.notifier).signOutUser();
-            NavigationService.navigateTo('/auth/landingPage');
-          },
-          child: Text("Exit"),
-        ),
+        if (appView == AppView.orgBuild || appView == AppView.assessmentView || appView == AppView.assessmentSelect)
+          FilledButton.tonal(
+            onPressed: () async {
+              ref.read(appStateProvider.notifier).toOrgSelect();
+              NavigationService.navigateTo('/app/orgSelect');
+            },
+            child: Text("Home"),
+          ),
       ],
     );
   }

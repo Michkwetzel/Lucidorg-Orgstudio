@@ -67,7 +67,7 @@ BoxDecoration kAuthBoxDecoration = BoxDecoration(
 );
 
 BoxDecoration kboxShadowNormal = BoxDecoration(
-  boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.20), blurRadius: 4)],
+  boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.20), blurRadius: 4)],
   color: Colors.white,
   borderRadius: BorderRadius.circular(12),
 );

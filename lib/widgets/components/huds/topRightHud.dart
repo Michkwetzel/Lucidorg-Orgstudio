@@ -10,27 +10,58 @@ class TopRightHud extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    if (ref.watch(topRightHudProvider) == false) return SizedBox.shrink();
+    if (ref.watch(appStateProvider).displayContext.appView != AppView.orgBuild) return SizedBox.shrink();
 
-    return FilledButton.tonal(
-      onPressed: () {
-        OverlayService.openAssessmentCreationOverlay(
-          context,
-          onCreate: (assessmentName) async {
-            String assessmentId = await FirestoreService.createAssessment(ref.read(appStateProvider).orgId!, assessmentName);
-            ref.read(appStateProvider.notifier).setAppView(AppView.assessmentCreate);
-
-            //TODO: Return assesment ID and Assessment Name. 
-            ref.read(appStateProvider.notifier).setAssessment(assessmentId, "assessment.assessmentName");
-
-            print('Creating assessment: $assessmentName');
-          },
-          onClose: () {
-            // Handle close if needed
-          },
-        );
+    return PopupMenuButton<String>(
+      icon: Container(
+        padding: EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Icon(
+          Icons.more_vert,
+          size: 20,
+          color: Colors.black,
+        ),
+      ),
+      tooltip: 'More options',
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(8),
+      ),
+      onSelected: (value) {
+        switch (value) {
+          case 'create_assessment':
+            _createAssessment(context, ref);
+            break;
+        }
       },
-      child: Text("Create Assessment"),
+      itemBuilder: (context) => [
+        PopupMenuItem(
+          value: 'create_assessment',
+          child: Row(
+            children: [
+              Icon(Icons.add_circle_outline, size: 18, color: Colors.blue[700]),
+              SizedBox(width: 8),
+              Text('Create Assessment'),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _createAssessment(BuildContext context, WidgetRef ref) {
+    OverlayService.openAssessmentCreationOverlay(
+      context,
+      onCreate: (assessmentName) async {
+        // String assessmentId = await FirestoreService.createAssessment(ref.read(appStateProvider).orgId!, assessmentName);
+
+        // ref.read(appStateProvider.notifier).toAssessmentView(assessmentId, assessmentName);
+        print('Creating assessment: $assessmentName');
+      },
+      onClose: () {
+        // Handle close if needed
+      },
     );
   }
 }

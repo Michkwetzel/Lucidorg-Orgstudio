@@ -1,51 +1,90 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:platform_v2/config/enums.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:platform_v2/dataClasses/displayContext.dart';
+import 'package:platform_v2/dataClasses/firestoreContext.dart';
+import 'package:platform_v2/main.dart';
+import 'package:platform_v2/services/persistService.dart';
 
 // Notifier Holding Main app state like which appView, Selected org, Selected Assessment, etc.
 class AppState {
   final bool isLoading;
   final bool isInitialized;
-  final AppView appView;
-  final String? orgId;
-  final String? orgName;
-  final String? assessmentID;
-  final String? assessmentName;
+  final FirestoreContext firestoreContext;
+  final DisplayContext displayContext;
 
   const AppState({
     this.isLoading = false,
     this.isInitialized = false,
-    this.appView = AppView.none,
-    this.orgId,
-    this.orgName,
-    this.assessmentID,
-    this.assessmentName,
+    this.firestoreContext = const FirestoreContext(),
+    this.displayContext = const DisplayContext(),
   });
 
   AppState copyWith({
     bool? isLoading,
     bool? isInitialized,
-    AppView? appView,
+    FirestoreContext? firestoreContext,
+    DisplayContext? displayContext,
+    // Individual field updates for convenience
     String? orgId,
     String? orgName,
     String? assessmentID,
     String? assessmentName,
+    AppView? appView,
     // Use this pattern to allow explicitly setting fields to null
     bool clearOrgId = false,
     bool clearOrgName = false,
     bool clearAssessmentID = false,
     bool clearAssessmentName = false,
   }) {
+    // Handle individual field updates by creating new contexts
+    FirestoreContext newFirestoreContext = firestoreContext ?? this.firestoreContext;
+    DisplayContext newDisplayContext = displayContext ?? this.displayContext;
+
+    if (orgId != null || clearOrgId) {
+      newFirestoreContext = newFirestoreContext.copyWith(
+        orgId: orgId,
+        clearOrgId: clearOrgId,
+      );
+    }
+
+    if (orgName != null || clearOrgName) {
+      newDisplayContext = newDisplayContext.copyWith(
+        orgName: orgName,
+        clearOrgName: clearOrgName,
+      );
+    }
+
+    if (assessmentID != null || clearAssessmentID) {
+      newFirestoreContext = newFirestoreContext.copyWith(
+        assessmentId: assessmentID,
+        clearAssessmentId: clearAssessmentID,
+      );
+    }
+
+    if (assessmentName != null || clearAssessmentName) {
+      newDisplayContext = newDisplayContext.copyWith(
+        assessmentName: assessmentName,
+        clearAssessmentName: clearAssessmentName,
+      );
+    }
+
+    if (appView != null) {
+      newDisplayContext = newDisplayContext.copyWith(
+        appView: appView,
+      );
+    }
+
     return AppState(
       isLoading: isLoading ?? this.isLoading,
       isInitialized: isInitialized ?? this.isInitialized,
-      appView: appView ?? this.appView,
-      orgId: clearOrgId ? null : (orgId ?? this.orgId),
-      orgName: clearOrgName ? null : (orgName ?? this.orgName),
-      assessmentID: clearAssessmentID ? null : (assessmentID ?? this.assessmentID),
-      assessmentName: clearAssessmentName ? null : (assessmentName ?? this.assessmentName),
+      firestoreContext: newFirestoreContext,
+      displayContext: newDisplayContext,
     );
   }
+
+  // Getters for data classes
+  FirestoreContext get firestore => firestoreContext;
+  DisplayContext get display => displayContext;
 
   @override
   bool operator ==(Object other) {
@@ -53,11 +92,8 @@ class AppState {
     return other is AppState &&
         other.isLoading == isLoading &&
         other.isInitialized == isInitialized &&
-        other.appView == appView &&
-        other.orgId == orgId &&
-        other.orgName == orgName &&
-        other.assessmentID == assessmentID &&
-        other.assessmentName == assessmentName;
+        other.firestoreContext == firestoreContext &&
+        other.displayContext == displayContext;
   }
 
   @override
@@ -65,17 +101,14 @@ class AppState {
     return Object.hash(
       isLoading,
       isInitialized,
-      appView,
-      orgId,
-      orgName,
-      assessmentID,
-      assessmentName,
+      firestoreContext,
+      displayContext,
     );
   }
 
   @override
   String toString() {
-    return 'AppState(isLoading: $isLoading, isInitialized: $isInitialized, appView: $appView, orgId: $orgId, orgName: $orgName, assessmentID: $assessmentID, assessmentName: $assessmentName)';
+    return 'AppState(isLoading: $isLoading, isInitialized: $isInitialized, firestoreContext: $firestoreContext, displayContext: $displayContext)';
   }
 }
 
@@ -83,17 +116,13 @@ class AppStateNotifier extends StateNotifier<AppState> {
   AppStateNotifier() : super(const AppState()) {
     _loadPersistedState();
   }
+
   // Load persisted state on initialization
   Future<void> _loadPersistedState() async {
-    final prefs = await SharedPreferences.getInstance();
-    final orgId = prefs.getString('orgId');
-    final orgName = prefs.getString('orgName');
-    final appViewString = prefs.getString('appView');
-
-    AppView appView = AppView.none;
-    if (appViewString != null) {
-      appView = _parseAppView(appViewString);
-    }
+    final persistedData = await PersistenceService.loadPersistedState();
+    final orgId = persistedData['orgId'] as String?;
+    final orgName = persistedData['orgName'] as String?;
+    final appView = persistedData['appView'] as AppView;
 
     if (orgId != null) {
       state = state.copyWith(orgId: orgId, orgName: orgName, appView: appView, isInitialized: true);
@@ -106,68 +135,37 @@ class AppStateNotifier extends StateNotifier<AppState> {
   void setOrg(String? orgId, String? orgName) {
     print('OrgID: $orgId, OrgName: $orgName');
     state = state.copyWith(orgId: orgId, orgName: orgName);
-    _persistOrg(orgId, orgName);
+    PersistenceService.persistOrg(orgId, orgName);
   }
 
   void clearOrg() {
     state = state.copyWith(clearOrgId: true, clearOrgName: true);
-    _clearPersistedOrg();
-  }
-
-  Future<void> _persistOrg(String? orgId, String? orgName) async {
-    final prefs = await SharedPreferences.getInstance();
-    if (orgId != null) {
-      await prefs.setString('orgId', orgId);
-      if (orgName != null) {
-        await prefs.setString('orgName', orgName);
-      }
-    }
-  }
-
-  Future<void> _clearPersistedOrg() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('orgId');
-    await prefs.remove('orgName');
-  }
-
-  Future<void> _persistAppView(AppView appView) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('appView', appView.toString());
-  }
-
-  Future<void> _clearPersistedAppView() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('appView');
-  }
-
-  AppView _parseAppView(String appViewString) {
-    switch (appViewString) {
-      case 'AppView.logIn':
-        return AppView.logIn;
-      case 'AppView.selectOrg':
-        return AppView.selectOrg;
-      case 'AppView.orgBuild':
-        return AppView.orgBuild;
-      case 'AppView.assessmentCreate':
-        return AppView.assessmentCreate;
-      case 'AppView.assessmentView':
-        return AppView.assessmentView;
-      default:
-        return AppView.none;
-    }
+    PersistenceService.clearPersistedOrg();
   }
 
   void setLoading(bool isLoading) {
     state = state.copyWith(isLoading: isLoading);
   }
 
-  void setAppView(AppView appView) {
-    state = state.copyWith(appView: appView);
-    _persistAppView(appView);
+  void toOrgBuilder() {
+    state = state.copyWith(appView: AppView.orgBuild, clearAssessmentID: true, clearAssessmentName: true);
+    PersistenceService.persistAppView(AppView.orgBuild);
   }
 
-  void setAssessment(String? assessmentID, String? assessmentName) {
-    state = state.copyWith(assessmentID: assessmentID, assessmentName: assessmentName);
+  void toAssessmentView(String? assessmentID, String? assessmentName) {
+    //Also sets Appview
+    state = state.copyWith(assessmentID: assessmentID, assessmentName: assessmentName, appView: AppView.assessmentView);
+    PersistenceService.persistAppView(AppView.assessmentView);
+  }
+
+  void toAssessmentSelect() {
+    state = state.copyWith(appView: AppView.assessmentSelect);
+    PersistenceService.persistAppView(AppView.assessmentSelect);
+  }
+
+  void toOrgSelect() {
+    state = state.copyWith(appView: AppView.orgSelect, clearOrgId: true);
+    PersistenceService.persistAppView(AppView.orgSelect);
   }
 
   void clearAssessment() {
@@ -176,15 +174,13 @@ class AppStateNotifier extends StateNotifier<AppState> {
 
   void reset() {
     state = const AppState();
-    _clearPersistedAppView();
+    PersistenceService.clearPersistedAppView();
   }
 
-  // Getters
-  String? get orgId => state.orgId;
-  String? get orgName => state.orgName;
-  String? get assessmentID => state.assessmentID;
-  String? get assessmentName => state.assessmentName;
-  AppView get currentAppView => state.appView;
+  // Getters for data classes
+  FirestoreContext get firestore => state.firestoreContext;
+  DisplayContext get display => state.displayContext;
+  AppView get currentAppView => state.displayContext.appView;
   bool get isLoading => state.isLoading;
   bool get isInitialized => state.isInitialized;
 }

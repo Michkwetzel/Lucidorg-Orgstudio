@@ -36,7 +36,7 @@ final orgsScreenProvider = StateNotifierProvider.autoDispose<OrgsScreenNotifier,
 });
 
 final assessmentScreenProvider = StateNotifierProvider.autoDispose<AssessmentScreenNotifier, AssessmentScreenState>((ref) {
-  final String orgId = ref.read(appStateProvider).orgId!;
+  final String orgId = ref.read(appStateProvider).firestoreContext.orgId!;
   return AssessmentScreenNotifier(orgId: orgId);
 });
 
@@ -45,18 +45,19 @@ final appStateProvider = StateNotifierProvider<AppStateNotifier, AppState>((ref)
 });
 
 final canvasProvider = StateNotifierProvider.autoDispose<OrgCanvasNotifier, Set<String>>((ref) {
-  final String orgId = ref.watch(appStateProvider).orgId!;
+  final context = ref.watch(appStateProvider).firestoreContext;
+
   final ConnectionManager connectionManager = ref.read(connectionManagerProvider.notifier);
 
-  return OrgCanvasNotifier(orgId: orgId, connectionManager: connectionManager);
+  return OrgCanvasNotifier(context: context, connectionManager: connectionManager);
 });
 
 final blockNotifierProvider = ChangeNotifierProvider.family.autoDispose<BlockNotifier, String>((ref, blockID) {
-  final String orgId = ref.read(appStateProvider).orgId!;
+  final context = ref.watch(appStateProvider).firestoreContext;
 
   final notifier = BlockNotifier(
     blockID: blockID,
-    orgId: orgId,
+    context: context,
   );
 
   return notifier;
@@ -88,9 +89,9 @@ final blockPositionsProvider = Provider<Map<String, Offset>>((ref) {
 });
 
 final connectionManagerProvider = StateNotifierProvider<ConnectionManager, ConnectionsState>((ref) {
-  final String orgId = ref.watch(appStateProvider).orgId!;
+  final context = ref.watch(appStateProvider).firestoreContext;
 
-  return ConnectionManager(orgId: orgId);
+  return ConnectionManager(context: context);
 });
 
 final selectedBlockProvider = StateProvider<String?>((ref) => null);
