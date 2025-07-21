@@ -22,4 +22,5 @@ class BlockContext {
   BlockNotifier get blockNotifier => ref.read(blockNotifierProvider(blockId).notifier);
   OrgCanvasNotifier get orgCanvasNotifier => ref.read(canvasProvider.notifier);
   ConnectionManager get connectionManager => ref.read(connectionManagerProvider.notifier);
+  Set<String> get selectedBlocks => ref.read(selectedBlocksProvider);
 }
