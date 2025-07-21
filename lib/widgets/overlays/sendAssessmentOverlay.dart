@@ -22,6 +22,7 @@ class SendAssessmentOverlay extends ConsumerStatefulWidget {
 class _SendAssessmentOverlayState extends ConsumerState<SendAssessmentOverlay> {
   final TextEditingController textController = TextEditingController();
   String selectedOption = 'Select';
+  List<String> availableDepartments = [];
 
   void _handleSend() {
     final selectedBlockIds = ref.read(selectedBlocksProvider);
@@ -44,16 +45,68 @@ class _SendAssessmentOverlayState extends ConsumerState<SendAssessmentOverlay> {
     }
   }
 
+  void _scanForDepartments() {
+    final blockIds = ref.read(canvasProvider);
+    final departments = <String>{};
+    
+    for (final blockId in blockIds) {
+      final blockNotifier = ref.read(blockNotifierProvider(blockId));
+      final blockData = blockNotifier.blockData;
+      if (blockData != null && blockData.department.isNotEmpty) {
+        departments.add(blockData.department);
+      }
+    }
+    
+    setState(() {
+      availableDepartments = departments.toList()..sort();
+    });
+  }
+
+  void _toggleDepartment(String department) {
+    final selectedDepartments = ref.read(selectedDepartmentsProvider);
+    final newSelectedDepartments = Set<String>.from(selectedDepartments);
+    
+    if (selectedDepartments.contains(department)) {
+      newSelectedDepartments.remove(department);
+    } else {
+      newSelectedDepartments.add(department);
+    }
+    
+    ref.read(selectedDepartmentsProvider.notifier).state = newSelectedDepartments;
+    _updateSelectedBlocksFromDepartments(newSelectedDepartments);
+  }
+
+  void _updateSelectedBlocksFromDepartments(Set<String> selectedDepartments) {
+    final blockIds = ref.read(canvasProvider);
+    final selectedBlocks = <String>{};
+    
+    for (final blockId in blockIds) {
+      final blockNotifier = ref.read(blockNotifierProvider(blockId));
+      final blockData = blockNotifier.blockData;
+      if (blockData != null && selectedDepartments.contains(blockData.department)) {
+        selectedBlocks.add(blockId);
+      }
+    }
+    
+    ref.read(selectedBlocksProvider.notifier).state = selectedBlocks;
+  }
+
+  void _selectAllBlocks() {
+    final blockIds = ref.read(canvasProvider);
+    ref.read(selectedBlocksProvider.notifier).state = Set.from(blockIds);
+    ref.read(selectedDepartmentsProvider.notifier).state = {};
+  }
+
   void _handleOptionTap(String option) {
     switch (option) {
       case 'Select':
         ref.read(appStateProvider.notifier).setAppMode(AppMode.assessmentSendSelectBlocks);
         break;
       case 'Department':
-        // Handle department logic
+        _scanForDepartments();
         break;
       case 'All':
-        // Handle all logic
+        _selectAllBlocks();
         break;
     }
     setState(() => selectedOption = option);
@@ -163,8 +216,45 @@ class _SendAssessmentOverlayState extends ConsumerState<SendAssessmentOverlay> {
                     ),
                     const SizedBox(height: 16),
 
+                    // Department Selection Section
+                    if (selectedOption == 'Department') ...[
+                      const Text(
+                        'Select Departments',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      if (availableDepartments.isNotEmpty)
+                        Consumer(
+                          builder: (context, ref, child) {
+                            final selectedDepartments = ref.watch(selectedDepartmentsProvider);
+                            return Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: availableDepartments.map((department) {
+                                final isSelected = selectedDepartments.contains(department);
+                                return FilterChip(
+                                  label: Text(department),
+                                  selected: isSelected,
+                                  onSelected: (selected) => _toggleDepartment(department),
+                                  selectedColor: Colors.blue.shade100,
+                                  checkmarkColor: Colors.blue.shade700,
+                                  backgroundColor: Colors.grey.shade100,
+                                  side: BorderSide(
+                                    color: isSelected ? Colors.blue.shade300 : Colors.grey.shade300,
+                                  ),
+                                );
+                              }).toList(),
+                            );
+                          },
+                        ),
+                      const SizedBox(height: 16),
+                    ],
+
                     // Selected Blocks Section
-                    if (selectedBlockIds.isNotEmpty) ...[
+                    if (selectedBlockIds.isNotEmpty && selectedOption != 'Department') ...[
                       const Text(
                         'Selected Blocks',
                         style: TextStyle(
@@ -253,6 +343,7 @@ class _SendAssessmentOverlayState extends ConsumerState<SendAssessmentOverlay> {
                             onPressed: () {
                               // Handle cancel logic here
                               ref.read(selectedBlocksProvider.notifier).state = {};
+                              ref.read(selectedDepartmentsProvider.notifier).state = {};
                               ref.read(appStateProvider.notifier).setAppMode(AppMode.assessmentBuild);
                               widget.onClose?.call();
                             },

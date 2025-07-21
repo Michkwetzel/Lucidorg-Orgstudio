@@ -96,6 +96,7 @@ final connectionManagerProvider = StateNotifierProvider<ConnectionManager, Conne
 
 // For assessment Send Mode
 final selectedBlocksProvider = StateProvider<Set<String>>((ref) => {});
+final selectedDepartmentsProvider = StateProvider<Set<String>>((ref) => {});
 
 // For Builder
 final selectedBlockProvider = StateProvider<String?>((ref) => null);

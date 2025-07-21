@@ -70,7 +70,7 @@ class _OrgCanvasState extends ConsumerState<OrgCanvas> {
                 ref.read(canvasProvider.notifier).addBlock(blockID, _lastTapPosition);
               },
               child: Container(
-                width: 7000,
+                width: 15000,
                 height: 7000,
                 color: Colors.grey,
                 child: Stack(

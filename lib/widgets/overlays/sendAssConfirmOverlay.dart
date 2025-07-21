@@ -27,7 +27,9 @@ class AssessmentSendConfirmationOverlay extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final selectedBlockIds = ref.watch(selectedBlocksProvider);
+    final selectedDepartments = ref.watch(selectedDepartmentsProvider);
     final totalEmails = _calculateTotalEmails(selectedBlockIds, ref);
+    final isDepartmentMode = selectedDepartments.isNotEmpty;
 
     return Material(
       color: Colors.black54,
@@ -76,7 +78,7 @@ class AssessmentSendConfirmationOverlay extends ConsumerWidget {
                 ),
                 const SizedBox(height: 16),
 
-                // Email count info
+                // Email count and department info
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.all(16),
@@ -85,20 +87,44 @@ class AssessmentSendConfirmationOverlay extends ConsumerWidget {
                     border: Border.all(color: Colors.blue.shade300),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: Row(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Icon(Icons.email, color: Colors.blue.shade600, size: 20),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          'You are about to send an assessment to $totalEmails email${totalEmails != 1 ? 's' : ''}',
-                          style: TextStyle(
-                            color: Colors.blue.shade700,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w500,
+                      Row(
+                        children: [
+                          Icon(Icons.email, color: Colors.blue.shade600, size: 20),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'You are about to send an assessment to $totalEmails email${totalEmails != 1 ? 's' : ''}',
+                              style: TextStyle(
+                                color: Colors.blue.shade700,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
                           ),
-                        ),
+                        ],
                       ),
+                      if (isDepartmentMode) ...[
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            Icon(Icons.business, color: Colors.blue.shade600, size: 20),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                'Sending to departments: ${selectedDepartments.join(', ')}',
+                                style: TextStyle(
+                                  color: Colors.blue.shade700,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ],
                   ),
                 ),

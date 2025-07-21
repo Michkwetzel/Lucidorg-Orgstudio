@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:platform_v2/config/enums.dart';
 import 'package:platform_v2/config/provider.dart';
+import 'package:platform_v2/services/firestoreService.dart';
 import 'package:platform_v2/services/uiServices/overLayService.dart';
 
 class TopRightHud extends ConsumerWidget {
@@ -53,7 +54,7 @@ class TopRightHud extends ConsumerWidget {
     OverlayService.openAssessmentCreationOverlay(
       context,
       onCreate: (assessmentName) async {
-        // String assessmentId = await FirestoreService.createAssessment(ref.read(appStateProvider).orgId!, assessmentName);
+        await FirestoreService.createAssessment(ref.read(appStateProvider).firestoreContext.orgId!, assessmentName);
 
         // ref.read(appStateProvider.notifier).toAssessmentView(assessmentId, assessmentName);
         print('Creating assessment: $assessmentName');
