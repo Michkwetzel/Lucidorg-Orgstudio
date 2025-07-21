@@ -66,6 +66,17 @@ class _SendAssessmentOverlayState extends ConsumerState<SendAssessmentOverlay> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    // Listen for app view changes
+    ref.listenManual(appStateProvider.select((state) => state.displayContext.appView), (previous, next) {
+      if (next != AppView.assessmentBuild) {
+        widget.onClose?.call();
+      }
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     final selectedBlockIds = ref.watch(selectedBlocksProvider);
 

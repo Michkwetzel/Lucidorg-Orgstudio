@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:platform_v2/dataClasses/blockData.dart';
-import 'package:platform_v2/widgets/overlays/assessmentCreationOverlay.dart';
-import 'package:platform_v2/widgets/overlays/assessmentSendOverlay.dart';
+import 'package:platform_v2/widgets/overlays/createAssessment.dart';
+import 'package:platform_v2/widgets/overlays/sendAssessmentOverlay.dart';
 import 'package:platform_v2/widgets/overlays/blockInputOverlay.dart';
-import 'package:platform_v2/widgets/overlays/assessmentSendConfirmationOverlay.dart';
+import 'package:platform_v2/widgets/overlays/sendAssConfirmOverlay.dart';
 
 class OverlayService {
   static OverlayEntry? _currentOverlay;

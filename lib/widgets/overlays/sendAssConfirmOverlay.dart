@@ -16,7 +16,7 @@ class AssessmentSendConfirmationOverlay extends ConsumerWidget {
     int totalEmails = 0;
     for (String blockId in selectedBlockIds) {
       final blockNotifier = ref.read(blockNotifierProvider(blockId));
-      final blockData = blockNotifier?.blockData;
+      final blockData = blockNotifier.blockData;
       if (blockData != null) {
         totalEmails += blockData.emails.length;
       }
@@ -124,7 +124,7 @@ class AssessmentSendConfirmationOverlay extends ConsumerWidget {
                           return Consumer(
                             builder: (context, ref, child) {
                               final blockNotifier = ref.watch(blockNotifierProvider(blockId));
-                              final blockData = blockNotifier?.blockData;
+                              final blockData = blockNotifier.blockData;
 
                               if (blockData == null) {
                                 return const Card(
@@ -150,9 +150,7 @@ class AssessmentSendConfirmationOverlay extends ConsumerWidget {
                                             radius: 20,
                                             backgroundColor: Colors.blue.shade100,
                                             child: Text(
-                                              blockData.name.isNotEmpty 
-                                                ? blockData.name[0].toUpperCase()
-                                                : '?',
+                                              blockData.name.isNotEmpty ? blockData.name[0].toUpperCase() : '?',
                                               style: TextStyle(
                                                 color: Colors.blue.shade700,
                                                 fontWeight: FontWeight.bold,

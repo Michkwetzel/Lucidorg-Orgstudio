@@ -54,4 +54,7 @@ class AssessmentSendStrategy extends BlockBehaviorStrategy {
 
   @override
   void onDoubleTapDown(BlockContext context) {}
+
+  @override
+  void onPanUpdate(BlockContext context, DragUpdateDetails details, double hitboxOffset) {}
 }
