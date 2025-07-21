@@ -26,7 +26,7 @@ class _LogInScreenState extends ConsumerState<LogInScreen> {
     final Logger logger = Logger("LogIn");
 
     void successfullyLogIn() {
-      ref.read(appStateProvider.notifier).toOrgSelect();
+      ref.read(appStateProvider.notifier).setAppView(AppView.orgSelect);
       NavigationService.navigateTo('/app/orgSelect');
     }
 

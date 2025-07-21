@@ -1,7 +1,6 @@
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:platform_v2/config/enums.dart';
 
-
 class PersistenceService {
   static const String _orgIdKey = 'orgId';
   static const String _orgNameKey = 'orgName';
@@ -65,10 +64,8 @@ class PersistenceService {
         return AppView.orgSelect;
       case 'AppView.orgBuild':
         return AppView.orgBuild;
-      case 'AppView.assessmentCreate':
-        return AppView.assessmentCreate;
       case 'AppView.assessmentView':
-        return AppView.assessmentView;
+        return AppView.assessmentBuild;
       default:
         return AppView.none;
     }

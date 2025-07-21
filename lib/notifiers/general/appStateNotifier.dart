@@ -2,7 +2,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:platform_v2/config/enums.dart';
 import 'package:platform_v2/dataClasses/displayContext.dart';
 import 'package:platform_v2/dataClasses/firestoreContext.dart';
-import 'package:platform_v2/main.dart';
 import 'package:platform_v2/services/persistService.dart';
 
 // Notifier Holding Main app state like which appView, Selected org, Selected Assessment, etc.
@@ -30,6 +29,7 @@ class AppState {
     String? assessmentID,
     String? assessmentName,
     AppView? appView,
+    AppMode? appMode,
     // Use this pattern to allow explicitly setting fields to null
     bool clearOrgId = false,
     bool clearOrgName = false,
@@ -74,6 +74,12 @@ class AppState {
       );
     }
 
+    if (appMode != null) {
+      newDisplayContext = newDisplayContext.copyWith(
+        appMode: appMode,
+      );
+    }
+
     return AppState(
       isLoading: isLoading ?? this.isLoading,
       isInitialized: isInitialized ?? this.isInitialized,
@@ -89,11 +95,7 @@ class AppState {
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
-    return other is AppState &&
-        other.isLoading == isLoading &&
-        other.isInitialized == isInitialized &&
-        other.firestoreContext == firestoreContext &&
-        other.displayContext == displayContext;
+    return other is AppState && other.isLoading == isLoading && other.isInitialized == isInitialized && other.firestoreContext == firestoreContext && other.displayContext == displayContext;
   }
 
   @override
@@ -123,13 +125,20 @@ class AppStateNotifier extends StateNotifier<AppState> {
     final orgId = persistedData['orgId'] as String?;
     final orgName = persistedData['orgName'] as String?;
     final appView = persistedData['appView'] as AppView;
+    final appMode = persistedData['appMode'] as AppMode?;
 
     if (orgId != null) {
-      state = state.copyWith(orgId: orgId, orgName: orgName, appView: appView, isInitialized: true);
+      state = state.copyWith(orgId: orgId, orgName: orgName, appView: appView, appMode: appMode, isInitialized: true);
     } else {
       // No saved org, but still mark as initialized so app can show org selection
-      state = state.copyWith(appView: appView, isInitialized: true);
+      state = state.copyWith(appView: appView, appMode: appMode, isInitialized: true);
     }
+  }
+
+  void setAppMode(AppMode appMode) {
+    state = state.copyWith(appMode: appMode);
+    // Optionally persist the app mode if needed
+    // PersistenceService.persistAppMode(appMode);
   }
 
   void setOrg(String? orgId, String? orgName) {
@@ -147,25 +156,19 @@ class AppStateNotifier extends StateNotifier<AppState> {
     state = state.copyWith(isLoading: isLoading);
   }
 
-  void toOrgBuilder() {
-    state = state.copyWith(appView: AppView.orgBuild, clearAssessmentID: true, clearAssessmentName: true);
-    PersistenceService.persistAppView(AppView.orgBuild);
-  }
-
-  void toAssessmentView(String? assessmentID, String? assessmentName) {
+  void setAppView(AppView appview, {String? assessmentID, String? assessmentName}) {
     //Also sets Appview
-    state = state.copyWith(assessmentID: assessmentID, assessmentName: assessmentName, appView: AppView.assessmentView);
-    PersistenceService.persistAppView(AppView.assessmentView);
-  }
+    if (appview == AppView.assessmentBuild) {
+      state = state.copyWith(assessmentID: assessmentID, assessmentName: assessmentName, appView: AppView.assessmentBuild);
+    } else if (appview == AppView.orgSelect) {
+      state = state.copyWith(appView: AppView.orgSelect, clearOrgId: true);
+    } else if (appview == AppView.assessmentSelect) {
+      state = state.copyWith(appView: AppView.assessmentSelect);
+    } else if (appview == AppView.orgBuild) {
+      state = state.copyWith(appView: AppView.orgBuild, clearAssessmentID: true, clearAssessmentName: true);
+    }
 
-  void toAssessmentSelect() {
-    state = state.copyWith(appView: AppView.assessmentSelect);
-    PersistenceService.persistAppView(AppView.assessmentSelect);
-  }
-
-  void toOrgSelect() {
-    state = state.copyWith(appView: AppView.orgSelect, clearOrgId: true);
-    PersistenceService.persistAppView(AppView.orgSelect);
+    PersistenceService.persistAppView(appview);
   }
 
   void clearAssessment() {
@@ -181,6 +184,7 @@ class AppStateNotifier extends StateNotifier<AppState> {
   FirestoreContext get firestore => state.firestoreContext;
   DisplayContext get display => state.displayContext;
   AppView get currentAppView => state.displayContext.appView;
+  AppMode get currentAppMode => state.displayContext.appMode;
   bool get isLoading => state.isLoading;
   bool get isInitialized => state.isInitialized;
 }

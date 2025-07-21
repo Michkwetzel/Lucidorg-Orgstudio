@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:platform_v2/widgets/components/huds/botLeftHud.dart';
+import 'package:platform_v2/widgets/components/huds/botRightHud.dart';
 import 'package:platform_v2/widgets/components/huds/topLeftHud.dart';
 import 'package:platform_v2/widgets/components/huds/topRightHud.dart';
 
@@ -31,6 +32,11 @@ class AppScaffold extends StatelessWidget {
                 bottom: 24,
                 left: 24,
                 child: BotLeftHud(),
+              ),
+              Positioned(
+                bottom: 24,
+                right: 24,
+                child: BotRightHud(),
               ),
             ],
           ),

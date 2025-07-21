@@ -7,7 +7,6 @@ class FirestoreContext {
   FirestoreContext copyWith({
     String? orgId,
     String? assessmentId,
-    // Use this pattern to allow explicitly setting fields to null
     bool clearOrgId = false,
     bool clearAssessmentId = false,
   }) {

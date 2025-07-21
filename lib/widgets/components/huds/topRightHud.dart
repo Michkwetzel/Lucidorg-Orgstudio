@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:platform_v2/config/enums.dart';
 import 'package:platform_v2/config/provider.dart';
-import 'package:platform_v2/services/firestoreService.dart';
 import 'package:platform_v2/services/uiServices/overLayService.dart';
 
 class TopRightHud extends ConsumerWidget {

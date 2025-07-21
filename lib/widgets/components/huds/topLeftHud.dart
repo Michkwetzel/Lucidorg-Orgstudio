@@ -31,7 +31,7 @@ class TopLeftHud extends ConsumerWidget {
             SizedBox(width: 12),
             // Mode and assessment info
             _buildModeText(appDisplayState),
-            if (appDisplayState.appView == AppView.assessmentView || appDisplayState.appView == AppView.assessmentCreate && appDisplayState.assessmentName != null) ...[
+            if (appDisplayState.appView == AppView.assessmentBuild && appDisplayState.assessmentName != null) ...[
               Text(" • ", style: kTextHeading3L.copyWith(color: Colors.grey[600])),
               Text(
                 appDisplayState.assessmentName!,
@@ -70,7 +70,7 @@ class TopLeftHud extends ConsumerWidget {
         modeText = "Select Assessment";
         modeColor = Colors.blue[700];
         break;
-      case AppView.assessmentView:
+      case AppView.assessmentBuild:
         modeText = "Assessment Builder";
         modeColor = Colors.blue[700];
         break;
@@ -96,7 +96,7 @@ class TopLeftHud extends ConsumerWidget {
   }
 
   bool _shouldShowDropdown(appstate) {
-    return appstate.appView == AppView.orgBuild || appstate.appView == AppView.assessmentCreate || appstate.appView == AppView.assessmentView || appstate.appView == AppView.assessmentSelect;
+    return appstate.appView == AppView.orgBuild || appstate.appView == AppView.assessmentBuild || appstate.appView == AppView.assessmentSelect;
   }
 
   // Updated TopLeftHud dropdown styling
@@ -120,11 +120,11 @@ class TopLeftHud extends ConsumerWidget {
         onSelected: (value) {
           switch (value) {
             case AppView.orgBuild:
-              ref.read(appStateProvider.notifier).toOrgBuilder();
+              ref.read(appStateProvider.notifier).setAppView(AppView.orgBuild);
               NavigationService.navigateTo("/app/canvas");
               break;
             case AppView.assessmentSelect:
-              ref.read(appStateProvider.notifier).toAssessmentSelect();
+              ref.read(appStateProvider.notifier).setAppView(AppView.assessmentSelect);
               NavigationService.navigateTo("/app/assessmentSelect");
               break;
             default:

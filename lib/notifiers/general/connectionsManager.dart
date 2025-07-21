@@ -3,7 +3,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logging/logging.dart';
-import 'package:platform_v2/config/provider.dart';
 import 'package:platform_v2/dataClasses/connection.dart';
 import 'package:platform_v2/dataClasses/firestoreContext.dart';
 import 'package:platform_v2/services/firestoreIDGenerator.dart';
