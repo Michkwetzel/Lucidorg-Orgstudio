@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logging/logging.dart';
+import 'package:platform_v2/config/enums.dart';
 import 'package:platform_v2/config/provider.dart';
 import 'package:platform_v2/services/customPainters/connectionPainter.dart';
 import 'package:platform_v2/services/firestoreIdGenerator.dart';
@@ -66,11 +67,14 @@ class _OrgCanvasState extends ConsumerState<OrgCanvas> {
               },
               onDoubleTap: () {
                 // Create new block at tap position
-                final blockID = FirestoreIdGenerator.generate();
-                ref.read(canvasProvider.notifier).addBlock(blockID, _lastTapPosition);
+                if (ref.read(appStateProvider.notifier).currentAppMode != AppMode.assessmentSendSelectBlocks) {
+                  // But only if not select blocks for assessment mode.
+                  final blockID = FirestoreIdGenerator.generate();
+                  ref.read(canvasProvider.notifier).addBlock(blockID, _lastTapPosition);
+                }
               },
               child: Container(
-                width: 15000,
+                width: 30000,
                 height: 7000,
                 color: Colors.grey,
                 child: Stack(

@@ -2,12 +2,12 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:platform_v2/config/setup_logging.dart';
+import 'package:platform_v2/config/setupLogging.dart';
 import 'package:platform_v2/firebase_options.dart';
 import 'package:platform_v2/services/firestoreService.dart';
 import 'package:platform_v2/services/uiServices/navigationService.dart';
 import 'package:platform_v2/services/uiServices/snackBarService.dart';
-import 'package:platform_v2/config/setup_router.dart';
+import 'package:platform_v2/config/setupRouter.dart';
 import 'package:platform_v2/config/provider.dart';
 
 void main() async {

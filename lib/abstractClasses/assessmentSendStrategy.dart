@@ -15,15 +15,17 @@ class AssessmentSendStrategy extends BlockBehaviorStrategy {
         width: kBlockWidth,
         height: kBlockHeight,
         decoration: getDecoration(context),
-        child: Column(
-          spacing: 4,
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Text(context.blockNotifier.blockData?.name ?? ""),
-            Text(context.blockNotifier.blockData?.role ?? ""),
-            Text(context.blockNotifier.blockData?.department ?? ""),
-          ],
+        child: Center(
+          child: Column(
+            spacing: 4,
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Text(context.blockNotifier.blockData?.name ?? ""),
+              Text(context.blockNotifier.blockData?.role ?? ""),
+              Text(context.blockNotifier.blockData?.department ?? ""),
+            ],
+          ),
         ),
       ),
     );

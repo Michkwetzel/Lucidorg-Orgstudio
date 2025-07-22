@@ -9,12 +9,7 @@ class OverlayService {
   static OverlayEntry? _currentOverlay;
 
   // When double taping a block
-  static void openBlockInputBox(
-    BuildContext context, {
-    Function(BlockData)? onSave,
-    VoidCallback? onClose,
-    BlockData? initialData,
-  }) {
+  static void openBlockInputBox(BuildContext context, {Function(BlockData)? onSave, VoidCallback? onClose, BlockData? initialData}) {
     final overlay = Overlay.of(context);
 
     // Remove any existing overlay
@@ -43,11 +38,7 @@ class OverlayService {
   }
 
   // Dialogie that opens when you want to create a new Assessment
-  static void openAssessmentCreationOverlay(
-    BuildContext context, {
-    Future<void> Function(String)? onCreate,
-    VoidCallback? onClose,
-  }) {
+  static void openAssessmentCreationOverlay(BuildContext context, {Future<void> Function(String)? onCreate, VoidCallback? onClose}) {
     final overlay = Overlay.of(context);
 
     // Remove any existing overlay
@@ -75,11 +66,7 @@ class OverlayService {
   }
 
   // Selecting which emails to send Assessment to
-  static void openSendAssessmentOverlay(
-    BuildContext context, {
-    Function(String, String)? onSend,
-    VoidCallback? onClose,
-  }) {
+  static void openSendAssessmentOverlay(BuildContext context, {Function(String, String)? onSend, VoidCallback? onClose}) {
     final overlay = Overlay.of(context);
 
     late OverlayEntry overlayEntry;
@@ -104,11 +91,7 @@ class OverlayService {
   }
 
   // Opens to confirm what you assessments you are about to send
-  static void openAssessmentSendConfirmationOverlay(
-    BuildContext context, {
-    VoidCallback? onSend,
-    VoidCallback? onCancel,
-  }) {
+  static void openAssessmentSendConfirmationOverlay(BuildContext context, {VoidCallback? onSend, VoidCallback? onCancel}) {
     final overlay = Overlay.of(context);
 
     late OverlayEntry overlayEntry;

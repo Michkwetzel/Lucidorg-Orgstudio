@@ -5,7 +5,7 @@ import 'package:logging/logging.dart';
 class HttpService {
   static final Logger logger = Logger("HttpService");
 
-  static Future<dynamic> postRequest({required String path, required Map<String, dynamic> request, Map<String, String>? additionalHeaders}) async {
+  static Future<dynamic> postRequest({required String path, required Map<String, dynamic> request}) async {
     final uri = Uri.parse(path);
     final headers = {
       'Content-Type': 'application/json',
