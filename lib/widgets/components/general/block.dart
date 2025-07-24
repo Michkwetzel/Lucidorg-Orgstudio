@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:platform_v2/abstractClasses/assessmentDataViewStrategy.dart';
 import 'package:platform_v2/abstractClasses/assessmentSendStrategy.dart';
 import 'package:platform_v2/abstractClasses/blockBehaviourStrategy.dart';
 import 'package:platform_v2/abstractClasses/blockContext.dart';
@@ -19,39 +20,39 @@ class Block extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     print("Build block $blockId");
-    BlockBehaviorStrategy strategy = OrgBuildStrategy();
 
-    AppMode appMode = ref.watch(appStateProvider).displayContext.appMode;
-    if (appMode == AppMode.assessmentSendSelectBlocks) {
-      strategy = AssessmentSendStrategy();
-    }
+    const dotOverhang = 38.0;
+    final hitboxOffset = ref.read(blockNotifierProvider(blockId).notifier).selected ? dotOverhang : 0.0;
 
     BlockContext blockContext = BlockContext(
       ref: ref,
       blockId: blockId,
       buildContext: context,
-      dotOverhang: 38, //How far the dot extends beyond the block
+      hitboxOffset: hitboxOffset,
     );
 
-    const dotOverhang = 38.0;
-    final hitboxOffset = ref.read(blockNotifierProvider(blockId).notifier).selectionMode ? dotOverhang : 0.0;
-    final hitboxWidth = kBlockWidth + (hitboxOffset * 2);
-    final hitboxHeight = kBlockHeight + (hitboxOffset * 2);
+    BlockBehaviorStrategy strategy = OrgBuildStrategy();
+
+    // Get strategy
+    AppMode appMode = ref.watch(appStateProvider).displayContext.appMode;
+    if (appMode == AppMode.assessmentSend) {
+      strategy = AssessmentSendStrategy();
+    } else if (appMode == AppMode.assessmentDataView) {
+      strategy = AssessmentDataViewStrategy();
+    }
 
     final blockState = ref.watch(blockNotifierProvider(blockId));
     final blockNotifier = ref.read(blockNotifierProvider(blockId).notifier);
 
     ref.listen<String?>(selectedBlockProvider, (previous, next) {
-      if (next != blockId && blockState.selectionMode) {
-        blockNotifier.selectionModeDisable();
+      if (next != blockId && blockState.selected) {
+        blockNotifier.onDeSelect();
       }
     });
 
     if (blockState.positionLoaded == false) {
       return const SizedBox.shrink();
     }
-
-    // strategy.getBlockDataDisplay(blockContext, hitboxOffset),
 
     return Positioned(
       left: blockState.position.dx - hitboxOffset,
@@ -61,19 +62,7 @@ class Block extends ConsumerWidget {
         onTap: () => strategy.onTap(blockContext),
         onDoubleTapDown: (details) => strategy.onDoubleTapDown(blockContext),
         onPanUpdate: (details) => strategy.onPanUpdate(blockContext, details, hitboxOffset),
-        child: SizedBox(
-          width: hitboxWidth,
-          height: hitboxHeight,
-          child: Stack(
-            clipBehavior: Clip.none,
-            children: [
-              // Main block container - positioned at the center of the hitbox area
-              strategy.getBlockDataDisplay(blockContext, hitboxOffset),
-
-              if (blockState.selectionMode) ...strategy.getSideDotWidgets(blockContext, hitboxWidth, hitboxHeight),
-            ],
-          ),
-        ),
+        child: strategy.getBlockWidget(blockContext),
       ),
     );
   }

@@ -4,35 +4,45 @@ import 'package:platform_v2/abstractClasses/blockContext.dart';
 import 'package:platform_v2/config/constants.dart';
 import 'package:platform_v2/config/provider.dart';
 
-//Class encupasulating Block behaviour and appearance in OrgBuild mode
 class AssessmentSendStrategy extends BlockBehaviorStrategy {
   @override
-  Widget getBlockDataDisplay(BlockContext context, double hitboxOffset) {
-    return Positioned(
-      left: hitboxOffset,
-      top: hitboxOffset,
-      child: Container(
-        width: kBlockWidth,
-        height: kBlockHeight,
-        decoration: getDecoration(context),
-        child: Center(
-          child: Column(
-            spacing: 4,
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Text(context.blockNotifier.blockData?.name ?? ""),
-              Text(context.blockNotifier.blockData?.role ?? ""),
-              Text(context.blockNotifier.blockData?.department ?? ""),
-            ],
+  Widget getBlockWidget(BlockContext context) {
+    return SizedBox(
+      width: context.hitboxWidth,
+      height: context.hitboxHeight,
+      child: Stack(
+        children: [
+          Positioned(
+            left: context.hitboxOffset,
+            top: context.hitboxOffset,
+            child: Container(
+              width: kBlockWidth,
+              height: kBlockHeight,
+              decoration: blockDecoration(context),
+              child: blockData(context),
+            ),
           ),
-        ),
+        ],
       ),
     );
   }
 
   @override
-  BoxDecoration getDecoration(BlockContext context) {
+  Widget blockData(BlockContext context) {
+    return Column(
+      spacing: 4,
+      mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Text(context.blockNotifier.blockData?.name ?? ""),
+        Text(context.blockNotifier.blockData?.role ?? ""),
+        Text(context.blockNotifier.blockData?.department ?? ""),
+      ],
+    );
+  }
+
+  @override
+  BoxDecoration blockDecoration(BlockContext context) {
     Set<String> selectedBlocks = context.ref.watch(selectedBlocksProvider);
     if (selectedBlocks.contains(context.blockId)) {
       return kboxShadowNormal.copyWith(border: Border.all(color: Colors.blue, width: 6));
@@ -41,7 +51,6 @@ class AssessmentSendStrategy extends BlockBehaviorStrategy {
     }
   }
 
-  // add blocks to selected blocks list
   @override
   void onTap(BlockContext context) {
     print("Block tapped");

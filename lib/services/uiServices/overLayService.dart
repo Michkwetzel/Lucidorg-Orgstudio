@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:platform_v2/config/enums.dart';
 import 'package:platform_v2/dataClasses/blockData.dart';
 import 'package:platform_v2/widgets/overlays/createAssessment.dart';
 import 'package:platform_v2/widgets/overlays/sendAssessmentOverlay.dart';
@@ -6,112 +7,110 @@ import 'package:platform_v2/widgets/overlays/blockInputOverlay.dart';
 import 'package:platform_v2/widgets/overlays/sendAssConfirmOverlay.dart';
 
 class OverlayService {
-  static OverlayEntry? _currentOverlay;
+  static OverlayEntry? _activeBlockInputOverlay;
+  static OverlayEntry? _activeSendAssessmentOverlay;
+  static OverlayEntry? _activeAssessmentCreationOverlay;
 
-  // When double taping a block
-  static void openBlockInputBox(BuildContext context, {Function(BlockData)? onSave, VoidCallback? onClose, BlockData? initialData}) {
+  static void showBlockInput(BuildContext context, {required Function(BlockData) onSave, VoidCallback? onCancel, BlockData? initialData, required String blockId}) {
+    // Close existing block input overlay if one exists
+    _activeBlockInputOverlay?.remove();
+    _activeBlockInputOverlay = null;
     final overlay = Overlay.of(context);
-
-    // Remove any existing overlay
-    _currentOverlay?.remove();
-
     late OverlayEntry overlayEntry;
 
     overlayEntry = OverlayEntry(
       builder: (context) => BlockInputOverlay(
         initialData: initialData,
+        blockId: blockId,
         onSave: (data) {
           overlayEntry.remove();
-          _currentOverlay = null;
-          onSave?.call(data);
+          _activeBlockInputOverlay = null;
+          onSave(data);
         },
         onClose: () {
           overlayEntry.remove();
-          _currentOverlay = null;
-          onClose?.call();
+          _activeBlockInputOverlay = null;
+          onCancel?.call();
         },
       ),
     );
 
-    _currentOverlay = overlayEntry;
+    _activeBlockInputOverlay = overlayEntry;
     overlay.insert(overlayEntry);
   }
 
-  // Dialogie that opens when you want to create a new Assessment
-  static void openAssessmentCreationOverlay(BuildContext context, {Future<void> Function(String)? onCreate, VoidCallback? onClose}) {
+  static void showAssessmentCreation(BuildContext context, {required Future<void> Function(String) onCreate, VoidCallback? onCancel}) {
+    // Close existing assessment creation overlay if one exists
+    _activeAssessmentCreationOverlay?.remove();
+    _activeAssessmentCreationOverlay = null;
+    
     final overlay = Overlay.of(context);
-
-    // Remove any existing overlay
-    _currentOverlay?.remove();
-
     late OverlayEntry overlayEntry;
 
     overlayEntry = OverlayEntry(
       builder: (context) => AssessmentCreationOverlay(
         onCreate: (assessmentName) async {
-          await onCreate?.call(assessmentName);
+          await onCreate(assessmentName);
           overlayEntry.remove();
-          _currentOverlay = null;
+          _activeAssessmentCreationOverlay = null;
         },
         onClose: () {
           overlayEntry.remove();
-          _currentOverlay = null;
-          onClose?.call();
+          _activeAssessmentCreationOverlay = null;
+          onCancel?.call();
         },
       ),
     );
 
-    _currentOverlay = overlayEntry;
+    _activeAssessmentCreationOverlay = overlayEntry;
     overlay.insert(overlayEntry);
   }
 
-  // Selecting which emails to send Assessment to
-  static void openSendAssessmentOverlay(BuildContext context, {Function(String, String)? onSend, VoidCallback? onClose}) {
+  static void showSendAssessment(BuildContext context, {required Function(Options, String) onSend, VoidCallback? onCancel}) {
+    // Close existing send assessment overlay if one exists
+    _activeSendAssessmentOverlay?.remove();
+    _activeSendAssessmentOverlay = null;
+    
     final overlay = Overlay.of(context);
-
     late OverlayEntry overlayEntry;
 
     overlayEntry = OverlayEntry(
       builder: (context) => SendAssessmentOverlay(
         onSend: (selectionType, textData) {
           overlayEntry.remove();
-          _currentOverlay = null;
-          onSend?.call(selectionType, textData);
+          _activeSendAssessmentOverlay = null;
+          onSend(selectionType, textData);
         },
         onClose: () {
           overlayEntry.remove();
-          _currentOverlay = null;
-          onClose?.call();
+          _activeSendAssessmentOverlay = null;
+          onCancel?.call();
         },
       ),
     );
 
-    _currentOverlay = overlayEntry;
+    _activeSendAssessmentOverlay = overlayEntry;
     overlay.insert(overlayEntry);
   }
 
-  // Opens to confirm what you assessments you are about to send
-  static void openAssessmentSendConfirmationOverlay(BuildContext context, {VoidCallback? onSend, VoidCallback? onCancel}) {
+  static void showAssessmentSendConfirmation(BuildContext context, {required VoidCallback onSend, VoidCallback? onCancel}) {
+    // Note: Confirmation overlay can stack over send assessment overlay
     final overlay = Overlay.of(context);
-
     late OverlayEntry overlayEntry;
 
     overlayEntry = OverlayEntry(
       builder: (context) => AssessmentSendConfirmationOverlay(
         onSend: () {
           overlayEntry.remove();
-          _currentOverlay = null;
-          onSend?.call();
+          onSend();
         },
         onCancel: () {
           overlayEntry.remove();
-          _currentOverlay = null;
           onCancel?.call();
         },
       ),
     );
 
-    _currentOverlay = overlayEntry;
     overlay.insert(overlayEntry);
   }
 }

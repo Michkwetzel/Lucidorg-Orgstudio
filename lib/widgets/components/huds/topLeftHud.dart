@@ -31,7 +31,7 @@ class TopLeftHud extends ConsumerWidget {
             SizedBox(width: 12),
             // Mode and assessment info
             _buildModeText(appDisplayState),
-            if (appDisplayState.appView == AppView.assessmentBuild && appDisplayState.assessmentName != null) ...[
+            if (appDisplayState.appView == AppScreen.assessmentBuild && appDisplayState.assessmentName != null) ...[
               Text(" • ", style: kTextHeading3L.copyWith(color: Colors.grey[600])),
               Text(
                 appDisplayState.assessmentName!,
@@ -58,19 +58,19 @@ class TopLeftHud extends ConsumerWidget {
     Color? modeColor;
 
     switch (appstate.appView) {
-      case AppView.orgSelect:
+      case AppScreen.orgSelect:
         modeText = "Select Org";
         modeColor = Colors.green[700];
         break;
-      case AppView.orgBuild:
+      case AppScreen.orgBuild:
         modeText = "Org Builder";
         modeColor = Colors.green[700];
         break;
-      case AppView.assessmentSelect:
+      case AppScreen.assessmentSelect:
         modeText = "Select Assessment";
         modeColor = Colors.blue[700];
         break;
-      case AppView.assessmentBuild:
+      case AppScreen.assessmentBuild:
         modeText = "Assessment Builder";
         modeColor = Colors.blue[700];
         break;
@@ -96,7 +96,7 @@ class TopLeftHud extends ConsumerWidget {
   }
 
   bool _shouldShowDropdown(appstate) {
-    return appstate.appView == AppView.orgBuild || appstate.appView == AppView.assessmentBuild || appstate.appView == AppView.assessmentSelect;
+    return appstate.appView == AppScreen.orgBuild || appstate.appView == AppScreen.assessmentBuild || appstate.appView == AppScreen.assessmentSelect;
   }
 
   // Updated TopLeftHud dropdown styling
@@ -106,7 +106,7 @@ class TopLeftHud extends ConsumerWidget {
         // Dark theme for HUD distinction
         borderRadius: BorderRadius.circular(6),
       ),
-      child: PopupMenuButton<AppView>(
+      child: PopupMenuButton<AppScreen>(
         icon: Icon(
           Icons.keyboard_arrow_down,
           size: 18,
@@ -119,12 +119,12 @@ class TopLeftHud extends ConsumerWidget {
         ),
         onSelected: (value) {
           switch (value) {
-            case AppView.orgBuild:
-              ref.read(appStateProvider.notifier).setAppView(AppView.orgBuild);
+            case AppScreen.orgBuild:
+              ref.read(appStateProvider.notifier).setAppView(AppScreen.orgBuild);
               NavigationService.navigateTo("/app/canvas");
               break;
-            case AppView.assessmentSelect:
-              ref.read(appStateProvider.notifier).setAppView(AppView.assessmentSelect);
+            case AppScreen.assessmentSelect:
+              ref.read(appStateProvider.notifier).setAppView(AppScreen.assessmentSelect);
               NavigationService.navigateTo("/app/assessmentSelect");
               break;
             default:
@@ -133,7 +133,7 @@ class TopLeftHud extends ConsumerWidget {
         },
         itemBuilder: (context) => [
           PopupMenuItem(
-            value: AppView.orgBuild,
+            value: AppScreen.orgBuild,
             child: Row(
               children: [
                 Container(
@@ -150,7 +150,7 @@ class TopLeftHud extends ConsumerWidget {
             ),
           ),
           PopupMenuItem(
-            value: AppView.assessmentSelect,
+            value: AppScreen.assessmentSelect,
             child: Row(
               children: [
                 Container(

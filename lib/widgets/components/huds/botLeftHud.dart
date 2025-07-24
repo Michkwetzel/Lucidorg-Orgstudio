@@ -15,18 +15,18 @@ class BotLeftHud extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       spacing: 4,
       children: [
-        if (appView == AppView.assessmentBuild)
+        if (appView == AppScreen.assessmentBuild)
           FilledButton.tonal(
             onPressed: () {
-              ref.read(appStateProvider.notifier).setAppView(AppView.assessmentSelect);
+              ref.read(appStateProvider.notifier).setAppView(AppScreen.assessmentSelect);
               NavigationService.navigateTo('/app/assessmentSelect');
             },
             child: Text("Assessments"),
           ),
-        if (appView == AppView.orgBuild || appView == AppView.assessmentBuild || appView == AppView.assessmentSelect)
+        if (appView == AppScreen.orgBuild || appView == AppScreen.assessmentBuild || appView == AppScreen.assessmentSelect)
           FilledButton.tonal(
             onPressed: () async {
-              ref.read(appStateProvider.notifier).setAppView(AppView.orgSelect);
+              ref.read(appStateProvider.notifier).setAppView(AppScreen.orgSelect);
               NavigationService.navigateTo('/app/orgSelect');
             },
             child: Text("Orgs"),

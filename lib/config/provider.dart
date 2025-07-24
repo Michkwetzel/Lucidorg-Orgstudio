@@ -101,4 +101,7 @@ final selectedDepartmentsProvider = StateProvider<Set<String>>((ref) => {});
 // For Builder
 final selectedBlockProvider = StateProvider<String?>((ref) => null);
 
+// For Assessment Data View - tracks which blocks show detailed view
+final detailedViewBlocksProvider = StateProvider<Set<String>>((ref) => {});
+
 final canvasScaleProvider = StateProvider<double>((ref) => 1.0);

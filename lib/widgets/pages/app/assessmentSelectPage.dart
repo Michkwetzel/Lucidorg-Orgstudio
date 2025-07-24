@@ -39,7 +39,7 @@ class AssessmentSelectPage extends ConsumerWidget {
                       data: assessment.id,
                       onPressed: () {
                         // Update app state
-                        ref.read(appStateProvider.notifier).setAppView(AppView.assessmentBuild, assessmentID: assessment.id, assessmentName: assessment.assessmentName);
+                        ref.read(appStateProvider.notifier).setAppView(AppScreen.assessmentBuild, assessmentID: assessment.id, assessmentName: assessment.assessmentName);
 
                         NavigationService.navigateTo("/app/canvas");
                       },

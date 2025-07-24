@@ -3,6 +3,7 @@ class BlockData {
   final String role;
   final String department;
   final List<String> emails;
+  final List<int> rawResults;
   //TODO: At the moment these are not nullable. might be usefull to do this later depending on how calculations are made.
 
   BlockData({
@@ -10,12 +11,30 @@ class BlockData {
     required this.role,
     required this.department,
     required this.emails,
+    this.rawResults = const [],
   });
 
   // Convenience getters
   String get primaryEmail => emails.isNotEmpty ? emails.first : '';
   bool get hasMultipleEmails => emails.length > 1;
   bool get hasEmails => emails.isNotEmpty;
+
+  // Add this method to your BlockData class
+  BlockData copyWith({
+    String? name,
+    String? role,
+    String? department,
+    List<String>? emails,
+    List<int>? rawResults,
+  }) {
+    return BlockData(
+      name: name ?? this.name,
+      role: role ?? this.role,
+      department: department ?? this.department,
+      emails: emails ?? this.emails,
+      rawResults: rawResults ?? this.rawResults,
+    );
+  }
 
   @override
   String toString() {

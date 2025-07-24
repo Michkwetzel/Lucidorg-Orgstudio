@@ -3,20 +3,20 @@ import 'package:platform_v2/config/enums.dart';
 class DisplayContext {
   final String? orgName;
   final String? assessmentName;
-  final AppView appView;
+  final AppScreen appView;
   final AppMode appMode;
 
   const DisplayContext({
     this.orgName,
     this.assessmentName,
-    this.appView = AppView.none,
+    this.appView = AppScreen.none,
     this.appMode = AppMode.none,
   });
 
   DisplayContext copyWith({
     String? orgName,
     String? assessmentName,
-    AppView? appView,
+    AppScreen? appView,
     AppMode? appMode,
     bool clearOrgName = false,
     bool clearAssessmentName = false,

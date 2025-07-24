@@ -28,7 +28,7 @@ class AppState {
     String? orgName,
     String? assessmentID,
     String? assessmentName,
-    AppView? appView,
+    AppScreen? appView,
     AppMode? appMode,
     // Use this pattern to allow explicitly setting fields to null
     bool clearOrgId = false,
@@ -124,7 +124,7 @@ class AppStateNotifier extends StateNotifier<AppState> {
     final persistedData = await PersistenceService.loadPersistedState();
     final orgId = persistedData['orgId'] as String?;
     final orgName = persistedData['orgName'] as String?;
-    final appView = persistedData['appView'] as AppView;
+    final appView = persistedData['appView'] as AppScreen;
     final appMode = persistedData['appMode'] as AppMode?;
 
     if (orgId != null) {
@@ -156,16 +156,16 @@ class AppStateNotifier extends StateNotifier<AppState> {
     state = state.copyWith(isLoading: isLoading);
   }
 
-  void setAppView(AppView appview, {String? assessmentID, String? assessmentName}) {
+  void setAppView(AppScreen appview, {String? assessmentID, String? assessmentName}) {
     //Also sets Appview
-    if (appview == AppView.assessmentBuild) {
-      state = state.copyWith(assessmentID: assessmentID, assessmentName: assessmentName, appView: AppView.assessmentBuild);
-    } else if (appview == AppView.orgSelect) {
-      state = state.copyWith(appView: AppView.orgSelect, clearOrgId: true);
-    } else if (appview == AppView.assessmentSelect) {
-      state = state.copyWith(appView: AppView.assessmentSelect);
-    } else if (appview == AppView.orgBuild) {
-      state = state.copyWith(appView: AppView.orgBuild, clearAssessmentID: true, clearAssessmentName: true);
+    if (appview == AppScreen.assessmentBuild) {
+      state = state.copyWith(assessmentID: assessmentID, assessmentName: assessmentName, appView: AppScreen.assessmentBuild);
+    } else if (appview == AppScreen.orgSelect) {
+      state = state.copyWith(appView: AppScreen.orgSelect, clearOrgId: true);
+    } else if (appview == AppScreen.assessmentSelect) {
+      state = state.copyWith(appView: AppScreen.assessmentSelect);
+    } else if (appview == AppScreen.orgBuild) {
+      state = state.copyWith(appView: AppScreen.orgBuild, clearAssessmentID: true, clearAssessmentName: true);
     }
 
     PersistenceService.persistAppView(appview);
@@ -183,7 +183,7 @@ class AppStateNotifier extends StateNotifier<AppState> {
   // Getters for data classes
   FirestoreContext get firestore => state.firestoreContext;
   DisplayContext get display => state.displayContext;
-  AppView get currentAppView => state.displayContext.appView;
+  AppScreen get currentAppView => state.displayContext.appView;
   AppMode get currentAppMode => state.displayContext.appMode;
   bool get isLoading => state.isLoading;
   bool get isInitialized => state.isInitialized;

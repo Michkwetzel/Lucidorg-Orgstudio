@@ -1,37 +1,50 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:platform_v2/config/provider.dart';
 import 'package:platform_v2/dataClasses/blockData.dart';
+import 'package:platform_v2/services/firestoreService.dart';
 import 'package:platform_v2/widgets/components/buildingBlocks/misc/uploadCSVWidget.dart';
 
-class BlockInputOverlay extends StatefulWidget {
+class BlockInputOverlay extends ConsumerStatefulWidget {
   final Function(BlockData)? onSave;
   final VoidCallback? onClose;
   final BlockData? initialData;
+  final String blockId;
 
   const BlockInputOverlay({
     super.key,
     this.onSave,
     this.onClose,
     this.initialData,
+    required this.blockId,
   });
 
   @override
-  State<BlockInputOverlay> createState() => _BlockInputOverlayState();
+  ConsumerState<BlockInputOverlay> createState() => _BlockInputOverlayState();
 }
 
-class _BlockInputOverlayState extends State<BlockInputOverlay> {
+class _BlockInputOverlayState extends ConsumerState<BlockInputOverlay> {
   final TextEditingController nameController = TextEditingController();
   final TextEditingController roleController = TextEditingController();
   final TextEditingController departmentController = TextEditingController();
+  final TextEditingController assessmentResultsController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
 
   bool isMultipleEmails = false;
   List<String> csvEmails = [];
   bool csvError = false;
+  bool assessmentResultsError = false;
+  String assessmentResultsErrorMessage = '';
+  bool isLoadingAssessmentResults = false;
+  bool isSavingAssessmentResults = false;
 
   @override
   void initState() {
     super.initState();
     _initializeWithData();
+    _loadAssessmentResults();
   }
 
   void _initializeWithData() {
@@ -52,11 +65,42 @@ class _BlockInputOverlayState extends State<BlockInputOverlay> {
     }
   }
 
+  Future<void> _loadAssessmentResults() async {
+    final firestoreContext = ref.read(appStateProvider).firestoreContext;
+    final orgId = firestoreContext.orgId;
+    final assessmentId = firestoreContext.assessmentId;
+
+    if (orgId == null || assessmentId == null) return;
+
+    setState(() {
+      isLoadingAssessmentResults = true;
+      assessmentResultsError = false;
+      assessmentResultsErrorMessage = '';
+    });
+
+    try {
+      final rawResults = await _loadExistingRawResults(orgId, assessmentId, widget.blockId);
+      if (rawResults != null && rawResults.isNotEmpty) {
+        assessmentResultsController.text = rawResults.join('');
+      }
+    } catch (e) {
+      setState(() {
+        assessmentResultsError = true;
+        assessmentResultsErrorMessage = 'Failed to load existing assessment results';
+      });
+    } finally {
+      setState(() {
+        isLoadingAssessmentResults = false;
+      });
+    }
+  }
+
   void _clearAllData() {
     setState(() {
       nameController.clear();
       roleController.clear();
       departmentController.clear();
+      assessmentResultsController.clear();
       emailController.clear();
       isMultipleEmails = false;
       csvEmails.clear();
@@ -64,7 +108,7 @@ class _BlockInputOverlayState extends State<BlockInputOverlay> {
     });
   }
 
-  void _handleSave() {
+  void _handleSave() async {
     List<String> emails = [];
 
     if (isMultipleEmails) {
@@ -83,7 +127,56 @@ class _BlockInputOverlayState extends State<BlockInputOverlay> {
       department: departmentController.text.trim(),
       emails: isMultipleEmails ? emails : [emailController.text.trim()],
     );
+
+    // Save assessment results if provided
+    if (assessmentResultsController.text.trim().isNotEmpty) {
+      await _saveAssessmentResults();
+    }
+
     widget.onSave?.call(data);
+  }
+
+  Future<void> _saveAssessmentResults() async {
+    final firestoreContext = ref.read(appStateProvider).firestoreContext;
+    final orgId = firestoreContext.orgId;
+    final assessmentId = firestoreContext.assessmentId;
+
+    if (orgId == null || assessmentId == null) {
+      setState(() {
+        assessmentResultsError = true;
+        assessmentResultsErrorMessage = 'Missing organization or assessment context';
+      });
+      return;
+    }
+
+    setState(() {
+      isSavingAssessmentResults = true;
+      assessmentResultsError = false;
+      assessmentResultsErrorMessage = '';
+    });
+
+    try {
+      final rawResults = _parseAssessmentResults(assessmentResultsController.text);
+      if (rawResults.isEmpty) {
+        throw Exception('Invalid assessment results format');
+      }
+
+      final docId = await _findAssessmentDataDocId(orgId, assessmentId, widget.blockId);
+      if (docId == null) {
+        throw Exception('No assessment data document found for this block');
+      }
+
+      await _updateAssessmentDataRawResults(orgId, assessmentId, docId, rawResults);
+    } catch (e) {
+      setState(() {
+        assessmentResultsError = true;
+        assessmentResultsErrorMessage = e.toString().replaceAll('Exception: ', '');
+      });
+    } finally {
+      setState(() {
+        isSavingAssessmentResults = false;
+      });
+    }
   }
 
   void _onCSVDataExtracted(List<String> emails, bool error) {
@@ -93,11 +186,91 @@ class _BlockInputOverlayState extends State<BlockInputOverlay> {
     });
   }
 
+  List<int> _parseAssessmentResults(String input) {
+    if (input.trim().isEmpty) return [];
+    
+    // Remove any whitespace and validate only digits
+    final cleanInput = input.replaceAll(RegExp(r'\s'), '');
+    if (!RegExp(r'^\d+$').hasMatch(cleanInput)) return [];
+    
+    // Convert each character to an integer
+    return cleanInput.split('').map((char) => int.parse(char)).toList();
+  }
+
+  bool _isValidAssessmentResults(String input) {
+    final cleanInput = input.replaceAll(RegExp(r'\s'), '');
+    return cleanInput.length == 37 && RegExp(r'^\d+$').hasMatch(cleanInput);
+  }
+
+  Future<String?> _findAssessmentDataDocId(String orgId, String assessmentId, String blockId) async {
+    try {
+      final querySnapshot = await FirestoreService.instance
+          .collection('orgs')
+          .doc(orgId)
+          .collection('assessments')
+          .doc(assessmentId)
+          .collection('data')
+          .where('blockId', isEqualTo: blockId)
+          .limit(1)
+          .get();
+
+      if (querySnapshot.docs.isNotEmpty) {
+        return querySnapshot.docs.first.id;
+      }
+      return null;
+    } catch (e) {
+      print('Error finding assessment data doc: $e');
+      return null;
+    }
+  }
+
+  Future<void> _updateAssessmentDataRawResults(String orgId, String assessmentId, String docId, List<int> rawResults) async {
+    try {
+      await FirestoreService.instance
+          .collection('orgs')
+          .doc(orgId)
+          .collection('assessments')
+          .doc(assessmentId)
+          .collection('data')
+          .doc(docId)
+          .update({'rawResults': rawResults});
+    } catch (e) {
+      throw Exception('Failed to update assessment data: $e');
+    }
+  }
+
+  Future<List<int>?> _loadExistingRawResults(String orgId, String assessmentId, String blockId) async {
+    try {
+      final docId = await _findAssessmentDataDocId(orgId, assessmentId, blockId);
+      if (docId == null) return null;
+
+      final docSnapshot = await FirestoreService.instance
+          .collection('orgs')
+          .doc(orgId)
+          .collection('assessments')
+          .doc(assessmentId)
+          .collection('data')
+          .doc(docId)
+          .get();
+
+      if (docSnapshot.exists) {
+        final data = docSnapshot.data();
+        final rawResults = data?['rawResults'] as List<dynamic>?;
+        return rawResults?.cast<int>();
+      }
+      return null;
+    } catch (e) {
+      print('Error loading existing raw results: $e');
+      return null;
+    }
+  }
+
   @override
   void dispose() {
     nameController.dispose();
     roleController.dispose();
     departmentController.dispose();
+    assessmentResultsController.dispose();
     emailController.dispose();
     super.dispose();
   }
@@ -168,6 +341,10 @@ class _BlockInputOverlayState extends State<BlockInputOverlay> {
 
                     // Department field
                     _buildTextField('Department', departmentController),
+                    const SizedBox(height: 12),
+
+                    // Assessment Results field
+                    _buildAssessmentResultsField(),
                     const SizedBox(height: 12),
 
                     // Email type selection
@@ -314,6 +491,149 @@ class _BlockInputOverlayState extends State<BlockInputOverlay> {
             ),
           ),
         ),
+      ],
+    );
+  }
+
+  Widget _buildAssessmentResultsField() {
+    final isValid = _isValidAssessmentResults(assessmentResultsController.text);
+    final currentLength = assessmentResultsController.text.replaceAll(RegExp(r'\s'), '').length;
+    
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const Text(
+              'Assessment Results',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(width: 8),
+            if (isLoadingAssessmentResults) ...[
+              SizedBox(
+                width: 12,
+                height: 12,
+                child: CircularProgressIndicator(
+                  strokeWidth: 1.5,
+                  color: Colors.blue.shade600,
+                ),
+              ),
+              const SizedBox(width: 4),
+              Text(
+                'Loading...',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.blue.shade600,
+                ),
+              ),
+            ] else if (isSavingAssessmentResults) ...[
+              SizedBox(
+                width: 12,
+                height: 12,
+                child: CircularProgressIndicator(
+                  strokeWidth: 1.5,
+                  color: Colors.green.shade600,
+                ),
+              ),
+              const SizedBox(width: 4),
+              Text(
+                'Saving...',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.green.shade600,
+                ),
+              ),
+            ] else ...[
+              Text(
+                '($currentLength/37)',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: isValid ? Colors.green.shade600 : Colors.grey.shade600,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ],
+        ),
+        const SizedBox(height: 4),
+        TextField(
+          controller: assessmentResultsController,
+          enabled: !isLoadingAssessmentResults && !isSavingAssessmentResults,
+          maxLength: 37,
+          keyboardType: TextInputType.number,
+          inputFormatters: [
+            FilteringTextInputFormatter.digitsOnly,
+          ],
+          onChanged: (value) => setState(() {
+            // Clear error when user starts typing
+            if (assessmentResultsError) {
+              assessmentResultsError = false;
+              assessmentResultsErrorMessage = '';
+            }
+          }),
+          decoration: InputDecoration(
+            hintText: 'Enter 37 consecutive numbers (e.g., 1234567890...)',
+            counterText: '', // Hide default counter since we have custom one
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(
+                color: assessmentResultsError
+                    ? Colors.red.shade300
+                    : isValid
+                        ? Colors.green.shade300
+                        : Colors.grey.shade300,
+              ),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(
+                color: assessmentResultsError
+                    ? Colors.red.shade300
+                    : isValid
+                        ? Colors.green.shade300
+                        : Colors.grey.shade300,
+              ),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(
+                color: assessmentResultsError
+                    ? Colors.red
+                    : isValid
+                        ? Colors.green
+                        : Colors.blue,
+              ),
+            ),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 8,
+            ),
+          ),
+        ),
+        if (assessmentResultsError) ...[
+          const SizedBox(height: 4),
+          Text(
+            assessmentResultsErrorMessage,
+            style: TextStyle(
+              fontSize: 12,
+              color: Colors.red.shade600,
+            ),
+          ),
+        ] else if (currentLength > 0 && !isValid && !isLoadingAssessmentResults) ...[
+          const SizedBox(height: 4),
+          Text(
+            currentLength < 37 
+              ? 'Please enter exactly 37 numbers'
+              : 'Too many numbers entered',
+            style: TextStyle(
+              fontSize: 12,
+              color: Colors.red.shade600,
+            ),
+          ),
+        ],
       ],
     );
   }

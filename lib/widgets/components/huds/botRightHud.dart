@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:platform_v2/config/enums.dart';
 import 'package:platform_v2/config/provider.dart';
+import 'package:platform_v2/services/httpService.dart';
 import 'package:platform_v2/services/uiServices/overLayService.dart';
 
 class BotRightHud extends ConsumerWidget {
@@ -11,7 +12,7 @@ class BotRightHud extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final appView = ref.watch(appStateProvider).displayContext.appView;
 
-    if (appView != AppView.assessmentBuild) return SizedBox.shrink();
+    if (appView != AppScreen.assessmentBuild) return SizedBox.shrink();
 
     return Tooltip(
       message: 'Send Assessment',
@@ -20,7 +21,7 @@ class BotRightHud extends ConsumerWidget {
           // unselect a block if it was selected.
           ref.read(selectedBlockProvider.notifier).state = null;
           // chnage mode to assessmentSendSelectBlocks
-          ref.read(appStateProvider.notifier).setAppMode(AppMode.assessmentSendSelectBlocks);
+          ref.read(appStateProvider.notifier).setAppMode(AppMode.assessmentSend);
           _openSendAssessmentOverlay(context, ref);
         },
         child: Icon(Icons.add),
@@ -29,16 +30,33 @@ class BotRightHud extends ConsumerWidget {
   }
 
   void _openSendAssessmentOverlay(BuildContext context, WidgetRef ref) {
-    OverlayService.openSendAssessmentOverlay(
+    OverlayService.showSendAssessment(
       context,
       onSend: (selectionType, textData) {
-        print('Sending assessment with selection: $selectionType, text: $textData');
+        // Open the confirmation Overlay
+        OverlayService.showAssessmentSendConfirmation(
+          context,
+          onSend: () {
+            final blockIds = ref.read(selectedBlocksProvider);
+            final assessmentId = ref.read(appStateProvider).firestoreContext.assessmentId;
+            final orgId = ref.read(appStateProvider).firestoreContext.orgId;
+            final request = {
+              'assessmentId': assessmentId,
+              'orgId': orgId,
+              'blockIds': blockIds.toList(),
+            };
+
+            HttpService.postRequest(path: 'http://127.0.0.1:5001/efficiency-1st/us-central1/sendAssessmentToBlockIds', request: request);
+          },
+          onCancel: () {},
+        );
       },
-      onClose: () {
+      onCancel: () {
         // Clear AssessmentSend Blocks
         ref.read(selectedBlocksProvider.notifier).state = {};
         ref.read(appStateProvider.notifier).setAppMode(AppMode.assessmentBuild);
       },
     );
   }
+  
 }

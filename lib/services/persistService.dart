@@ -13,7 +13,7 @@ class PersistenceService {
     final orgName = prefs.getString(_orgNameKey);
     final appViewString = prefs.getString(_appViewKey);
 
-    AppView appView = AppView.none;
+    AppScreen appView = AppScreen.none;
     if (appViewString != null) {
       appView = _parseAppView(appViewString);
     }
@@ -44,7 +44,7 @@ class PersistenceService {
   }
 
   // Persist app view
-  static Future<void> persistAppView(AppView appView) async {
+  static Future<void> persistAppView(AppScreen appView) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_appViewKey, appView.toString());
   }
@@ -56,18 +56,18 @@ class PersistenceService {
   }
 
   // Parse app view from string
-  static AppView _parseAppView(String appViewString) {
+  static AppScreen _parseAppView(String appViewString) {
     switch (appViewString) {
       case 'AppView.logIn':
-        return AppView.logIn;
+        return AppScreen.logIn;
       case 'AppView.selectOrg':
-        return AppView.orgSelect;
+        return AppScreen.orgSelect;
       case 'AppView.orgBuild':
-        return AppView.orgBuild;
+        return AppScreen.orgBuild;
       case 'AppView.assessmentView':
-        return AppView.assessmentBuild;
+        return AppScreen.assessmentBuild;
       default:
-        return AppView.none;
+        return AppScreen.none;
     }
   }
 }

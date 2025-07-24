@@ -1,10 +1,12 @@
-enum AppMode { none, assessmentSendSelectBlocks, assessmentBuild, orgBuild }
+enum AppMode { none, assessmentSend, assessmentBuild, assessmentDataView, orgBuild }
 
-enum AppView { none, logIn, orgSelect, orgBuild, assessmentSelect, assessmentBuild }
+enum AppScreen { none, logIn, orgSelect, orgBuild, assessmentSelect, assessmentBuild }
 
 enum BlockMode { orgBuild, assessmentView, assessmentCreate }
 
 enum Permission { admin, error }
+
+enum Options { select, department, all}
 
 enum Pilar { alignment, people, process, leadership, none }
 
@@ -20,6 +22,8 @@ enum Benchmark {
   engagedCommunity,
   meetingEfficacy,
   crossFuncAcc,
+  engagement,
+  productivity,
   orgIndex,
   workforce,
   operations,
@@ -42,6 +46,8 @@ List<Benchmark> indicators() {
     Benchmark.meetingEfficacy,
     Benchmark.purposeDriven,
     Benchmark.empoweredLeadership,
+    Benchmark.engagement,
+    Benchmark.productivity,
   ];
 }
 
@@ -79,6 +85,10 @@ extension Description on Benchmark {
         return "Meeting Efficacy";
       case Benchmark.crossFuncAcc:
         return "Cross-Functional Accountability";
+      case Benchmark.engagement:
+        return "Engagement";
+      case Benchmark.productivity:
+        return "Productivity";
       case Benchmark.orgIndex:
         return "Index";
       case Benchmark.workforce:

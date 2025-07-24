@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:platform_v2/config/constants.dart';
 import 'package:platform_v2/config/provider.dart';
 import 'package:platform_v2/notifiers/general/blockNotifier.dart';
 import 'package:platform_v2/notifiers/general/connectionsManager.dart';
@@ -10,17 +11,24 @@ class BlockContext {
   final WidgetRef ref;
   final String blockId;
   final BuildContext buildContext;
-  final double dotOverhang;
+  final double hitboxOffset;
+  final double hitboxWidth;
+  final double hitboxHeight;
 
   BlockContext({
     required this.ref,
     required this.blockId,
     required this.buildContext,
-    required this.dotOverhang,
-  });
+    required this.hitboxOffset,
+  }) : hitboxWidth = kBlockWidth + (hitboxOffset * 2),
+       hitboxHeight = kBlockHeight + (hitboxOffset * 2);
 
+  // Consider adding null safety checks
   BlockNotifier get blockNotifier => ref.read(blockNotifierProvider(blockId).notifier);
+
   OrgCanvasNotifier get orgCanvasNotifier => ref.read(canvasProvider.notifier);
+
   ConnectionManager get connectionManager => ref.read(connectionManagerProvider.notifier);
+
   Set<String> get selectedBlocks => ref.read(selectedBlocksProvider);
 }
