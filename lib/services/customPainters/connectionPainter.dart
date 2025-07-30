@@ -16,6 +16,8 @@ class ConnectionsPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
+    return;
+    print("Painting connections");
     for (final connection in connections) {
       final parentPos = blockPositions[connection.parentId];
       final childPos = blockPositions[connection.childId];

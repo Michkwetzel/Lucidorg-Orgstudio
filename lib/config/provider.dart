@@ -71,6 +71,7 @@ final blockPositionsProvider = Provider<Map<String, Offset>>((ref) {
   if (!canvasNotifier.isInitialLoadComplete) {
     return {};
   }
+  print("BlockPositionProvider");
 
   // Get live positions from individual block notifiers, with fallback to initial positions
   return Map.fromEntries(

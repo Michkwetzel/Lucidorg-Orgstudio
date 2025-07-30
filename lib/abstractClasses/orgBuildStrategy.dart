@@ -174,8 +174,8 @@ class OrgBuildStrategy extends BlockBehaviorStrategy {
     if (canvasBox == null) return;
     final localPosition = canvasBox.globalToLocal(details.globalPosition);
     final newPosition = Offset(
-      localPosition.dx - hitboxOffset,
-      localPosition.dy - hitboxOffset,
+      localPosition.dx,
+      localPosition.dy,
     );
 
     // Check if block is selected and if it has any children. If yes then do batch move and batch firestore update

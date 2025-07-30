@@ -5,7 +5,6 @@ import 'package:platform_v2/abstractClasses/assessmentSendStrategy.dart';
 import 'package:platform_v2/abstractClasses/blockBehaviourStrategy.dart';
 import 'package:platform_v2/abstractClasses/blockContext.dart';
 import 'package:platform_v2/abstractClasses/orgBuildStrategy.dart';
-import 'package:platform_v2/config/constants.dart';
 import 'package:platform_v2/config/enums.dart';
 import 'package:platform_v2/config/provider.dart';
 
