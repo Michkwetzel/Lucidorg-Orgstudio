@@ -63,33 +63,8 @@ final blockNotifierProvider = ChangeNotifierProvider.family.autoDispose<BlockNot
   return notifier;
 });
 
-//Get block Ids from canvas. Canvas is source of truth for blockIds
-final blockPositionsProvider = Provider<Map<String, Offset>>((ref) {
-  final activeBlocks = ref.watch(canvasProvider);
-  final canvasNotifier = ref.read(canvasProvider.notifier);
 
-  if (!canvasNotifier.isInitialLoadComplete) {
-    return {};
-  }
-  print("BlockPositionProvider");
-
-  // Get live positions from individual block notifiers, with fallback to initial positions
-  return Map.fromEntries(
-    activeBlocks.map((blockID) {
-      final bool postionsLoaded = ref.watch(blockNotifierProvider(blockID).select((state) => state.positionLoaded));
-      if (postionsLoaded) {
-        // Use live position from block notifier
-        final Offset blockPosition = ref.watch(blockNotifierProvider(blockID).select((state) => state.position));
-        return MapEntry(blockID, blockPosition);
-      } else {
-        // Fallback to initial position until block notifier loads
-        return MapEntry(blockID, canvasNotifier.initialPositions[blockID] ?? Offset.zero);
-      }
-    }),
-  );
-});
-
-final connectionManagerProvider = StateNotifierProvider<ConnectionManager, ConnectionsState>((ref) {
+final connectionManagerProvider = StateNotifierProvider.autoDispose<ConnectionManager, ConnectionsState>((ref) {
   final context = ref.watch(appStateProvider.select((state) => state.firestoreContext));
 
   return ConnectionManager(context: context);

@@ -6,6 +6,7 @@ import 'package:platform_v2/config/provider.dart';
 import 'package:platform_v2/services/customPainters/connectionPainter.dart';
 import 'package:platform_v2/services/firestoreIdGenerator.dart';
 import 'package:platform_v2/widgets/components/general/block.dart';
+import 'package:platform_v2/widgets/pages/app/orgCanvas/connectionsLayer.dart';
 
 class OrgCanvas extends ConsumerStatefulWidget {
   const OrgCanvas({super.key});
@@ -79,21 +80,7 @@ class _OrgCanvasState extends ConsumerState<OrgCanvas> {
                 color: Colors.grey,
                 child: Stack(
                   children: [
-                    // Connections layer (isolated consumer - doesn't affect blocks)
-                    Consumer(
-                      builder: (context, ref, child) {
-                        final connectionState = ref.watch(connectionManagerProvider);
-
-                        return RepaintBoundary(
-                          child: CustomPaint(
-                            painter: ConnectionsPainter(
-                              connections: connectionState.connections,
-                              blockPositions: ref.watch(blockPositionsProvider),
-                            ),
-                            size: const Size(7000, 7000),
-                          ),
-                        );
-                      },
+                    ConnectionLayer(
                     ),
 
                     ...canvasState.map(
