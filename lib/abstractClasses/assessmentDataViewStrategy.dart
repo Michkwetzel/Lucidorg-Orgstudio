@@ -4,6 +4,7 @@ import 'package:platform_v2/abstractClasses/blockContext.dart';
 import 'package:platform_v2/config/constants.dart';
 import 'package:platform_v2/config/enums.dart';
 import 'package:platform_v2/config/provider.dart';
+import 'package:platform_v2/services/uiServices/overLayService.dart';
 
 // The rulebook for what functions a strategy can implement.
 class AssessmentDataViewStrategy extends BlockBehaviorStrategy {
@@ -34,7 +35,7 @@ class AssessmentDataViewStrategy extends BlockBehaviorStrategy {
   Widget blockData(BlockContext context) {
     final detailedBlocks = context.ref.watch(detailedViewBlocksProvider);
     final isDetailedView = detailedBlocks.contains(context.blockId);
-    
+
     if (isDetailedView) {
       return _buildDetailedView(context);
     } else {
@@ -45,11 +46,14 @@ class AssessmentDataViewStrategy extends BlockBehaviorStrategy {
   Widget _buildBasicView(BlockContext context) {
     final blockData = context.blockNotifier.blockData;
     final benchmarks = context.blockNotifier.benchmarks;
-    
-    // Calculate orgIndex percentage (normalize to 0-100%)
-    final orgIndex = benchmarks?[Benchmark.orgIndex];
-    final orgIndexPercent = orgIndex != null ? (orgIndex * 100).round() : null;
-    
+
+    // Get selected benchmark from provider
+    final selectedBenchmark = context.ref.watch(selectedBenchmarkProvider);
+
+    // Calculate selected benchmark percentage (normalize to 0-100%)
+    final benchmarkValue = benchmarks?[selectedBenchmark];
+    final benchmarkPercent = benchmarkValue != null ? (benchmarkValue * 100).round() : null;
+
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       crossAxisAlignment: CrossAxisAlignment.center,
@@ -77,10 +81,10 @@ class AssessmentDataViewStrategy extends BlockBehaviorStrategy {
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
-        if (orgIndexPercent != null) ...[
+        if (benchmarkPercent != null) ...[
           const SizedBox(height: 4),
           Text(
-            '${orgIndexPercent}%',
+            '$benchmarkPercent%',
             style: const TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.bold,
@@ -95,7 +99,7 @@ class AssessmentDataViewStrategy extends BlockBehaviorStrategy {
 
   Widget _buildDetailedView(BlockContext context) {
     final benchmarks = context.blockNotifier.benchmarks;
-    
+
     if (benchmarks == null) {
       return const Center(
         child: Text(
@@ -107,14 +111,14 @@ class AssessmentDataViewStrategy extends BlockBehaviorStrategy {
         ),
       );
     }
-    
+
     // Get benchmark values and convert to percentages
     final orgIndex = ((benchmarks[Benchmark.orgIndex] ?? 0) * 100).round();
     final align = ((benchmarks[Benchmark.alignP] ?? 0) * 100).round();
     final process = ((benchmarks[Benchmark.processP] ?? 0) * 100).round();
     final people = ((benchmarks[Benchmark.peopleP] ?? 0) * 100).round();
     final leadership = ((benchmarks[Benchmark.leadershipP] ?? 0) * 100).round();
-    
+
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       crossAxisAlignment: CrossAxisAlignment.center,
@@ -134,7 +138,7 @@ class AssessmentDataViewStrategy extends BlockBehaviorStrategy {
 
   Widget _buildBenchmarkRowWithColor(String label, int percentage, double? benchmarkValue) {
     final color = _getBenchmarkColor(percentage.toDouble());
-    
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8),
       child: Row(
@@ -197,19 +201,22 @@ class AssessmentDataViewStrategy extends BlockBehaviorStrategy {
     final isSelected = context.blockNotifier.selected;
     final detailedBlocks = context.ref.watch(detailedViewBlocksProvider);
     final isDetailedView = detailedBlocks.contains(context.blockId);
-    
+
+    // Get selected benchmark from provider
+    final selectedBenchmark = context.ref.watch(selectedBenchmarkProvider);
+
     // Default color when no benchmarks available
     Color performanceColor = Colors.grey[300]!;
-    
-    // Color coding based on orgIndex
+
+    // Color coding based on selected benchmark
     if (benchmarks != null) {
-      final orgIndex = benchmarks[Benchmark.orgIndex];
-      if (orgIndex != null) {
-        final percentage = orgIndex * 100;
+      final benchmarkValue = benchmarks[selectedBenchmark];
+      if (benchmarkValue != null) {
+        final percentage = benchmarkValue * 100;
         performanceColor = _getBenchmarkColor(percentage);
       }
     }
-    
+
     if (isDetailedView) {
       // Detailed view: white background with colored border
       return BoxDecoration(
@@ -249,7 +256,7 @@ class AssessmentDataViewStrategy extends BlockBehaviorStrategy {
   void onTap(BlockContext context) {
     final detailedBlocks = context.ref.read(detailedViewBlocksProvider.notifier);
     final currentDetailedBlocks = context.ref.read(detailedViewBlocksProvider);
-    
+
     if (currentDetailedBlocks.contains(context.blockId)) {
       // Remove from detailed view (switch to basic)
       detailedBlocks.state = Set.from(currentDetailedBlocks)..remove(context.blockId);
@@ -260,7 +267,9 @@ class AssessmentDataViewStrategy extends BlockBehaviorStrategy {
   }
 
   @override
-  void onDoubleTapDown(BlockContext context) {}
+  void onDoubleTapDown(BlockContext context) {
+    OverlayService.showBlockDataView(context.buildContext, blockData: context.blockNotifier.blockData!, benchmarks: context.blockNotifier.benchmarks);
+  }
 
   @override
   void onPanUpdate(BlockContext context, DragUpdateDetails details, double hitboxOffset) {

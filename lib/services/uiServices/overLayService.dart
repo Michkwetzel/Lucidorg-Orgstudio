@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:platform_v2/config/enums.dart';
 import 'package:platform_v2/dataClasses/blockData.dart';
+import 'package:platform_v2/services/uiServices/blockDataViewOverlay.dart';
 import 'package:platform_v2/widgets/overlays/createAssessment.dart';
 import 'package:platform_v2/widgets/overlays/sendAssessmentOverlay.dart';
 import 'package:platform_v2/widgets/overlays/blockInputOverlay.dart';
@@ -10,6 +11,7 @@ class OverlayService {
   static OverlayEntry? _activeBlockInputOverlay;
   static OverlayEntry? _activeSendAssessmentOverlay;
   static OverlayEntry? _activeAssessmentCreationOverlay;
+  static OverlayEntry? _activeBlockDataViewOverlay;
 
   static void showBlockInput(BuildContext context, {required Function(BlockData) onSave, VoidCallback? onCancel, BlockData? initialData, required String blockId}) {
     // Close existing block input overlay if one exists
@@ -39,11 +41,40 @@ class OverlayService {
     overlay.insert(overlayEntry);
   }
 
+  static void showBlockDataView(
+    BuildContext context, {
+    required BlockData blockData,
+    Map<Benchmark, double>? benchmarks,
+    VoidCallback? onClose,
+  }) {
+    // Close existing block data view overlay if one exists
+    _activeBlockDataViewOverlay?.remove();
+    _activeBlockDataViewOverlay = null;
+
+    final overlay = Overlay.of(context);
+    late OverlayEntry overlayEntry;
+
+    overlayEntry = OverlayEntry(
+      builder: (context) => BlockDataViewOverlay(
+        blockData: blockData,
+        benchmarks: benchmarks,
+        onClose: () {
+          overlayEntry.remove();
+          _activeBlockDataViewOverlay = null;
+          onClose?.call();
+        },
+      ),
+    );
+
+    _activeBlockDataViewOverlay = overlayEntry;
+    overlay.insert(overlayEntry);
+  }
+
   static void showAssessmentCreation(BuildContext context, {required Future<void> Function(String) onCreate, VoidCallback? onCancel}) {
     // Close existing assessment creation overlay if one exists
     _activeAssessmentCreationOverlay?.remove();
     _activeAssessmentCreationOverlay = null;
-    
+
     final overlay = Overlay.of(context);
     late OverlayEntry overlayEntry;
 
@@ -70,7 +101,7 @@ class OverlayService {
     // Close existing send assessment overlay if one exists
     _activeSendAssessmentOverlay?.remove();
     _activeSendAssessmentOverlay = null;
-    
+
     final overlay = Overlay.of(context);
     late OverlayEntry overlayEntry;
 
@@ -112,5 +143,20 @@ class OverlayService {
     );
 
     overlay.insert(overlayEntry);
+  }
+
+  // Utility method to close all active overlays
+  static void closeAllOverlays() {
+    _activeBlockInputOverlay?.remove();
+    _activeBlockInputOverlay = null;
+
+    _activeBlockDataViewOverlay?.remove();
+    _activeBlockDataViewOverlay = null;
+
+    _activeSendAssessmentOverlay?.remove();
+    _activeSendAssessmentOverlay = null;
+
+    _activeAssessmentCreationOverlay?.remove();
+    _activeAssessmentCreationOverlay = null;
   }
 }

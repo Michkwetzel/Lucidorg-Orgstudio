@@ -3,8 +3,8 @@ import 'package:platform_v2/config/enums.dart';
 import 'package:platform_v2/dataClasses/displayContext.dart';
 import 'package:platform_v2/dataClasses/firestoreContext.dart';
 import 'package:platform_v2/services/persistService.dart';
+import 'package:platform_v2/services/uiServices/navigationService.dart';
 
-// Notifier Holding Main app state like which appView, Selected org, Selected Assessment, etc.
 class AppState {
   final bool isLoading;
   final bool isInitialized;
@@ -18,79 +18,77 @@ class AppState {
     this.displayContext = const DisplayContext(),
   });
 
+  // Simplified copyWith - only handles the main properties
   AppState copyWith({
     bool? isLoading,
     bool? isInitialized,
     FirestoreContext? firestoreContext,
     DisplayContext? displayContext,
-    // Individual field updates for convenience
-    String? orgId,
-    String? orgName,
-    String? assessmentID,
-    String? assessmentName,
-    AppScreen? appView,
-    AppMode? appMode,
-    // Use this pattern to allow explicitly setting fields to null
-    bool clearOrgId = false,
-    bool clearOrgName = false,
-    bool clearAssessmentID = false,
-    bool clearAssessmentName = false,
   }) {
-    // Handle individual field updates by creating new contexts
-    FirestoreContext newFirestoreContext = firestoreContext ?? this.firestoreContext;
-    DisplayContext newDisplayContext = displayContext ?? this.displayContext;
-
-    if (orgId != null || clearOrgId) {
-      newFirestoreContext = newFirestoreContext.copyWith(
-        orgId: orgId,
-        clearOrgId: clearOrgId,
-      );
-    }
-
-    if (orgName != null || clearOrgName) {
-      newDisplayContext = newDisplayContext.copyWith(
-        orgName: orgName,
-        clearOrgName: clearOrgName,
-      );
-    }
-
-    if (assessmentID != null || clearAssessmentID) {
-      newFirestoreContext = newFirestoreContext.copyWith(
-        assessmentId: assessmentID,
-        clearAssessmentId: clearAssessmentID,
-      );
-    }
-
-    if (assessmentName != null || clearAssessmentName) {
-      newDisplayContext = newDisplayContext.copyWith(
-        assessmentName: assessmentName,
-        clearAssessmentName: clearAssessmentName,
-      );
-    }
-
-    if (appView != null) {
-      newDisplayContext = newDisplayContext.copyWith(
-        appView: appView,
-      );
-    }
-
-    if (appMode != null) {
-      newDisplayContext = newDisplayContext.copyWith(
-        appMode: appMode,
-      );
-    }
-
     return AppState(
       isLoading: isLoading ?? this.isLoading,
       isInitialized: isInitialized ?? this.isInitialized,
-      firestoreContext: newFirestoreContext,
-      displayContext: newDisplayContext,
+      firestoreContext: firestoreContext ?? this.firestoreContext,
+      displayContext: displayContext ?? this.displayContext,
     );
   }
 
-  // Getters for data classes
+  // Convenience methods for common updates
+  AppState updateFirestore(FirestoreContext Function(FirestoreContext) update) {
+    return copyWith(firestoreContext: update(firestoreContext));
+  }
+
+  AppState updateDisplay(DisplayContext Function(DisplayContext) update) {
+    return copyWith(displayContext: update(displayContext));
+  }
+
+  AppState updateOrg({String? orgId, String? orgName, bool clear = false}) {
+    return copyWith(
+      firestoreContext: firestoreContext.copyWith(
+        orgId: orgId,
+        clearOrgId: clear,
+      ),
+      displayContext: displayContext.copyWith(
+        orgName: orgName,
+        clearOrgName: clear,
+      ),
+    );
+  }
+
+  AppState updateAssessment({String? assessmentId, String? assessmentName, bool clear = false}) {
+    return copyWith(
+      firestoreContext: firestoreContext.copyWith(
+        assessmentId: assessmentId,
+        clearAssessmentId: clear,
+      ),
+      displayContext: displayContext.copyWith(
+        assessmentName: assessmentName,
+        clearAssessmentName: clear,
+      ),
+    );
+  }
+
+  AppState updateAppView(AppScreen appView) {
+    return copyWith(
+      displayContext: displayContext.copyWith(appView: appView),
+    );
+  }
+
+  AppState updateAppMode(AppMode appMode) {
+    return copyWith(
+      displayContext: displayContext.copyWith(appMode: appMode),
+    );
+  }
+
+  // Getters
   FirestoreContext get firestore => firestoreContext;
   DisplayContext get display => displayContext;
+  String? get orgId => firestoreContext.orgId;
+  String? get orgName => displayContext.orgName;
+  String? get assessmentId => firestoreContext.assessmentId;
+  String? get assessmentName => displayContext.assessmentName;
+  AppScreen get appView => displayContext.appView;
+  AppMode get appMode => displayContext.appMode;
 
   @override
   bool operator ==(Object other) {
@@ -100,12 +98,7 @@ class AppState {
 
   @override
   int get hashCode {
-    return Object.hash(
-      isLoading,
-      isInitialized,
-      firestoreContext,
-      displayContext,
-    );
+    return Object.hash(isLoading, isInitialized, firestoreContext, displayContext);
   }
 
   @override
@@ -119,36 +112,33 @@ class AppStateNotifier extends StateNotifier<AppState> {
     _loadPersistedState();
   }
 
-  // Load persisted state on initialization
   Future<void> _loadPersistedState() async {
     final persistedData = await PersistenceService.loadPersistedState();
     final orgId = persistedData['orgId'] as String?;
     final orgName = persistedData['orgName'] as String?;
-    final appView = persistedData['appView'] as AppScreen;
-    final appMode = persistedData['appMode'] as AppMode?;
+    final appView = persistedData['appView'] as AppScreen? ?? AppScreen.none;
+    final appMode = persistedData['appMode'] as AppMode? ?? AppMode.none;
 
     if (orgId != null) {
-      state = state.copyWith(orgId: orgId, orgName: orgName, appView: appView, appMode: appMode, isInitialized: true);
+      state = state.updateOrg(orgId: orgId, orgName: orgName).updateAppView(appView).updateAppMode(appMode).copyWith(isInitialized: true);
     } else {
-      // No saved org, but still mark as initialized so app can show org selection
-      state = state.copyWith(appView: appView, appMode: appMode, isInitialized: true);
+      state = state.updateAppView(appView).updateAppMode(appMode).copyWith(isInitialized: true);
     }
   }
 
   void setAppMode(AppMode appMode) {
-    state = state.copyWith(appMode: appMode);
-    // Optionally persist the app mode if needed
-    // PersistenceService.persistAppMode(appMode);
+    state = state.updateAppMode(appMode);
+    PersistenceService.persistAppMode(appMode);
   }
 
   void setOrg(String? orgId, String? orgName) {
     print('OrgID: $orgId, OrgName: $orgName');
-    state = state.copyWith(orgId: orgId, orgName: orgName);
+    state = state.updateOrg(orgId: orgId, orgName: orgName);
     PersistenceService.persistOrg(orgId, orgName);
   }
 
   void clearOrg() {
-    state = state.copyWith(clearOrgId: true, clearOrgName: true);
+    state = state.updateOrg(clear: true);
     PersistenceService.clearPersistedOrg();
   }
 
@@ -156,23 +146,48 @@ class AppStateNotifier extends StateNotifier<AppState> {
     state = state.copyWith(isLoading: isLoading);
   }
 
-  void setAppView(AppScreen appview, {String? assessmentID, String? assessmentName}) {
-    //Also sets Appview
-    if (appview == AppScreen.assessmentBuild) {
-      state = state.copyWith(assessmentID: assessmentID, assessmentName: assessmentName, appView: AppScreen.assessmentBuild);
-    } else if (appview == AppScreen.orgSelect) {
-      state = state.copyWith(appView: AppScreen.orgSelect, clearOrgId: true);
-    } else if (appview == AppScreen.assessmentSelect) {
-      state = state.copyWith(appView: AppScreen.assessmentSelect);
-    } else if (appview == AppScreen.orgBuild) {
-      state = state.copyWith(appView: AppScreen.orgBuild, clearAssessmentID: true, clearAssessmentName: true);
-    }
+  void setAssessment(String? assessmentId, String? assessmentName) {
+    print('AssessmentID: $assessmentId, AssessmentName: $assessmentName');
+    state = state.updateAssessment(assessmentId: assessmentId, assessmentName: assessmentName);
+    // Could add persistence here if needed for assessments
+    // PersistenceService.persistAssessment(assessmentId, assessmentName);
+  }
 
-    PersistenceService.persistAppView(appview);
+  void setAppView(AppScreen appView) {
+    switch (appView) {
+      case AppScreen.orgBuild:
+        state = state.updateAssessment(clear: true).updateAppView(appView);
+        break;
+      default:
+        state = state.updateAppView(appView);
+    }
+    PersistenceService.persistAppView(appView);
+  }
+
+  // Combined method for common use case - single rebuild
+  void setOrgAndNavigate(String? orgId, String? orgName, AppScreen appView) {
+    print('OrgID: $orgId, OrgName: $orgName');
+    state = state.updateOrg(orgId: orgId, orgName: orgName).updateAppView(appView);
+    PersistenceService.persistOrg(orgId, orgName);
+    PersistenceService.persistAppView(appView);
+  }
+
+  // Combined method for common use case - single rebuild
+  void setAssessmentAndNavigate(String? assessmentId, String? assessmentName, AppScreen appView) {
+    print('AssessmentID: $assessmentId, AssessmentName: $assessmentName');
+    state = state.updateAssessment(assessmentId: assessmentId, assessmentName: assessmentName).updateAppView(appView);
+    NavigationService.navigateTo("/app/canvas");
+
+    PersistenceService.persistAppView(appView);
+  }
+
+  // Batch update method for multiple changes at once
+  void batchUpdate(AppState Function(AppState) updates) {
+    state = updates(state);
   }
 
   void clearAssessment() {
-    state = state.copyWith(clearAssessmentID: true, clearAssessmentName: true);
+    state = state.updateAssessment(clear: true);
   }
 
   void reset() {
@@ -180,11 +195,11 @@ class AppStateNotifier extends StateNotifier<AppState> {
     PersistenceService.clearPersistedAppView();
   }
 
-  // Getters for data classes
+  // Clean getters
   FirestoreContext get firestore => state.firestoreContext;
   DisplayContext get display => state.displayContext;
-  AppScreen get currentAppView => state.displayContext.appView;
-  AppMode get currentAppMode => state.displayContext.appMode;
+  AppScreen get currentAppView => state.appView;
+  AppMode get currentAppMode => state.appMode;
   bool get isLoading => state.isLoading;
   bool get isInitialized => state.isInitialized;
 }

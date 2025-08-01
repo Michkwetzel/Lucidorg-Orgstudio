@@ -17,9 +17,9 @@ class OrgSelectPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final Logger logger = Logger('orgSelectPage.dart');
 
-    final List<Org> orgs = ref.watch(orgsScreenProvider.select((state) => state.orgs));
-    final bool isLoading = ref.watch(orgsScreenProvider.select((state) => state.isLoading));
-    final String loadingMessage = ref.watch(orgsScreenProvider.select((state) => state.loadingMessage));
+    final List<Org> orgs = ref.watch(orgsSelectProvider.select((state) => state.orgs));
+    final bool isLoading = ref.watch(orgsSelectProvider.select((state) => state.isLoading));
+    final String loadingMessage = ref.watch(orgsSelectProvider.select((state) => state.loadingMessage));
 
     logger.info("org Screen, Build run");
 
@@ -38,8 +38,7 @@ class OrgSelectPage extends ConsumerWidget {
                       heading: org.orgName,
                       data: org.id,
                       onPressed: () {
-                        ref.read(appStateProvider.notifier).setOrg(org.id, org.orgName);
-                        ref.read(appStateProvider.notifier).setAppView(AppScreen.orgBuild);
+                        ref.read(appStateProvider.notifier).setOrgAndNavigate(org.id, org.orgName, AppScreen.orgBuild);
                         NavigationService.navigateTo("/app/canvas");
                       },
                     ),
@@ -48,7 +47,7 @@ class OrgSelectPage extends ConsumerWidget {
                     onPressed: () async {
                       Map<String, String>? neworgInfo = await InputDialogService.showorgForm();
                       if (neworgInfo != null) {
-                        ref.read(orgsScreenProvider.notifier).createorg(neworgInfo['orgName']!);
+                        ref.read(orgsSelectProvider.notifier).createorg(neworgInfo['orgName']!);
                       }
                     },
                   ),

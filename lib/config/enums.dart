@@ -6,11 +6,18 @@ enum BlockMode { orgBuild, assessmentView, assessmentCreate }
 
 enum Permission { admin, error }
 
-enum Options { select, department, all}
+enum Options { select, department, all }
 
 enum Pilar { alignment, people, process, leadership, none }
 
 enum Benchmark {
+  orgIndex,
+  workforce,
+  operations,
+  alignP,
+  processP,
+  leadershipP,
+  peopleP,
   purposeDriven,
   growthAlign,
   orgAlign,
@@ -24,13 +31,6 @@ enum Benchmark {
   crossFuncAcc,
   engagement,
   productivity,
-  orgIndex,
-  workforce,
-  operations,
-  alignP,
-  processP,
-  leadershipP,
-  peopleP,
 }
 
 List<Benchmark> indicators() {

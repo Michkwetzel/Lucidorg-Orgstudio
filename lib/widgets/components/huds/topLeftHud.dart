@@ -12,6 +12,8 @@ class TopLeftHud extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final appDisplayState = ref.watch(appStateProvider).displayContext;
 
+    print("Building TopLEFTHUD");
+
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [

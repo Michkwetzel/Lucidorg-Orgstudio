@@ -7,35 +7,19 @@ import 'package:platform_v2/notifiers/general/orgCanvasNotifier.dart';
 import 'package:platform_v2/notifiers/general/connectionsManager.dart';
 import 'package:platform_v2/notifiers/general/orgsScreenNotifier.dart';
 import 'package:platform_v2/notifiers/general/assessmentScreenNotifier.dart';
-import 'package:platform_v2/notifiers/huds/botLeftHudNotifier.dart';
-import 'package:platform_v2/notifiers/huds/topLeftHudNotifier.dart';
-import 'package:platform_v2/notifiers/huds/topRightHudNotifier.dart';
+import 'package:platform_v2/config/enums.dart';
 
 final authProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
   return AuthNotifier()..initState();
 });
 
-final topleftHudProvider = StateNotifierProvider<TopleftHudNotifier, TopleftHudState>((ref) {
-  return TopleftHudNotifier();
-});
-
-final botLeftHudProvider = StateNotifierProvider<BotLeftHudNotifier, BotleftHudState>((ref) {
-  return BotLeftHudNotifier();
-});
-
-final topRightHudProvider = StateNotifierProvider<TopRightHudNotifier, bool>((ref) {
-  return TopRightHudNotifier();
-});
-
-// final toolBarHudProvider = StateNotifierProvider<ToolBarHudNotifier, ToolbarHudState>((ref) {
-//   return ToolBarHudNotifier();
-// });
-
-final orgsScreenProvider = StateNotifierProvider.autoDispose<OrgsScreenNotifier, OrgsScreenState>((ref) {
+// For Org select State
+final orgsSelectProvider = StateNotifierProvider.autoDispose<OrgsScreenNotifier, OrgsScreenState>((ref) {
   return OrgsScreenNotifier();
 });
 
-final assessmentScreenProvider = StateNotifierProvider.autoDispose<AssessmentScreenNotifier, AssessmentScreenState>((ref) {
+// For Assessment select State
+final assessmentsSelectProvider = StateNotifierProvider.autoDispose<AssessmentScreenNotifier, AssessmentScreenState>((ref) {
   final String orgId = ref.read(appStateProvider.select((state) => state.firestoreContext.orgId!));
   return AssessmentScreenNotifier(orgId: orgId);
 });
@@ -63,21 +47,24 @@ final blockNotifierProvider = ChangeNotifierProvider.family.autoDispose<BlockNot
   return notifier;
 });
 
-
 final connectionManagerProvider = StateNotifierProvider.autoDispose<ConnectionManager, ConnectionsState>((ref) {
   final context = ref.watch(appStateProvider.select((state) => state.firestoreContext));
 
   return ConnectionManager(context: context);
 });
 
-// For assessment Send Mode
+// For assessment Send Mode - Tracks which blocks are selected to send assessments too
 final selectedBlocksProvider = StateProvider<Set<String>>((ref) => {});
 final selectedDepartmentsProvider = StateProvider<Set<String>>((ref) => {});
 
-// For Builder
+// For Assessment/Org Builder. Tracks which block is selected
 final selectedBlockProvider = StateProvider<String?>((ref) => null);
 
 // For Assessment Data View - tracks which blocks show detailed view
 final detailedViewBlocksProvider = StateProvider<Set<String>>((ref) => {});
 
+// For Assessment Data View - tracks selected benchmark for display
+final selectedBenchmarkProvider = StateProvider<Benchmark>((ref) => Benchmark.orgIndex);
+
+// For orgCanvas scale.
 final canvasScaleProvider = StateProvider<double>((ref) => 1.0);

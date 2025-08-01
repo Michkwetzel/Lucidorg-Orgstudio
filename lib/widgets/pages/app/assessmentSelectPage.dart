@@ -17,9 +17,9 @@ class AssessmentSelectPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final Logger logger = Logger('assessmentSelectPage.dart');
 
-    final List<Assessment> assessments = ref.watch(assessmentScreenProvider.select((state) => state.assessments));
-    final bool isLoading = ref.watch(assessmentScreenProvider.select((state) => state.isLoading));
-    final String loadingMessage = ref.watch(assessmentScreenProvider.select((state) => state.loadingMessage));
+    final List<Assessment> assessments = ref.watch(assessmentsSelectProvider.select((state) => state.assessments));
+    final bool isLoading = ref.watch(assessmentsSelectProvider.select((state) => state.isLoading));
+    final String loadingMessage = ref.watch(assessmentsSelectProvider.select((state) => state.loadingMessage));
 
     logger.info("Assessment Screen, Build run");
 
@@ -38,9 +38,7 @@ class AssessmentSelectPage extends ConsumerWidget {
                       heading: assessment.assessmentName,
                       data: assessment.id,
                       onPressed: () {
-                        // Update app state
-                        ref.read(appStateProvider.notifier).setAppView(AppScreen.assessmentBuild, assessmentID: assessment.id, assessmentName: assessment.assessmentName);
-
+                        ref.read(appStateProvider.notifier).setAssessmentAndNavigate(assessment.id, assessment.assessmentName, AppScreen.assessmentBuild);
                         NavigationService.navigateTo("/app/canvas");
                       },
                     ),
