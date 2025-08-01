@@ -8,6 +8,7 @@ import 'package:platform_v2/notifiers/general/connectionsManager.dart';
 import 'package:platform_v2/notifiers/general/orgsScreenNotifier.dart';
 import 'package:platform_v2/notifiers/general/assessmentScreenNotifier.dart';
 import 'package:platform_v2/config/enums.dart';
+import 'package:platform_v2/dataClasses/displayOption.dart';
 
 final authProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
   return AuthNotifier()..initState();
@@ -63,8 +64,8 @@ final selectedBlockProvider = StateProvider<String?>((ref) => null);
 // For Assessment Data View - tracks which blocks show detailed view
 final detailedViewBlocksProvider = StateProvider<Set<String>>((ref) => {});
 
-// For Assessment Data View - tracks selected benchmark for display
-final selectedBenchmarkProvider = StateProvider<Benchmark>((ref) => Benchmark.orgIndex);
+// For Assessment Data View - tracks selected display option (benchmark or question)
+final selectedDisplayOptionProvider = StateProvider<DisplayOption>((ref) => DisplayOption.benchmark(Benchmark.orgIndex));
 
 // For orgCanvas scale.
 final canvasScaleProvider = StateProvider<double>((ref) => 1.0);

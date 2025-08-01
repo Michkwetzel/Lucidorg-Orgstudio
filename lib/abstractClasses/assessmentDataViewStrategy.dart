@@ -4,6 +4,7 @@ import 'package:platform_v2/abstractClasses/blockContext.dart';
 import 'package:platform_v2/config/constants.dart';
 import 'package:platform_v2/config/enums.dart';
 import 'package:platform_v2/config/provider.dart';
+import 'package:platform_v2/dataClasses/displayOption.dart';
 import 'package:platform_v2/services/uiServices/overLayService.dart';
 
 // The rulebook for what functions a strategy can implement.
@@ -47,12 +48,26 @@ class AssessmentDataViewStrategy extends BlockBehaviorStrategy {
     final blockData = context.blockNotifier.blockData;
     final benchmarks = context.blockNotifier.benchmarks;
 
-    // Get selected benchmark from provider
-    final selectedBenchmark = context.ref.watch(selectedBenchmarkProvider);
+    // Get selected display option
+    final selectedOption = context.ref.watch(selectedDisplayOptionProvider);
 
-    // Calculate selected benchmark percentage (normalize to 0-100%)
-    final benchmarkValue = benchmarks?[selectedBenchmark];
-    final benchmarkPercent = benchmarkValue != null ? (benchmarkValue * 100).round() : null;
+    // Extract data based on option type
+    String? displayText;
+    if (selectedOption.isQuestion) {
+      // Question mode
+      final hasRawResults = blockData?.rawResults.isNotEmpty == true;
+      if (hasRawResults && selectedOption.questionNumber! <= blockData!.rawResults.length) {
+        final answer = blockData.rawResults[selectedOption.questionNumber! - 1];
+        displayText = 'Q${selectedOption.questionNumber}: $answer';
+      }
+    } else {
+      // Benchmark mode
+      final benchmarkValue = benchmarks?[selectedOption.benchmark!];
+      if (benchmarkValue != null) {
+        final percent = (benchmarkValue * 100).round();
+        displayText = '$percent%';
+      }
+    }
 
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -81,12 +96,13 @@ class AssessmentDataViewStrategy extends BlockBehaviorStrategy {
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
-        if (benchmarkPercent != null) ...[
-          const SizedBox(height: 4),
+        const SizedBox(height: 4),
+        // Display the extracted data
+        if (displayText != null) ...[
           Text(
-            '$benchmarkPercent%',
-            style: const TextStyle(
-              fontSize: 14,
+            displayText,
+            style: TextStyle(
+              fontSize: selectedOption.isQuestion ? 12 : 14,
               fontWeight: FontWeight.bold,
               color: Colors.black87,
             ),
@@ -195,25 +211,56 @@ class AssessmentDataViewStrategy extends BlockBehaviorStrategy {
     }
   }
 
+  Color _getQuestionColor(int answer) {
+    // Question answer color coding (1-7 scale)
+    switch (answer) {
+      case 1:
+      case 2:
+        return Colors.red.shade600;
+      case 3:
+        return Colors.yellow.shade600;
+      case 4:
+        return Colors.orange.shade600;
+      case 5:
+      case 6:
+        return Colors.green.shade600;
+      case 7:
+        return Colors.green.shade700;
+      default:
+        return Colors.grey.shade400;
+    }
+  }
+
   @override
   BoxDecoration blockDecoration(BlockContext context) {
+    final blockData = context.blockNotifier.blockData;
     final benchmarks = context.blockNotifier.benchmarks;
     final isSelected = context.blockNotifier.selected;
     final detailedBlocks = context.ref.watch(detailedViewBlocksProvider);
     final isDetailedView = detailedBlocks.contains(context.blockId);
 
-    // Get selected benchmark from provider
-    final selectedBenchmark = context.ref.watch(selectedBenchmarkProvider);
+    // Get selected display option
+    final selectedOption = context.ref.watch(selectedDisplayOptionProvider);
 
-    // Default color when no benchmarks available
+    // Default color when no data available
     Color performanceColor = Colors.grey[300]!;
 
-    // Color coding based on selected benchmark
-    if (benchmarks != null) {
-      final benchmarkValue = benchmarks[selectedBenchmark];
-      if (benchmarkValue != null) {
-        final percentage = benchmarkValue * 100;
-        performanceColor = _getBenchmarkColor(percentage);
+    // Color coding based on option type
+    if (selectedOption.isQuestion) {
+      // Question mode
+      final hasRawResults = blockData?.rawResults.isNotEmpty == true;
+      if (hasRawResults && selectedOption.questionNumber! <= blockData!.rawResults.length) {
+        final answer = blockData.rawResults[selectedOption.questionNumber! - 1];
+        performanceColor = _getQuestionColor(answer);
+      }
+    } else {
+      // Benchmark mode
+      if (benchmarks != null) {
+        final benchmarkValue = benchmarks[selectedOption.benchmark!];
+        if (benchmarkValue != null) {
+          final percentage = benchmarkValue * 100;
+          performanceColor = _getBenchmarkColor(percentage);
+        }
       }
     }
 
