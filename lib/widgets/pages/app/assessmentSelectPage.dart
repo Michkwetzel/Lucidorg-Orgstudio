@@ -38,8 +38,7 @@ class AssessmentSelectPage extends ConsumerWidget {
                       heading: assessment.assessmentName,
                       data: assessment.id,
                       onPressed: () {
-                        ref.read(appStateProvider.notifier).setAssessmentAndNavigate(assessment.id, assessment.assessmentName, AppScreen.assessmentBuild);
-                        NavigationService.navigateTo("/app/canvas");
+                        NavigationService.navigateToAssessmentBuild(ref, assessment.id, assessment.assessmentName);
                       },
                     ),
                   ),

@@ -11,8 +11,9 @@ class BotRightHud extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final appView = ref.watch(appStateProvider).displayContext.appView;
+    final assessmentMode = ref.watch(appStateProvider).displayContext.assessmentMode;
 
-    if (appView != AppScreen.assessmentBuild) return SizedBox.shrink();
+    if (appView != AppView.assessmentBuild && assessmentMode != AssessmentMode.assessmentDataView) return SizedBox.shrink();
 
     return Tooltip(
       message: 'Send Assessment',
@@ -20,8 +21,8 @@ class BotRightHud extends ConsumerWidget {
         onPressed: () {
           // unselect a block if it was selected.
           ref.read(selectedBlockProvider.notifier).state = null;
-          // chnage mode to assessmentSendSelectBlocks
-          ref.read(appStateProvider.notifier).setAppMode(AppMode.assessmentSend);
+          // change mode to assessmentSendSelectBlocks
+          ref.read(appStateProvider.notifier).setAssessmentMode(AssessmentMode.assessmentSend);
           _openSendAssessmentOverlay(context, ref);
         },
         child: Icon(Icons.add),
@@ -54,9 +55,8 @@ class BotRightHud extends ConsumerWidget {
       onCancel: () {
         // Clear AssessmentSend Blocks
         ref.read(selectedBlocksProvider.notifier).state = {};
-        ref.read(appStateProvider.notifier).setAppMode(AppMode.assessmentBuild);
+        ref.read(appStateProvider.notifier).setAssessmentMode(AssessmentMode.assessmentBuild);
       },
     );
   }
-  
 }

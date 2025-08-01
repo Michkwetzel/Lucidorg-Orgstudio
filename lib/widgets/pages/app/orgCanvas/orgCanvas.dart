@@ -68,7 +68,7 @@ class _OrgCanvasState extends ConsumerState<OrgCanvas> {
               },
               onDoubleTap: () {
                 // Create new block at tap position
-                if (ref.read(appStateProvider.notifier).currentAppMode != AppMode.assessmentSend) {
+                if (ref.read(appStateProvider.notifier).currentAssessmentMode != AssessmentMode.assessmentSend) {
                   // But only if not select blocks for assessment mode.
                   final blockID = FirestoreIdGenerator.generate();
                   ref.read(canvasProvider.notifier).addBlock(blockID, _lastTapPosition);

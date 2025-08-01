@@ -13,7 +13,6 @@ class BlockNotifier extends ChangeNotifier {
 
   final String blockID;
   final FirestoreContext context;
-  late Offset _position;
   Set<String> _descendants = {};
   bool positionLoaded = false;
   BlockData? _blockData;
@@ -45,32 +44,31 @@ class BlockNotifier extends ChangeNotifier {
         if (doc.exists && doc.data() != null) {
           final data = doc.data()!;
 
-          // Get new position from Firestore
-          Offset newPosition = Offset(data['position']['x'] ?? 0, data['position']['y'] ?? 0);
-
-          // Check if position has changed (only if position was previously loaded)
-          bool positionChanged = positionLoaded && (_position != newPosition);
-
-          // Check if block data has changed
+          // Create new BlockData with all fields from Firestore
           String name = data['name'] ?? '';
           String role = data['role'] ?? '';
           String department = data['department'] ?? '';
           List<String> emails = List<String>.from(data['emails'] ?? []);
-          BlockData newBlockData = BlockData(name: name, role: role, department: department, emails: emails);
-          bool dataChanged = _blockData != null && (_blockData != newBlockData);
+          Offset position = Offset(data['position']['x'] ?? 0, data['position']['y'] ?? 0);
+          
+          BlockData newBlockData = BlockData(
+            name: name, 
+            role: role, 
+            department: department, 
+            emails: emails,
+            position: position,
+            // Keep existing rawResults, sent, submitted if they exist
+            rawResults: _blockData?.rawResults ?? [],
+            sent: _blockData?.sent ?? false,
+            submitted: _blockData?.submitted ?? false,
+          );
+          
+          bool dataChanged = _blockData != newBlockData;
 
           // Update if something actually changed or if this is the first load
-          if (positionChanged || dataChanged || !positionLoaded) {
-            if (!positionLoaded || positionChanged) {
-              _position = newPosition;
-              // print("Position for block $blockID updated");
-            }
-
-            if (_blockData == null || dataChanged) {
-              _blockData = newBlockData;
-              // print("Data for block $blockID updated");
-            }
-
+          if (dataChanged || !positionLoaded) {
+            _blockData = newBlockData;
+            
             if (!positionLoaded) {
               positionLoaded = true;
               // print("Initial load completed for block $blockID");
@@ -99,19 +97,28 @@ class BlockNotifier extends ChangeNotifier {
             if (doc.exists && doc.data() != null) {
               final data = doc.data()!;
               final rawResults = data['rawResults'] as List<dynamic>?;
-              if (rawResults != null) {
-                final rawResultsInt = rawResults.cast<int>();
-                _blockData =
-                    _blockData?.copyWith(rawResults: rawResultsInt) ??
-                    BlockData(
-                      name: '',
-                      role: '',
-                      department: '',
-                      emails: [],
-                      rawResults: rawResultsInt,
-                    );
+              final sent = data['sent'] as bool?;
+              final submitted = data['submitted'] as bool?;
 
-                // Calculate benchmarks when rawResults are available
+              // Update BlockData with assessment data
+              final rawResultsInt = rawResults?.cast<int>() ?? [];
+              
+              _blockData = _blockData?.copyWith(
+                rawResults: rawResultsInt,
+                sent: sent ?? false,
+                submitted: submitted ?? false,
+              ) ?? BlockData(
+                name: '',
+                role: '',
+                department: '',
+                emails: [],
+                rawResults: rawResultsInt,
+                sent: sent ?? false,
+                submitted: submitted ?? false,
+              );
+
+              // Calculate benchmarks when rawResults are available
+              if (rawResultsInt.isNotEmpty) {
                 try {
                   _benchmarks = _calculateBenchmarks(rawResultsInt);
                   print("Calculated benchmarks for block $blockID: ${_benchmarks?.length} benchmarks");
@@ -119,9 +126,9 @@ class BlockNotifier extends ChangeNotifier {
                   print("Error calculating benchmarks for block $blockID: $e");
                   _benchmarks = null;
                 }
-
-                notifyListeners();
               }
+
+              notifyListeners();
             }
           }
         },
@@ -133,11 +140,13 @@ class BlockNotifier extends ChangeNotifier {
   }
 
   // Getters with proper encapsulation
-  Offset get position => _position;
+  Offset get position => _blockData?.position ?? const Offset(0, 0);
   BlockData? get blockData => _blockData;
   bool get selected => _selected;
   Set<String> get descendants => _descendants;
   Map<Benchmark, double>? get benchmarks => _benchmarks;
+  bool get sent => _blockData?.sent ?? false;
+  bool get submitted => _blockData?.submitted ?? false;
 
   void updateDescendants(Map<String, Set<String>> parentAndChildren) {
     //Finds all decendants of current block and adds to internal state map
@@ -162,8 +171,9 @@ class BlockNotifier extends ChangeNotifier {
   }
 
   void updatePosition(Offset newPosition) async {
-    if (!positionLoaded || _position != newPosition) {
-      _position = newPosition;
+    final currentPosition = _blockData?.position ?? const Offset(0, 0);
+    if (!positionLoaded || currentPosition != newPosition) {
+      _blockData = _blockData?.copyWith(position: newPosition) ?? BlockData.initial().copyWith(position: newPosition);
       notifyListeners();
 
       _debounceTimer?.cancel();
@@ -178,8 +188,9 @@ class BlockNotifier extends ChangeNotifier {
   }
 
   void updatePositionWithoutFirestore(Offset newPosition) {
-    if (!positionLoaded || _position != newPosition) {
-      _position = newPosition;
+    final currentPosition = _blockData?.position ?? const Offset(0, 0);
+    if (!positionLoaded || currentPosition != newPosition) {
+      _blockData = _blockData?.copyWith(position: newPosition) ?? BlockData.initial().copyWith(position: newPosition);
       notifyListeners();
     }
   }

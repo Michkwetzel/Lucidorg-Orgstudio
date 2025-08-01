@@ -5,7 +5,7 @@ class PersistenceService {
   static const String _orgIdKey = 'orgId';
   static const String _orgNameKey = 'orgName';
   static const String _appViewKey = 'appView';
-  static const String _appModeKey = 'appMode';
+  static const String _assessmentModeKey = 'assessmentMode';
 
   // Load persisted state
   static Future<Map<String, dynamic>> loadPersistedState() async {
@@ -13,23 +13,23 @@ class PersistenceService {
     final orgId = prefs.getString(_orgIdKey);
     final orgName = prefs.getString(_orgNameKey);
     final appViewString = prefs.getString(_appViewKey);
-    final appModeString = prefs.getString(_appModeKey);
+    final assessmentModeString = prefs.getString(_assessmentModeKey);
 
-    AppScreen appView = AppScreen.none;
+    AppView appView = AppView.none;
     if (appViewString != null) {
       appView = _parseAppView(appViewString);
     }
 
-    AppMode? appMode;
-    if (appModeString != null) {
-      appMode = _parseAppMode(appModeString);
+    AssessmentMode? assessmentMode;
+    if (assessmentModeString != null) {
+      assessmentMode = _parseAssessmentMode(assessmentModeString);
     }
 
     return {
       'orgId': orgId,
       'orgName': orgName,
       'appView': appView,
-      'appMode': appMode,
+      'assessmentMode': assessmentMode,
     };
   }
 
@@ -52,38 +52,48 @@ class PersistenceService {
   }
 
   // Persist app view
-  static Future<void> persistAppView(AppScreen appView) async {
+  static Future<void> persistAppView(AppView appView) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_appViewKey, appView.toString());
   }
 
-  // Persist app mode
-  static Future<void> persistAppMode(AppMode appMode) async {
+  // Persist assessment mode - now handles nullable values
+  static Future<void> persistAssessmentMode(AssessmentMode? assessmentMode) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_appModeKey, appMode.toString());
+    if (assessmentMode != null) {
+      await prefs.setString(_assessmentModeKey, assessmentMode.toString());
+    } else {
+      await prefs.remove(_assessmentModeKey);
+    }
+  }
+
+  // Clear persisted assessment mode
+  static Future<void> clearPersistedAssessmentMode() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_assessmentModeKey);
   }
 
   // Clear persisted app view
   static Future<void> clearPersistedAppView() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_appViewKey);
-    await prefs.remove(_appModeKey);
+    await prefs.remove(_assessmentModeKey);
   }
 
   // Parse app view from string - uses enum values directly
-  static AppScreen _parseAppView(String appViewString) {
-    for (AppScreen screen in AppScreen.values) {
+  static AppView _parseAppView(String appViewString) {
+    for (AppView screen in AppView.values) {
       if (screen.toString() == appViewString) {
         return screen;
       }
     }
-    return AppScreen.none;
+    return AppView.none;
   }
 
-  // Parse app mode from string
-  static AppMode? _parseAppMode(String appModeString) {
-    for (AppMode mode in AppMode.values) {
-      if (mode.toString() == appModeString) {
+  // Parse assessment mode from string
+  static AssessmentMode? _parseAssessmentMode(String assessmentModeString) {
+    for (AssessmentMode mode in AssessmentMode.values) {
+      if (mode.toString() == assessmentModeString) {
         return mode;
       }
     }

@@ -10,11 +10,11 @@ class TopRightHud extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final appScreen = ref.watch(appStateProvider).displayContext.appView;
-    
-    if (appScreen == AppScreen.orgBuild) {
+    final appView = ref.watch(appStateProvider).displayContext.appView;
+
+    if (appView == AppView.orgBuild) {
       return _buildPopupMenu(context, ref);
-    } else if (appScreen == AppScreen.assessmentBuild) {
+    } else if (appView == AppView.assessmentBuild) {
       return _buildSegmentedButton(context, ref);
     } else {
       return SizedBox.shrink();
@@ -61,8 +61,8 @@ class TopRightHud extends ConsumerWidget {
   }
 
   Widget _buildSegmentedButton(BuildContext context, WidgetRef ref) {
-    final currentAppMode = ref.watch(appStateProvider).displayContext.appMode;
-    
+    final currentAssessmentMode = ref.watch(appStateProvider).displayContext.assessmentMode;
+
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(8),
@@ -76,16 +76,16 @@ class TopRightHud extends ConsumerWidget {
             context: context,
             ref: ref,
             text: 'Builder',
-            isActive: currentAppMode == AppMode.assessmentBuild,
-            onTap: () => ref.read(appStateProvider.notifier).setAppMode(AppMode.assessmentBuild),
+            isActive: currentAssessmentMode == AssessmentMode.assessmentBuild,
+            onTap: () => ref.read(appStateProvider.notifier).setAssessmentMode(AssessmentMode.assessmentBuild),
             isFirst: true,
           ),
           _buildSegmentButton(
             context: context,
             ref: ref,
             text: 'Data View',
-            isActive: currentAppMode == AppMode.assessmentDataView,
-            onTap: () => ref.read(appStateProvider.notifier).setAppMode(AppMode.assessmentDataView),
+            isActive: currentAssessmentMode == AssessmentMode.assessmentDataView,
+            onTap: () => ref.read(appStateProvider.notifier).setAssessmentMode(AssessmentMode.assessmentDataView),
             isFirst: false,
           ),
         ],
@@ -129,7 +129,6 @@ class TopRightHud extends ConsumerWidget {
       context,
       onCreate: (assessmentName) async {
         await FirestoreService.createAssessment(ref.read(appStateProvider).firestoreContext.orgId!, assessmentName);
-
         // ref.read(appStateProvider.notifier).toAssessmentView(assessmentId, assessmentName);
         print('Creating assessment: $assessmentName');
       },

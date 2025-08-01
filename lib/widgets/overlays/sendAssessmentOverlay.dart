@@ -100,7 +100,7 @@ class _SendAssessmentOverlayState extends ConsumerState<SendAssessmentOverlay> {
   void _handleOptionTap(Options option) {
     switch (option) {
       case Options.select:
-        ref.read(appStateProvider.notifier).setAppMode(AppMode.assessmentSend);
+        ref.read(appStateProvider.notifier).setAssessmentMode(AssessmentMode.assessmentSend);
         break;
       case Options.department:
         _scanForDepartments();
@@ -123,7 +123,7 @@ class _SendAssessmentOverlayState extends ConsumerState<SendAssessmentOverlay> {
     super.initState();
     // Listen for app view changes
     ref.listenManual(appStateProvider.select((state) => state.displayContext.appView), (previous, next) {
-      if (next != AppScreen.assessmentBuild) {
+      if (next != AppView.assessmentBuild) {
         widget.onClose?.call();
       }
     });
@@ -344,7 +344,7 @@ class _SendAssessmentOverlayState extends ConsumerState<SendAssessmentOverlay> {
                               // Handle cancel logic here
                               ref.read(selectedBlocksProvider.notifier).state = {};
                               ref.read(selectedDepartmentsProvider.notifier).state = {};
-                              ref.read(appStateProvider.notifier).setAppMode(AppMode.assessmentBuild);
+                              ref.read(appStateProvider.notifier).setAssessmentMode(AssessmentMode.assessmentBuild);
                               widget.onClose?.call();
                             },
                             style: OutlinedButton.styleFrom(

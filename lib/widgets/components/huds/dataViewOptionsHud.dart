@@ -16,9 +16,9 @@ class _DataViewOptionsHudState extends ConsumerState<DataViewOptionsHud> {
 
   @override
   Widget build(BuildContext context) {
-    final appMode = ref.watch(appStateProvider).displayContext.appMode;
+    final assessmentMode = ref.watch(appStateProvider).displayContext.assessmentMode;
     // Only show in AssessmentDataViewx
-    if (appMode != AppMode.assessmentDataView) {
+    if (assessmentMode != AssessmentMode.assessmentDataView) {
       return const SizedBox.shrink();
     }
 

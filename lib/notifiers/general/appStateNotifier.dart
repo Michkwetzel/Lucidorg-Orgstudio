@@ -3,7 +3,6 @@ import 'package:platform_v2/config/enums.dart';
 import 'package:platform_v2/dataClasses/displayContext.dart';
 import 'package:platform_v2/dataClasses/firestoreContext.dart';
 import 'package:platform_v2/services/persistService.dart';
-import 'package:platform_v2/services/uiServices/navigationService.dart';
 
 class AppState {
   final bool isLoading;
@@ -18,18 +17,21 @@ class AppState {
     this.displayContext = const DisplayContext(),
   });
 
-  // Simplified copyWith - only handles the main properties
   AppState copyWith({
     bool? isLoading,
     bool? isInitialized,
     FirestoreContext? firestoreContext,
     DisplayContext? displayContext,
+    AssessmentMode? assessmentMode,
+    bool clearAssessmentMode = false,
   }) {
     return AppState(
       isLoading: isLoading ?? this.isLoading,
       isInitialized: isInitialized ?? this.isInitialized,
       firestoreContext: firestoreContext ?? this.firestoreContext,
-      displayContext: displayContext ?? this.displayContext,
+      displayContext: clearAssessmentMode
+          ? this.displayContext.copyWith(assessmentMode: null)
+          : (displayContext ?? (assessmentMode != null ? this.displayContext.copyWith(assessmentMode: assessmentMode) : this.displayContext)),
     );
   }
 
@@ -68,15 +70,15 @@ class AppState {
     );
   }
 
-  AppState updateAppView(AppScreen appView) {
+  AppState updateAppView(AppView appView) {
     return copyWith(
       displayContext: displayContext.copyWith(appView: appView),
     );
   }
 
-  AppState updateAppMode(AppMode appMode) {
+  AppState updateAssessmentMode(AssessmentMode? assessmentMode) {
     return copyWith(
-      displayContext: displayContext.copyWith(appMode: appMode),
+      displayContext: displayContext.copyWith(assessmentMode: assessmentMode),
     );
   }
 
@@ -87,8 +89,8 @@ class AppState {
   String? get orgName => displayContext.orgName;
   String? get assessmentId => firestoreContext.assessmentId;
   String? get assessmentName => displayContext.assessmentName;
-  AppScreen get appView => displayContext.appView;
-  AppMode get appMode => displayContext.appMode;
+  AppView get appView => displayContext.appView;
+  AssessmentMode? get assessmentMode => displayContext.assessmentMode;
 
   @override
   bool operator ==(Object other) {
@@ -116,19 +118,32 @@ class AppStateNotifier extends StateNotifier<AppState> {
     final persistedData = await PersistenceService.loadPersistedState();
     final orgId = persistedData['orgId'] as String?;
     final orgName = persistedData['orgName'] as String?;
-    final appView = persistedData['appView'] as AppScreen? ?? AppScreen.none;
-    final appMode = persistedData['appMode'] as AppMode? ?? AppMode.none;
+    final appView = persistedData['appView'] as AppView? ?? AppView.none;
+    final assessmentMode = persistedData['assessmentMode'] as AssessmentMode?;
 
     if (orgId != null) {
-      state = state.updateOrg(orgId: orgId, orgName: orgName).updateAppView(appView).updateAppMode(appMode).copyWith(isInitialized: true);
+      state = state.updateOrg(orgId: orgId, orgName: orgName).updateAppView(appView);
+      if (assessmentMode != null) {
+        state = state.updateAssessmentMode(assessmentMode);
+      }
+      state = state.copyWith(isInitialized: true);
     } else {
-      state = state.updateAppView(appView).updateAppMode(appMode).copyWith(isInitialized: true);
+      state = state.updateAppView(appView);
+      if (assessmentMode != null) {
+        state = state.updateAssessmentMode(assessmentMode);
+      }
+      state = state.copyWith(isInitialized: true);
     }
   }
 
-  void setAppMode(AppMode appMode) {
-    state = state.updateAppMode(appMode);
-    PersistenceService.persistAppMode(appMode);
+  void setAssessmentMode(AssessmentMode? assessmentMode) {
+    state = state.updateAssessmentMode(assessmentMode);
+    if (assessmentMode != null) {
+      PersistenceService.persistAssessmentMode(assessmentMode);
+    } else {
+      // Handle clearing persisted assessment mode if needed
+      PersistenceService.clearPersistedAssessmentMode();
+    }
   }
 
   void setOrg(String? orgId, String? orgName) {
@@ -153,9 +168,9 @@ class AppStateNotifier extends StateNotifier<AppState> {
     // PersistenceService.persistAssessment(assessmentId, assessmentName);
   }
 
-  void setAppView(AppScreen appView) {
+  void setAppView(AppView appView) {
     switch (appView) {
-      case AppScreen.orgBuild:
+      case AppView.orgBuild:
         state = state.updateAssessment(clear: true).updateAppView(appView);
         break;
       default:
@@ -165,7 +180,7 @@ class AppStateNotifier extends StateNotifier<AppState> {
   }
 
   // Combined method for common use case - single rebuild
-  void setOrgAndNavigate(String? orgId, String? orgName, AppScreen appView) {
+  void setOrgAndNavigate(String? orgId, String? orgName, AppView appView) {
     print('OrgID: $orgId, OrgName: $orgName');
     state = state.updateOrg(orgId: orgId, orgName: orgName).updateAppView(appView);
     PersistenceService.persistOrg(orgId, orgName);
@@ -173,11 +188,9 @@ class AppStateNotifier extends StateNotifier<AppState> {
   }
 
   // Combined method for common use case - single rebuild
-  void setAssessmentAndNavigate(String? assessmentId, String? assessmentName, AppScreen appView) {
+  void setAssessmentAndNavigate(String? assessmentId, String? assessmentName, AppView appView) {
     print('AssessmentID: $assessmentId, AssessmentName: $assessmentName');
     state = state.updateAssessment(assessmentId: assessmentId, assessmentName: assessmentName).updateAppView(appView);
-    NavigationService.navigateTo("/app/canvas");
-
     PersistenceService.persistAppView(appView);
   }
 
@@ -190,6 +203,11 @@ class AppStateNotifier extends StateNotifier<AppState> {
     state = state.updateAssessment(clear: true);
   }
 
+  void clearAssessmentMode() {
+    state = state.updateAssessmentMode(null);
+    PersistenceService.clearPersistedAssessmentMode();
+  }
+
   void reset() {
     state = const AppState();
     PersistenceService.clearPersistedAppView();
@@ -198,8 +216,8 @@ class AppStateNotifier extends StateNotifier<AppState> {
   // Clean getters
   FirestoreContext get firestore => state.firestoreContext;
   DisplayContext get display => state.displayContext;
-  AppScreen get currentAppView => state.appView;
-  AppMode get currentAppMode => state.appMode;
+  AppView get currentAppView => state.appView;
+  AssessmentMode? get currentAssessmentMode => state.assessmentMode;
   bool get isLoading => state.isLoading;
   bool get isInitialized => state.isInitialized;
 }

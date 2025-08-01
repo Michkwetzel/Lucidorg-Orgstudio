@@ -38,8 +38,7 @@ class OrgSelectPage extends ConsumerWidget {
                       heading: org.orgName,
                       data: org.id,
                       onPressed: () {
-                        ref.read(appStateProvider.notifier).setOrgAndNavigate(org.id, org.orgName, AppScreen.orgBuild);
-                        NavigationService.navigateTo("/app/canvas");
+                        NavigationService.navigateToOrgBuild(ref, org.id, org.orgName);
                       },
                     ),
                   ),

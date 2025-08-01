@@ -26,8 +26,7 @@ class _LogInScreenState extends ConsumerState<LogInScreen> {
     final Logger logger = Logger("LogIn");
 
     void successfullyLogIn() {
-      ref.read(appStateProvider.notifier).setAppView(AppScreen.orgSelect);
-      NavigationService.navigateTo('/app/orgSelect');
+      NavigationService.navigateToOrgSelect(ref);
     }
 
     // Sign in with google. If new account. cancel and delete newly created OAuth account.
