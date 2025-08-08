@@ -6,7 +6,6 @@ class BlockData {
   final String department;
   final List<String> emails;
   final List<int> rawResults;
-  final Offset position;
   final bool sent;
   final bool submitted;
   //TODO: At the moment these are not nullable. might be usefull to do this later depending on how calculations are made.
@@ -17,7 +16,6 @@ class BlockData {
     required this.department,
     required this.emails,
     this.rawResults = const [],
-    this.position = const Offset(0, 0),
     this.sent = false,
     this.submitted = false,
   });
@@ -44,7 +42,6 @@ class BlockData {
       department: department ?? this.department,
       emails: emails ?? this.emails,
       rawResults: rawResults ?? this.rawResults,
-      position: position ?? this.position,
       sent: sent ?? this.sent,
       submitted: submitted ?? this.submitted,
     );
@@ -61,14 +58,13 @@ class BlockData {
     if (identical(this, other)) return true;
     if (other is! BlockData) return false;
 
-    return name == other.name && 
-           role == other.role && 
-           department == other.department && 
-           _listEquals(emails, other.emails) &&
-           _listEquals(rawResults, other.rawResults) &&
-           position == other.position &&
-           sent == other.sent &&
-           submitted == other.submitted;
+    return name == other.name &&
+        role == other.role &&
+        department == other.department &&
+        _listEquals(emails, other.emails) &&
+        _listEquals(rawResults, other.rawResults) &&
+        sent == other.sent &&
+        submitted == other.submitted;
   }
 
   // Override hashCode to be consistent with equality
@@ -80,7 +76,6 @@ class BlockData {
       department,
       Object.hashAll(emails),
       Object.hashAll(rawResults),
-      position,
       sent,
       submitted,
     );
@@ -101,7 +96,6 @@ class BlockData {
       role: '',
       department: '',
       emails: [],
-      position: const Offset(0, 0),
       sent: false,
       submitted: false,
     );
@@ -113,7 +107,6 @@ class BlockData {
     required String role,
     required String department,
     required String email,
-    Offset position = const Offset(0, 0),
     bool sent = false,
     bool submitted = false,
   }) {
@@ -122,7 +115,6 @@ class BlockData {
       role: role,
       department: department,
       emails: [email],
-      position: position,
       sent: sent,
       submitted: submitted,
     );

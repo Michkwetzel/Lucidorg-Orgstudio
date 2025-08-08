@@ -57,14 +57,14 @@ class OrgBuildStrategy extends BlockBehaviorStrategy {
       Positioned(
         top: 38,
         right: 38,
-        child: _BlockDropdownMenu(blockId: context.blockId),
+        child: BlockDropdownMenu(blockId: context.blockId),
       ),
 
       // Top center dot
       Positioned(
         left: (context.hitboxWidth / 2) - (kSelectionDotSize / 2),
         top: 0,
-        child: _SelectionDot(
+        child: SelectionDot(
           onTap: () {
             String newBlockID = FirestoreIdGenerator.generate();
             Offset newPosition = Offset(context.blockNotifier.position.dx, context.blockNotifier.position.dy - 300);
@@ -80,7 +80,7 @@ class OrgBuildStrategy extends BlockBehaviorStrategy {
       Positioned(
         left: (context.hitboxWidth / 2) - (kSelectionDotSize / 2),
         bottom: 0,
-        child: _SelectionDot(
+        child: SelectionDot(
           onTap: () {
             String newBlockID = FirestoreIdGenerator.generate();
             context.ref.read(canvasProvider.notifier).addBlock(newBlockID, Offset(context.blockNotifier.position.dx, context.blockNotifier.position.dy + 300), department: getDepartment());
@@ -94,7 +94,7 @@ class OrgBuildStrategy extends BlockBehaviorStrategy {
       Positioned(
         right: 0,
         top: (context.hitboxHeight / 2) - (kSelectionDotSize / 2),
-        child: _SelectionDot(
+        child: SelectionDot(
           onTap: () {
             String newBlockID = FirestoreIdGenerator.generate();
             Offset newPosition = Offset(context.blockNotifier.position.dx + 300, context.blockNotifier.position.dy);
@@ -114,7 +114,7 @@ class OrgBuildStrategy extends BlockBehaviorStrategy {
       Positioned(
         left: 0,
         top: (context.hitboxHeight / 2) - (kSelectionDotSize / 2),
-        child: _SelectionDot(
+        child: SelectionDot(
           onTap: () {
             String newBlockID = FirestoreIdGenerator.generate();
             Offset newPosition = Offset(context.blockNotifier.position.dx - 300, context.blockNotifier.position.dy);
@@ -218,10 +218,11 @@ class OrgBuildStrategy extends BlockBehaviorStrategy {
   }
 }
 
-class _SelectionDot extends StatelessWidget {
+class SelectionDot extends StatelessWidget {
   final VoidCallback onTap;
 
-  const _SelectionDot({
+  const SelectionDot({
+    super.key,
     required this.onTap,
   });
 
@@ -248,10 +249,10 @@ class _SelectionDot extends StatelessWidget {
   }
 }
 
-class _BlockDropdownMenu extends ConsumerWidget {
+class BlockDropdownMenu extends ConsumerWidget {
   final String blockId;
 
-  const _BlockDropdownMenu({required this.blockId});
+  const BlockDropdownMenu({super.key, required this.blockId});
 
   // Static menu items - built once, reused for all instances
   static const List<PopupMenuEntry<String>> _menuItems = [

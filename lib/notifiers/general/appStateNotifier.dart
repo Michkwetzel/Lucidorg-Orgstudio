@@ -77,6 +77,11 @@ class AppState {
   }
 
   AppState updateAssessmentMode(AssessmentMode? assessmentMode) {
+    if (assessmentMode == null) {
+      return copyWith(
+        displayContext: displayContext.copyWith(clearAssessmentMode: true),
+      );
+    }
     return copyWith(
       displayContext: displayContext.copyWith(assessmentMode: assessmentMode),
     );

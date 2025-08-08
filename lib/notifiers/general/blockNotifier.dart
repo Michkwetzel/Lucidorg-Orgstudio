@@ -18,11 +18,13 @@ class BlockNotifier extends ChangeNotifier {
   BlockData? _blockData;
   bool _selected = false;
   Map<Benchmark, double>? _benchmarks;
+  Offset _position = const Offset(0, 0);
 
   // Add StreamSubscription to track subscription to the blocks doc
-  StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>? _blockDocStreamSub;
-  late final Stream<DocumentSnapshot<Map<String, dynamic>>> blockDocStream;
+  StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>? _blockDataDocStreamSub;
+  late final Stream<DocumentSnapshot<Map<String, dynamic>>> _blockDataDocStream;
 
+  // from Data Doc
   StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? _blockResultStreamSub;
   late final Stream<QuerySnapshot<Map<String, dynamic>>> blockResultStream;
 
@@ -36,8 +38,8 @@ class BlockNotifier extends ChangeNotifier {
     required this.context,
   }) {
     // Get Block doc stream and listen to fields
-    blockDocStream = FirestoreService.getBlockStream(context, blockID);
-    _blockDocStreamSub = blockDocStream.listen(
+    _blockDataDocStream = FirestoreService.getBlockStream(context, blockID);
+    _blockDataDocStreamSub = _blockDataDocStream.listen(
       (snapshot) {
         DocumentSnapshot<Map<String, dynamic>> doc = snapshot;
         // Check if document exists before accessing data
@@ -50,25 +52,25 @@ class BlockNotifier extends ChangeNotifier {
           String department = data['department'] ?? '';
           List<String> emails = List<String>.from(data['emails'] ?? []);
           Offset position = Offset(data['position']['x'] ?? 0, data['position']['y'] ?? 0);
-          
+
           BlockData newBlockData = BlockData(
-            name: name, 
-            role: role, 
-            department: department, 
+            name: name,
+            role: role,
+            department: department,
             emails: emails,
-            position: position,
             // Keep existing rawResults, sent, submitted if they exist
             rawResults: _blockData?.rawResults ?? [],
             sent: _blockData?.sent ?? false,
             submitted: _blockData?.submitted ?? false,
           );
-          
+
           bool dataChanged = _blockData != newBlockData;
 
           // Update if something actually changed or if this is the first load
           if (dataChanged || !positionLoaded) {
             _blockData = newBlockData;
-            
+            _position = position;
+
             if (!positionLoaded) {
               positionLoaded = true;
               // print("Initial load completed for block $blockID");
@@ -97,25 +99,27 @@ class BlockNotifier extends ChangeNotifier {
             if (doc.exists && doc.data() != null) {
               final data = doc.data()!;
               final rawResults = data['rawResults'] as List<dynamic>?;
-              final sent = data['sent'] as bool?;
-              final submitted = data['submitted'] as bool?;
+              final sent = data['sentAssessment'] as bool? ?? false;
+              final submitted = data['submitted'] ?? false;
 
               // Update BlockData with assessment data
               final rawResultsInt = rawResults?.cast<int>() ?? [];
-              
-              _blockData = _blockData?.copyWith(
-                rawResults: rawResultsInt,
-                sent: sent ?? false,
-                submitted: submitted ?? false,
-              ) ?? BlockData(
-                name: '',
-                role: '',
-                department: '',
-                emails: [],
-                rawResults: rawResultsInt,
-                sent: sent ?? false,
-                submitted: submitted ?? false,
-              );
+
+              _blockData =
+                  _blockData?.copyWith(
+                    rawResults: rawResultsInt,
+                    sent: sent,
+                    submitted: submitted,
+                  ) ??
+                  BlockData(
+                    name: '',
+                    role: '',
+                    department: '',
+                    emails: [],
+                    rawResults: rawResultsInt,
+                    sent: sent,
+                    submitted: submitted,
+                  );
 
               // Calculate benchmarks when rawResults are available
               if (rawResultsInt.isNotEmpty) {
@@ -140,7 +144,7 @@ class BlockNotifier extends ChangeNotifier {
   }
 
   // Getters with proper encapsulation
-  Offset get position => _blockData?.position ?? const Offset(0, 0);
+  Offset get position => _position;
   BlockData? get blockData => _blockData;
   bool get selected => _selected;
   Set<String> get descendants => _descendants;
@@ -171,9 +175,8 @@ class BlockNotifier extends ChangeNotifier {
   }
 
   void updatePosition(Offset newPosition) async {
-    final currentPosition = _blockData?.position ?? const Offset(0, 0);
-    if (!positionLoaded || currentPosition != newPosition) {
-      _blockData = _blockData?.copyWith(position: newPosition) ?? BlockData.initial().copyWith(position: newPosition);
+    if (!positionLoaded || _position != newPosition) {
+      _position = newPosition;
       notifyListeners();
 
       _debounceTimer?.cancel();
@@ -188,9 +191,8 @@ class BlockNotifier extends ChangeNotifier {
   }
 
   void updatePositionWithoutFirestore(Offset newPosition) {
-    final currentPosition = _blockData?.position ?? const Offset(0, 0);
-    if (!positionLoaded || currentPosition != newPosition) {
-      _blockData = _blockData?.copyWith(position: newPosition) ?? BlockData.initial().copyWith(position: newPosition);
+    if (!positionLoaded || _position != newPosition) {
+      _position = newPosition;
       notifyListeners();
     }
   }
@@ -285,9 +287,9 @@ class BlockNotifier extends ChangeNotifier {
   void dispose() {
     _debounceTimer?.cancel();
     _batchDebounceTimer?.cancel();
-    _blockDocStreamSub?.cancel();
+    _blockDataDocStreamSub?.cancel();
     _blockResultStreamSub?.cancel();
-    _blockDocStreamSub = null;
+    _blockDataDocStreamSub = null;
     _blockResultStreamSub = null;
     super.dispose();
   }

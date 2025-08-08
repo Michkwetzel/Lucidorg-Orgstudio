@@ -13,7 +13,7 @@ class BotRightHud extends ConsumerWidget {
     final appView = ref.watch(appStateProvider).displayContext.appView;
     final assessmentMode = ref.watch(appStateProvider).displayContext.assessmentMode;
 
-    if (appView != AppView.assessmentBuild && assessmentMode != AssessmentMode.assessmentDataView) return SizedBox.shrink();
+    if (appView != AppView.assessmentBuild || assessmentMode != AssessmentMode.assessmentBuild) return SizedBox.shrink();
 
     return Tooltip(
       message: 'Send Assessment',

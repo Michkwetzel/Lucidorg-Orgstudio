@@ -69,9 +69,8 @@ class FirestoreService {
 
   // For now just 1 email doc per block.
   static Stream<QuerySnapshot<Map<String, dynamic>>> getBlockResultStream(FirestoreContext context, String blockID) {
-    
     final collection = _instance.collection('orgs').doc(context.orgId).collection('assessments').doc(context.assessmentId).collection('data');
-    return collection.where('blockId',isEqualTo: blockID).limit(1).snapshots();
+    return collection.where('blockId', isEqualTo: blockID).limit(1).snapshots();
   }
 
   // 1 Block. BlockNotifier subscribes to this

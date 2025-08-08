@@ -43,11 +43,30 @@ class AssessmentSendStrategy extends BlockBehaviorStrategy {
 
   @override
   BoxDecoration blockDecoration(BlockContext context) {
+    final sent = context.blockNotifier.sent;
+    final submitted = context.blockNotifier.submitted;
+
+    print(sent);
+    print(submitted);
+    // Color based on explicit assessment status flags
+    Color blockColor = Colors.white;
+
+    if (sent && !submitted) {
+      // Amber - Assessment sent but not submitted
+      blockColor = Colors.amber[300]!;
+    } else if (submitted && sent) {
+      // Green - Assessment submitted
+      blockColor = Colors.green[300]!;
+    }
+
     Set<String> selectedBlocks = context.ref.watch(selectedBlocksProvider);
     if (selectedBlocks.contains(context.blockId)) {
-      return kboxShadowNormal.copyWith(border: Border.all(color: Colors.blue, width: 6));
+      return kboxShadowNormal.copyWith(
+        border: Border.all(color: Colors.blue, width: 6),
+        color: blockColor,
+      );
     } else {
-      return kboxShadowNormal;
+      return kboxShadowNormal.copyWith(color: blockColor);
     }
   }
 

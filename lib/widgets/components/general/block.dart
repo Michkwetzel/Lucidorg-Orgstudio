@@ -21,8 +21,6 @@ class Block extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    print("Build block $blockId");
-
     const dotOverhang = 38.0;
     final hitboxOffset = ref.read(blockNotifierProvider(blockId).notifier).selected ? dotOverhang : 0.0;
 
@@ -36,8 +34,6 @@ class Block extends ConsumerWidget {
     BlockBehaviorStrategy strategy = OrgBuildStrategy();
     AssessmentMode? assessmentMode = ref.watch(appStateProvider).displayContext.assessmentMode;
     AppView appView = ref.watch(appStateProvider).displayContext.appView;
-    print(appView);
-    print(assessmentMode);
 
     if (appView == AppView.orgBuild) {
       strategy = OrgBuildStrategy();
