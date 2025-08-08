@@ -37,7 +37,7 @@ final canvasProvider = StateNotifierProvider.autoDispose<OrgCanvasNotifier, Set<
   return OrgCanvasNotifier(context: context, connectionManager: connectionManager);
 });
 
-final blockNotifierProvider = ChangeNotifierProvider.family.autoDispose<BlockNotifier, String>((ref, blockID) {
+final blockNotifierProvider = ChangeNotifierProvider.family<BlockNotifier, String>((ref, blockID) {
   final context = ref.watch(appStateProvider.select((state) => state.firestoreContext));
 
   final notifier = BlockNotifier(
