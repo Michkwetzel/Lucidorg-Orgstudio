@@ -37,8 +37,8 @@ class AssessmentBuildStrategy extends BlockBehaviorStrategy {
   @override
   Widget blockData(BlockContext context) {
     final blockData = context.blockNotifier.blockData;
-    print('AssessmentBuildStrategy blockData: name=${blockData?.name}, role=${blockData?.role}, department=${blockData?.department}');
-    print('AssessmentBuildStrategy blockData null? ${blockData == null}');
+    // print('AssessmentBuildStrategy blockData: name=${blockData?.name}, role=${blockData?.role}, department=${blockData?.department}');
+    // print('AssessmentBuildStrategy blockData null? ${blockData == null}');
 
     return Column(
       spacing: 4,
@@ -76,8 +76,8 @@ class AssessmentBuildStrategy extends BlockBehaviorStrategy {
     final sent = context.blockNotifier.sent;
     final submitted = context.blockNotifier.submitted;
 
-    print(sent);
-    print(submitted);
+    // print(sent);
+    // print(submitted);
     // Color based on explicit assessment status flags
     Color blockColor;
 

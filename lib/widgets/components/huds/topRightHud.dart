@@ -88,6 +88,17 @@ class TopRightHud extends ConsumerWidget {
             onTap: () => ref.read(appStateProvider.notifier).setAssessmentMode(AssessmentMode.assessmentDataView),
             isFirst: false,
           ),
+          _buildSegmentButton(
+            context: context,
+            ref: ref,
+            text: 'Analyze',
+            isActive: currentAssessmentMode == AssessmentMode.assessmentAnalyze,
+            onTap: () {
+              ref.read(appStateProvider.notifier).setAssessmentMode(AssessmentMode.assessmentAnalyze);
+            },
+            isFirst: false,
+            isLast: true,
+          ),
         ],
       ),
     );
@@ -100,6 +111,7 @@ class TopRightHud extends ConsumerWidget {
     required bool isActive,
     required VoidCallback onTap,
     required bool isFirst,
+    bool isLast = false,
   }) {
     return GestureDetector(
       onTap: onTap,
@@ -109,7 +121,7 @@ class TopRightHud extends ConsumerWidget {
           color: isActive ? Colors.blue.shade100 : Colors.transparent,
           borderRadius: BorderRadius.horizontal(
             left: isFirst ? Radius.circular(7) : Radius.zero,
-            right: !isFirst ? Radius.circular(7) : Radius.zero,
+            right: isLast ? Radius.circular(7) : Radius.zero,
           ),
         ),
         child: Text(

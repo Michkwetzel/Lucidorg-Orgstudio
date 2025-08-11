@@ -1,8 +1,6 @@
-enum AssessmentMode { none, assessmentSend, assessmentBuild, assessmentDataView }
+enum AssessmentMode { none, assessmentSend, assessmentBuild, assessmentDataView, assessmentAnalyze }
 
-enum AppView { none, logIn, orgSelect, orgBuild, assessmentBuild, assessmentSelect}
-
-enum BlockMode { orgBuild, assessmentView, assessmentCreate }
+enum AppView { none, logIn, orgSelect, orgBuild, assessmentBuild, assessmentSelect }
 
 enum Permission { admin, error }
 
