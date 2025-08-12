@@ -10,7 +10,7 @@ class TopRightHud extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final appView = ref.watch(appStateProvider).displayContext.appView;
+    final appView = ref.watch(appStateProvider).appView;
 
     if (appView == AppView.orgBuild) {
       return _buildPopupMenu(context, ref);
@@ -61,7 +61,7 @@ class TopRightHud extends ConsumerWidget {
   }
 
   Widget _buildSegmentedButton(BuildContext context, WidgetRef ref) {
-    final currentAssessmentMode = ref.watch(appStateProvider).displayContext.assessmentMode;
+    final currentAssessmentMode = ref.watch(appStateProvider).assessmentMode;
 
     return Container(
       decoration: BoxDecoration(
@@ -140,7 +140,7 @@ class TopRightHud extends ConsumerWidget {
     OverlayService.showAssessmentCreation(
       context,
       onCreate: (assessmentName) async {
-        await FirestoreService.createAssessment(ref.read(appStateProvider).firestoreContext.orgId!, assessmentName);
+        await FirestoreService.createAssessment(orgId: ref.read(appStateProvider).orgId!, assessmentName: assessmentName);
         // ref.read(appStateProvider.notifier).toAssessmentView(assessmentId, assessmentName);
         print('Creating assessment: $assessmentName');
       },

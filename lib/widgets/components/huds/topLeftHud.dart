@@ -10,9 +10,9 @@ class TopLeftHud extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final appDisplayState = ref.watch(appStateProvider).displayContext;
+    final appState = ref.watch(appStateProvider);
 
-    print("Building TopLEFTHUD");
+    // print("Building TopLEFTHUD");
 
     return Row(
       mainAxisSize: MainAxisSize.min,
@@ -27,16 +27,16 @@ class TopLeftHud extends ConsumerWidget {
             ),
             SizedBox(width: 12),
             Text(
-              appDisplayState.orgName ?? "",
+              appState.orgName ?? "",
               style: kTextHeading2R,
             ),
             SizedBox(width: 12),
             // Mode and assessment info
-            _buildModeText(appDisplayState),
-            if (appDisplayState.appView == AppView.assessmentBuild && appDisplayState.assessmentName != null) ...[
+            _buildModeText(appState),
+            if (appState.appView == AppView.assessmentBuild && appState.assessmentName != null) ...[
               Text(" • ", style: kTextHeading3L.copyWith(color: Colors.grey[600])),
               Text(
-                appDisplayState.assessmentName!,
+                appState.assessmentName!,
                 style: kTextHeading3L.copyWith(
                   color: Colors.blue[700],
                   fontWeight: FontWeight.w500,
@@ -47,7 +47,7 @@ class TopLeftHud extends ConsumerWidget {
         ),
 
         // Dropdown section
-        if (_shouldShowDropdown(appDisplayState)) ...[
+        if (_shouldShowDropdown(appState)) ...[
           SizedBox(width: 16),
           _buildDropdown(context, ref),
         ],

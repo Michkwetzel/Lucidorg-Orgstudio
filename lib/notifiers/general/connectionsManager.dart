@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logging/logging.dart';
 import 'package:platform_v2/dataClasses/connection.dart';
 import 'package:platform_v2/dataClasses/firestoreContext.dart';
+import 'package:platform_v2/notifiers/general/appStateNotifier.dart';
 import 'package:platform_v2/services/firestoreIDGenerator.dart';
 import 'package:platform_v2/services/firestoreService.dart';
 
@@ -32,7 +33,7 @@ class ConnectionManager extends StateNotifier<ConnectionsState> {
   Logger logger = Logger('ConnectionManager');
 
   StreamSubscription? _connectionSubscription;
-  final FirestoreContext context;
+  AppStateNotifier appState;
 
   // Track pending operations to avoid duplicate updates
   Set<String> _pendingAdditions = {};
@@ -41,7 +42,7 @@ class ConnectionManager extends StateNotifier<ConnectionsState> {
   //Quick lookup for children
   Map<String, Set<String>> get parentAndChildren => _buildParentToChildrenMap(state.connections);
 
-  ConnectionManager({required this.context}) : super(ConnectionsState()) {
+  ConnectionManager({required this.appState}) : super(ConnectionsState()) {
     _subscribeToConnections();
   }
 
@@ -53,7 +54,7 @@ class ConnectionManager extends StateNotifier<ConnectionsState> {
 
   void _subscribeToConnections() {
     _connectionSubscription?.cancel();
-    _connectionSubscription = FirestoreService.getConnectionsStream(context).listen(
+    _connectionSubscription = FirestoreService.getConnectionsStream(orgId: appState.orgId, assessmentId: appState.assessmentId).listen(
       (snapshot) {
         bool hasRelevantChanges = false;
 
@@ -115,7 +116,7 @@ class ConnectionManager extends StateNotifier<ConnectionsState> {
     state = state.copyWith(connections: [...state.connections, newConnection]);
 
     // Then update Firestore
-    FirestoreService.addConnection(context, newConnection).catchError((error) {
+    FirestoreService.addConnection(orgId: appState.orgId, assessmentId: appState.assessmentId, connection: newConnection).catchError((error) {
       // If Firestore operation fails, revert UI changes
 
       _pendingAdditions.remove(newConnection.id);
@@ -144,7 +145,7 @@ class ConnectionManager extends StateNotifier<ConnectionsState> {
     );
 
     // Then update Firestore
-    FirestoreService.deleteConnection(context, connectionId).catchError((error) {
+    FirestoreService.deleteConnection(orgId: appState.orgId, assessmentId: appState.assessmentId, connectionId: connectionId).catchError((error) {
       // If Firestore operation fails, revert UI changes
       _pendingDeletions.remove(connectionId);
       // Note: Would need to restore the connection here - you'd need to keep a reference

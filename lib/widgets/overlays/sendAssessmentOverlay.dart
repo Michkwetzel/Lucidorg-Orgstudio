@@ -122,7 +122,7 @@ class _SendAssessmentOverlayState extends ConsumerState<SendAssessmentOverlay> {
   void initState() {
     super.initState();
     // Listen for app view changes
-    ref.listenManual(appStateProvider.select((state) => state.displayContext.appView), (previous, next) {
+    ref.listenManual(appStateProvider.select((state) => state.appView), (previous, next) {
       if (next != AppView.assessmentBuild) {
         widget.onClose?.call();
       }

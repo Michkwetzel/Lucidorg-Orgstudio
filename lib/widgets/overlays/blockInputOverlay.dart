@@ -65,9 +65,9 @@ class _BlockInputOverlayState extends ConsumerState<BlockInputOverlay> {
   }
 
   Future<void> _loadAssessmentResults() async {
-    final firestoreContext = ref.read(appStateProvider).firestoreContext;
-    final orgId = firestoreContext.orgId;
-    final assessmentId = firestoreContext.assessmentId;
+    final appState = ref.read(appStateProvider);
+    final orgId = appState.orgId;
+    final assessmentId = appState.assessmentId;
 
     if (orgId == null || assessmentId == null) return;
 
@@ -136,9 +136,9 @@ class _BlockInputOverlayState extends ConsumerState<BlockInputOverlay> {
   }
 
   Future<void> _saveAssessmentResults() async {
-    final firestoreContext = ref.read(appStateProvider).firestoreContext;
-    final orgId = firestoreContext.orgId;
-    final assessmentId = firestoreContext.assessmentId;
+    final appState = ref.read(appStateProvider);
+    final orgId = appState.orgId;
+    final assessmentId = appState.assessmentId;
 
     if (orgId == null || assessmentId == null) {
       setState(() {
@@ -187,11 +187,11 @@ class _BlockInputOverlayState extends ConsumerState<BlockInputOverlay> {
 
   List<int> _parseAssessmentResults(String input) {
     if (input.trim().isEmpty) return [];
-    
+
     // Remove any whitespace and validate only digits
     final cleanInput = input.replaceAll(RegExp(r'\s'), '');
     if (!RegExp(r'^\d+$').hasMatch(cleanInput)) return [];
-    
+
     // Convert each character to an integer
     return cleanInput.split('').map((char) => int.parse(char)).toList();
   }
@@ -225,14 +225,7 @@ class _BlockInputOverlayState extends ConsumerState<BlockInputOverlay> {
 
   Future<void> _updateAssessmentDataRawResults(String orgId, String assessmentId, String docId, List<int> rawResults) async {
     try {
-      await FirestoreService.instance
-          .collection('orgs')
-          .doc(orgId)
-          .collection('assessments')
-          .doc(assessmentId)
-          .collection('data')
-          .doc(docId)
-          .update({'rawResults': rawResults});
+      await FirestoreService.instance.collection('orgs').doc(orgId).collection('assessments').doc(assessmentId).collection('data').doc(docId).update({'rawResults': rawResults});
     } catch (e) {
       throw Exception('Failed to update assessment data: $e');
     }
@@ -243,14 +236,7 @@ class _BlockInputOverlayState extends ConsumerState<BlockInputOverlay> {
       final docId = await _findAssessmentDataDocId(orgId, assessmentId, blockId);
       if (docId == null) return null;
 
-      final docSnapshot = await FirestoreService.instance
-          .collection('orgs')
-          .doc(orgId)
-          .collection('assessments')
-          .doc(assessmentId)
-          .collection('data')
-          .doc(docId)
-          .get();
+      final docSnapshot = await FirestoreService.instance.collection('orgs').doc(orgId).collection('assessments').doc(assessmentId).collection('data').doc(docId).get();
 
       if (docSnapshot.exists) {
         final data = docSnapshot.data();
@@ -497,7 +483,7 @@ class _BlockInputOverlayState extends ConsumerState<BlockInputOverlay> {
   Widget _buildAssessmentResultsField() {
     final isValid = _isValidAssessmentResults(assessmentResultsController.text);
     final currentLength = assessmentResultsController.text.replaceAll(RegExp(r'\s'), '').length;
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -582,8 +568,8 @@ class _BlockInputOverlayState extends ConsumerState<BlockInputOverlay> {
                 color: assessmentResultsError
                     ? Colors.red.shade300
                     : isValid
-                        ? Colors.green.shade300
-                        : Colors.grey.shade300,
+                    ? Colors.green.shade300
+                    : Colors.grey.shade300,
               ),
             ),
             enabledBorder: OutlineInputBorder(
@@ -592,8 +578,8 @@ class _BlockInputOverlayState extends ConsumerState<BlockInputOverlay> {
                 color: assessmentResultsError
                     ? Colors.red.shade300
                     : isValid
-                        ? Colors.green.shade300
-                        : Colors.grey.shade300,
+                    ? Colors.green.shade300
+                    : Colors.grey.shade300,
               ),
             ),
             focusedBorder: OutlineInputBorder(
@@ -602,8 +588,8 @@ class _BlockInputOverlayState extends ConsumerState<BlockInputOverlay> {
                 color: assessmentResultsError
                     ? Colors.red
                     : isValid
-                        ? Colors.green
-                        : Colors.blue,
+                    ? Colors.green
+                    : Colors.blue,
               ),
             ),
             contentPadding: const EdgeInsets.symmetric(
@@ -624,9 +610,7 @@ class _BlockInputOverlayState extends ConsumerState<BlockInputOverlay> {
         ] else if (currentLength > 0 && !isValid && !isLoadingAssessmentResults) ...[
           const SizedBox(height: 4),
           Text(
-            currentLength < 37 
-              ? 'Please enter exactly 37 numbers'
-              : 'Too many numbers entered',
+            currentLength < 37 ? 'Please enter exactly 37 numbers' : 'Too many numbers entered',
             style: TextStyle(
               fontSize: 12,
               color: Colors.red.shade600,

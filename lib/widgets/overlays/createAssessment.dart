@@ -57,7 +57,7 @@ class _AssessmentCreationOverlayState extends ConsumerState<AssessmentCreationOv
   @override
   Widget build(BuildContext context) {
     final appState = ref.watch(appStateProvider);
-    final orgName = appState.displayContext.orgName ?? 'Unknown Organization';
+    final orgName = appState.orgName ?? 'Unknown Organization';
 
     return Material(
       color: Colors.black54,

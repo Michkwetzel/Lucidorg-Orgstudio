@@ -20,27 +20,38 @@ class NavigationService {
     router.go(route, extra: {'internal': true});
   }
 
-  // Add these to your NavigationService class
-
   // Login navigation - clear everything
   static void navigateToLogin(WidgetRef ref) {
     final appStateNotifier = ref.read(appStateProvider.notifier);
 
-    // Clear org and assessment data
-    appStateNotifier.clearOrg();
-    appStateNotifier.clearAssessment();
-    appStateNotifier.setAssessmentMode(AssessmentMode.none);
-    appStateNotifier.setAppView(AppView.logIn);
+    appStateNotifier.batchUpdate(
+      (state) => state.copyWith(
+        clearOrgId: true,
+        clearOrgName: true,
+        clearAssessmentId: true,
+        clearAssessmentName: true,
+        clearAssessmentMode: true,
+        appView: AppView.logIn,
+      ),
+    );
 
     router.go('/login', extra: {'internal': true});
   }
 
-  // Org selection - clear org data, set to org select view
+  // Org selection - clear org data, set to org select appView
   static void navigateToOrgSelect(WidgetRef ref) {
     final appStateNotifier = ref.read(appStateProvider.notifier);
-    appStateNotifier.clearOrg();
-    appStateNotifier.setAssessmentMode(null);
-    appStateNotifier.setAppView(AppView.orgSelect);
+
+    appStateNotifier.batchUpdate(
+      (state) => state.copyWith(
+        clearOrgId: true,
+        clearOrgName: true,
+        clearAssessmentId: true,
+        clearAssessmentName: true,
+        clearAssessmentMode: true,
+        appView: AppView.orgSelect,
+      ),
+    );
 
     router.go('/app/orgSelect', extra: {'internal': true});
   }
@@ -49,12 +60,24 @@ class NavigationService {
   static void navigateToOrgBuild(WidgetRef ref, String? orgId, String? orgName) {
     final appStateNotifier = ref.read(appStateProvider.notifier);
 
-    // Set org data and clear assessment mode
-    appStateNotifier.setAssessmentMode(null);
     if (orgId == null || orgName == null) {
-      appStateNotifier.setAppView(AppView.orgBuild);
+      appStateNotifier.batchUpdate(
+        (state) => state.copyWith(
+          clearAssessmentId: true,
+          clearAssessmentName: true,
+          clearAssessmentMode: true,
+          appView: AppView.orgBuild,
+        ),
+      );
     } else {
-      appStateNotifier.setOrgAndNavigate(orgId, orgName, AppView.orgBuild);
+      appStateNotifier.batchUpdate(
+        (state) => state.copyWith(
+          orgId: orgId,
+          orgName: orgName,
+          clearAssessmentMode: true,
+          appView: AppView.orgBuild,
+        ),
+      );
     }
 
     router.go('/app/canvas', extra: {'internal': true});
@@ -64,9 +87,12 @@ class NavigationService {
   static void navigateToAssessmentSelect(WidgetRef ref) {
     final appStateNotifier = ref.read(appStateProvider.notifier);
 
-    // Clear assessment mode and set view
-    appStateNotifier.setAssessmentMode(null);
-    appStateNotifier.setAppView(AppView.assessmentSelect);
+    appStateNotifier.batchUpdate(
+      (state) => state.copyWith(
+        clearAssessmentMode: true,
+        appView: AppView.assessmentSelect,
+      ),
+    );
 
     router.go('/app/assessmentSelect', extra: {'internal': true});
   }
@@ -75,9 +101,14 @@ class NavigationService {
   static void navigateToAssessmentBuild(WidgetRef ref, String assessmentId, String assessmentName) {
     final appStateNotifier = ref.read(appStateProvider.notifier);
 
-    // Set assessment mode to build and update assessment data
-    appStateNotifier.setAssessmentMode(AssessmentMode.assessmentBuild);
-    appStateNotifier.setAssessmentAndNavigate(assessmentId, assessmentName, AppView.assessmentBuild);
+    appStateNotifier.batchUpdate(
+      (state) => state.copyWith(
+        assessmentId: assessmentId,
+        assessmentName: assessmentName,
+        assessmentMode: AssessmentMode.assessmentBuild,
+        appView: AppView.assessmentBuild,
+      ),
+    );
 
     router.go('/app/canvas', extra: {'internal': true});
   }

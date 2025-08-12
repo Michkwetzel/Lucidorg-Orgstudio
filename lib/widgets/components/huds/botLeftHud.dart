@@ -9,7 +9,7 @@ class BotLeftHud extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final appView = ref.watch(appStateProvider).displayContext.appView;
+    final appView = ref.watch(appStateProvider).appView;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -19,6 +19,7 @@ class BotLeftHud extends ConsumerWidget {
           FilledButton.tonal(
             onPressed: () {
               NavigationService.navigateToAssessmentSelect(ref);
+              ref.read(canvasProvider.notifier).dispose();
             },
             child: Text("Assessments"),
           ),

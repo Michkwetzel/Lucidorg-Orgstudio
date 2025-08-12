@@ -10,8 +10,8 @@ class BotRightHud extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final appView = ref.watch(appStateProvider).displayContext.appView;
-    final assessmentMode = ref.watch(appStateProvider).displayContext.assessmentMode;
+    final appView = ref.watch(appStateProvider).appView;
+    final assessmentMode = ref.watch(appStateProvider).assessmentMode;
 
     if (appView != AppView.assessmentBuild || assessmentMode != AssessmentMode.assessmentBuild) return SizedBox.shrink();
 
@@ -39,8 +39,8 @@ class BotRightHud extends ConsumerWidget {
           context,
           onSend: () {
             final blockIds = ref.read(selectedBlocksProvider);
-            final assessmentId = ref.read(appStateProvider).firestoreContext.assessmentId;
-            final orgId = ref.read(appStateProvider).firestoreContext.orgId;
+            final assessmentId = ref.read(appStateProvider).assessmentId;
+            final orgId = ref.read(appStateProvider).orgId;
             final request = {
               'assessmentId': assessmentId,
               'orgId': orgId,

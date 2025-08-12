@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:platform_v2/notifiers/general/appStateNotifier.dart';
 import 'package:platform_v2/notifiers/general/authNotifier.dart';
@@ -21,37 +20,52 @@ final orgsSelectProvider = StateNotifierProvider.autoDispose<OrgsScreenNotifier,
 
 // For Assessment select State
 final assessmentsSelectProvider = StateNotifierProvider.autoDispose<AssessmentScreenNotifier, AssessmentScreenState>((ref) {
-  final String orgId = ref.read(appStateProvider.select((state) => state.firestoreContext.orgId!));
-  return AssessmentScreenNotifier(orgId: orgId);
+  final orgId = ref.read(appStateProvider.notifier).orgId;
+  return AssessmentScreenNotifier(orgId: orgId!);
 });
 
 final appStateProvider = StateNotifierProvider<AppStateNotifier, AppState>((ref) {
   return AppStateNotifier();
 });
 
-final canvasProvider = StateNotifierProvider.autoDispose<OrgCanvasNotifier, Set<String>>((ref) {
-  final context = ref.watch(appStateProvider.select((state) => state.firestoreContext));
+final canvasProvider = StateNotifierProvider<OrgCanvasNotifier, Set<String>>((ref) {
+  final appStateNotifier = ref.read(appStateProvider.notifier);
+  final connectionManager = ref.read(connectionManagerProvider.notifier);
 
-  final ConnectionManager connectionManager = ref.read(connectionManagerProvider.notifier);
+  // Rebuild when below changes
+  ref.watch(appStateProvider.select((state) => state.orgId));
+  ref.watch(appStateProvider.select((state) => state.assessmentId));
 
-  return OrgCanvasNotifier(context: context, connectionManager: connectionManager);
+  final notifier = OrgCanvasNotifier(appState: appStateNotifier, connectionManager: connectionManager);
+
+  // Watch for appView changes
+  ref.listen(appStateProvider.select((state) => state.assessmentMode), (previous, next) {
+    if (next == AssessmentMode.assessmentAnalyze) {
+      notifier.subscribeToAnalysisBlocks(); // Call method on the notifier instance
+    } else if (previous == AssessmentMode.assessmentAnalyze) {
+      notifier.subscribeToBlocks(); // Call method on the notifier instance
+    }
+  });
+
+  return notifier;
 });
 
 final blockNotifierProvider = ChangeNotifierProvider.family<BlockNotifier, String>((ref, blockID) {
-  final context = ref.watch(appStateProvider.select((state) => state.firestoreContext));
+  final appStateNotifier = ref.read(appStateProvider.notifier);
+  ref.watch(appStateProvider.select((state) => state.appView));
 
   final notifier = BlockNotifier(
     blockID: blockID,
-    context: context,
+    appState: appStateNotifier,
   );
 
   return notifier;
 });
 
 final connectionManagerProvider = StateNotifierProvider.autoDispose<ConnectionManager, ConnectionsState>((ref) {
-  final context = ref.watch(appStateProvider.select((state) => state.firestoreContext));
+  final appStateNotifier = ref.read(appStateProvider.notifier);
 
-  return ConnectionManager(context: context);
+  return ConnectionManager(appState: appStateNotifier);
 });
 
 // For assessment Send Mode - Tracks which blocks are selected to send assessments too

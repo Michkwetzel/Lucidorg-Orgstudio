@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:logging/logging.dart';
 import 'package:platform_v2/config/enums.dart';
 import 'package:platform_v2/dataClasses/blockData.dart';
-import 'package:platform_v2/dataClasses/firestoreContext.dart';
+import 'package:platform_v2/notifiers/general/appStateNotifier.dart';
 import 'package:platform_v2/services/firestoreService.dart';
 
 // Individual block notifier. Responsible for block state: position, data and selection
@@ -12,13 +12,13 @@ class BlockNotifier extends ChangeNotifier {
   Logger logger = Logger('BlockNotifier');
 
   final String blockID;
-  final FirestoreContext context;
   Set<String> _descendants = {};
   bool positionLoaded = false;
   BlockData? _blockData;
   bool _selected = false;
   Map<Benchmark, double>? _benchmarks;
   Offset _position = const Offset(0, 0);
+  AppStateNotifier appState;
 
   // Add StreamSubscription to track subscription to the blocks doc
   StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>? _blockDataDocStreamSub;
@@ -35,10 +35,10 @@ class BlockNotifier extends ChangeNotifier {
 
   BlockNotifier({
     required this.blockID,
-    required this.context,
+    required this.appState,
   }) {
     // Get Block doc stream and listen to fields
-    _blockDataDocStream = FirestoreService.getBlockStream(context, blockID);
+    _blockDataDocStream = FirestoreService.getBlockStream(orgId: appState.orgId, assessmentId: appState.assessmentId, blockID: blockID);
     _blockDataDocStreamSub = _blockDataDocStream.listen(
       (snapshot) {
         DocumentSnapshot<Map<String, dynamic>> doc = snapshot;
@@ -75,7 +75,7 @@ class BlockNotifier extends ChangeNotifier {
               positionLoaded = true;
               // print("Initial load completed for block $blockID");
             }
-            logger.info("Block update state");
+            // logger.info("Block update state");
             notifyListeners();
           } else {
             // print("No changes detected for block $blockID - skipping update");
@@ -88,8 +88,10 @@ class BlockNotifier extends ChangeNotifier {
     );
 
     // Only set up result stream if we're in an assessment context
-    if (context.assessmentId != null) {
-      blockResultStream = FirestoreService.getBlockResultStream(context, blockID);
+    print(appState.appView);
+    if (appState.appView == AppView.assessmentBuild) {
+      // print("*************Getting Block Results Stream");
+      blockResultStream = FirestoreService.getBlockResultStream(orgId: appState.orgId, assessmentId: appState.assessmentId, blockID: blockID);
 
       _blockResultStreamSub = blockResultStream.listen(
         (event) {
@@ -185,7 +187,7 @@ class BlockNotifier extends ChangeNotifier {
       _debounceTimer = Timer(_debounceDuration, () async {
         print("Single doc upload");
 
-        await FirestoreService.updatePosition(context, blockID, {'x': newPosition.dx, 'y': newPosition.dy});
+        await FirestoreService.updatePosition(orgId: appState.orgId, assessmentId: appState.assessmentId, blockID: blockID, position: {'x': newPosition.dx, 'y': newPosition.dy});
       });
     }
   }
@@ -201,7 +203,7 @@ class BlockNotifier extends ChangeNotifier {
     _batchDebounceTimer?.cancel();
 
     _batchDebounceTimer = Timer(_debounceDuration, () async {
-      await FirestoreService.batchUpdatePositions(context, positions);
+      await FirestoreService.batchUpdatePositions(orgId: appState.orgId, assessmentId: appState.assessmentId, positions: positions);
     });
   }
 
@@ -276,9 +278,10 @@ class BlockNotifier extends ChangeNotifier {
       _blockData = newData;
       notifyListeners();
       FirestoreService.updateData(
-        context,
-        blockID,
-        newData,
+        orgId: appState.orgId,
+        assessmentId: appState.assessmentId,
+        blockID: blockID,
+        blockData: newData,
       );
     }
   }

@@ -4,7 +4,6 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:platform_v2/dataClasses/blockData.dart';
 import 'package:platform_v2/dataClasses/connection.dart';
-import 'package:platform_v2/dataClasses/firestoreContext.dart';
 
 class FirestoreService {
   static late final FirebaseFirestore _instance;
@@ -16,49 +15,57 @@ class FirestoreService {
     );
     _instance.settings = const Settings(
       persistenceEnabled: true,
-      cacheSizeBytes: Settings.CACHE_SIZE_UNLIMITED, // Optional: unlimited cache
+      cacheSizeBytes: Settings.CACHE_SIZE_UNLIMITED,
     );
   }
 
   static FirebaseFirestore get instance => _instance;
 
-  // Helper method to get the blocks collection based on context
-  static CollectionReference<Map<String, dynamic>> _getBlocksCollection(FirestoreContext context) {
-    if (context.assessmentId != null) {
-      return _instance.collection('orgs').doc(context.orgId).collection('assessments').doc(context.assessmentId).collection('blocks');
+  // Helper method to get the blocks collection based on orgId, assessmentId
+  static CollectionReference<Map<String, dynamic>> _getBlocksCollection({required String? orgId, String? assessmentId}) {
+    if (assessmentId != null) {
+      return _instance.collection('orgs').doc(orgId).collection('assessments').doc(assessmentId).collection('blocks');
     }
-    return _instance.collection('orgs').doc(context.orgId).collection('blocks');
+    return _instance.collection('orgs').doc(orgId).collection('blocks');
   }
 
-  // Helper method to get the connections collection based on context
-  static CollectionReference<Map<String, dynamic>> _getConnectionsCollection(FirestoreContext context) {
-    if (context.assessmentId != null) {
-      return _instance.collection('orgs').doc(context.orgId).collection('assessments').doc(context.assessmentId).collection('connections');
+  // Helper method to get the connections collection based on orgId, assessmentId
+  static CollectionReference<Map<String, dynamic>> _getConnectionsCollection({required String? orgId, String? assessmentId}) {
+    if (assessmentId != null) {
+      return _instance.collection('orgs').doc(orgId).collection('assessments').doc(assessmentId).collection('connections');
     }
-    return _instance.collection('orgs').doc(context.orgId).collection('connections');
+    return _instance.collection('orgs').doc(orgId).collection('connections');
   }
 
-  static Future<void> addBlock(FirestoreContext context, Map<String, dynamic> blockData) async {
-    final collection = _getBlocksCollection(context);
+  // Create Group for analysis
+  static Future<void> createGroup({required String? orgId, String? assessmentId, required Map<String, dynamic> groupData}) async {
+    final collection = _instance.collection('orgs').doc(orgId).collection('assessments').doc(assessmentId).collection('groups');
+    await collection.doc().set({
+      ...groupData,
+    });
+  }
+
+  static Future<void> addBlock({required String? orgId, String? assessmentId, required Map<String, dynamic> blockData}) async {
+    final collection = _getBlocksCollection(orgId: orgId, assessmentId: assessmentId);
     await collection.doc(blockData['blockID']).set({
       ...blockData,
     });
   }
 
-  static Future<void> deleteBlock(FirestoreContext context, String blockID) async {
-    final collection = _getBlocksCollection(context);
+  static Future<void> deleteBlock({required String? orgId, String? assessmentId, required String blockID}) async {
+    final collection = _getBlocksCollection(orgId: orgId, assessmentId: assessmentId);
     await collection.doc(blockID).delete();
   }
 
-  static Future<void> updatePosition(FirestoreContext context, String blockID, Map<String, double> position) async {
-    final collection = _getBlocksCollection(context);
+  static Future<void> updatePosition({required String? orgId, String? assessmentId, required String blockID, required Map<String, double> position}) async {
+    final collection = _getBlocksCollection(orgId: orgId, assessmentId: assessmentId);
     await collection.doc(blockID).update({
       'position': position,
     });
   }
 
-  static Future<void> updateData(FirestoreContext context, String blockID, BlockData blockData) async {
-    final collection = _getBlocksCollection(context);
+  static Future<void> updateData({required String? orgId, String? assessmentId, required String blockID, required BlockData blockData}) async {
+    final collection = _getBlocksCollection(orgId: orgId, assessmentId: assessmentId);
     await collection.doc(blockID).update({
       'name': blockData.name,
       'role': blockData.role,
@@ -68,31 +75,46 @@ class FirestoreService {
   }
 
   // For now just 1 email doc per block.
-  static Stream<QuerySnapshot<Map<String, dynamic>>> getBlockResultStream(FirestoreContext context, String blockID) {
-    final collection = _instance.collection('orgs').doc(context.orgId).collection('assessments').doc(context.assessmentId).collection('data');
+  static Stream<QuerySnapshot<Map<String, dynamic>>> getBlockResultStream({required String? orgId, required String? assessmentId, required String blockID}) {
+    final collectionPath = 'orgs/$orgId/assessments/$assessmentId/data';
+    print('Block result stream collection path: $collectionPath (where blockId == $blockID)');
+
+    final collection = _instance.collection('orgs').doc(orgId).collection('assessments').doc(assessmentId).collection('data');
     return collection.where('blockId', isEqualTo: blockID).limit(1).snapshots();
   }
 
   // 1 Block. BlockNotifier subscribes to this
-  static Stream<DocumentSnapshot<Map<String, dynamic>>> getBlockStream(FirestoreContext context, String blockID) {
-    final collection = _getBlocksCollection(context);
+  static Stream<DocumentSnapshot<Map<String, dynamic>>> getBlockStream({required String? orgId, String? assessmentId, required String blockID}) {
+    final collection = _getBlocksCollection(orgId: orgId, assessmentId: assessmentId);
     return collection.doc(blockID).snapshots();
   }
 
   // All blocks in Collection
-  static Stream<QuerySnapshot> getBlocksStream(FirestoreContext context) {
-    final CollectionReference collection = _getBlocksCollection(context);
+  static Stream<DocumentSnapshot<Map<String, dynamic>>> getAnalysisBlockStream({required String? orgId, String? assessmentId, required String blockId}) {
+    final collection = _instance.collection('orgs').doc(orgId).collection('assessments').doc(assessmentId).collection('analysisBlocks');
+    return collection.doc(blockId).snapshots();
+  }
+
+  // All blocks in Collection
+  static Stream<QuerySnapshot> getBlocksStream({required String? orgId, String? assessmentId}) {
+    final CollectionReference collection = _getBlocksCollection(orgId: orgId, assessmentId: assessmentId);
+    return collection.snapshots();
+  }
+
+  // All blocks in Collection
+  static Stream<QuerySnapshot> getAnalysisBlocksStream({required String? orgId, String? assessmentId}) {
+    final collection = _instance.collection('orgs').doc(orgId).collection('assessments').doc(assessmentId).collection('analysisBlocks');
     return collection.snapshots();
   }
 
   // All connections in Collection
-  static Stream<QuerySnapshot> getConnectionsStream(FirestoreContext context) {
-    final collection = _getConnectionsCollection(context);
+  static Stream<QuerySnapshot> getConnectionsStream({required String? orgId, String? assessmentId}) {
+    final collection = _getConnectionsCollection(orgId: orgId, assessmentId: assessmentId);
     return collection.snapshots();
   }
 
-  static Future<void> addConnection(FirestoreContext context, Connection connection) async {
-    final collection = _getConnectionsCollection(context);
+  static Future<void> addConnection({required String? orgId, String? assessmentId, required Connection connection}) async {
+    final collection = _getConnectionsCollection(orgId: orgId, assessmentId: assessmentId);
     await collection.doc(connection.id).set({
       'id': connection.id,
       'parentID': connection.parentId,
@@ -100,16 +122,16 @@ class FirestoreService {
     });
   }
 
-  static Future<void> deleteConnection(FirestoreContext context, String connectionId) async {
-    final collection = _getConnectionsCollection(context);
+  static Future<void> deleteConnection({required String? orgId, String? assessmentId, required String connectionId}) async {
+    final collection = _getConnectionsCollection(orgId: orgId, assessmentId: assessmentId);
     await collection.doc(connectionId).delete();
   }
 
-  static Future<void> batchUpdatePositions(FirestoreContext context, Map<String, Offset> positions) async {
+  static Future<void> batchUpdatePositions({required String? orgId, String? assessmentId, required Map<String, Offset> positions}) async {
     print("Do batch update to Firestore!!");
     WriteBatch batch = _instance.batch();
 
-    final collection = _getBlocksCollection(context);
+    final collection = _getBlocksCollection(orgId: orgId, assessmentId: assessmentId);
     for (String blockID in positions.keys) {
       final docRef = collection.doc(blockID);
       batch.update(docRef, {
@@ -120,7 +142,7 @@ class FirestoreService {
     await batch.commit();
   }
 
-  static Future<String> createAssessment(String orgId, String assessmentName) async {
+  static Future<String> createAssessment({required String orgId, required String assessmentName}) async {
     try {
       final assessmentsRef = _instance.collection('orgs').doc(orgId).collection('assessments');
 
@@ -165,14 +187,14 @@ class FirestoreService {
         targetCollection: assessmentDoc.collection('connections'),
       );
 
-      return assessmentsRef.id;
+      return assessmentDoc.id;
     } catch (e) {
-      // Rethrow with more context for debugging
+      // Rethrow with more orgId, assessmentId for debugging
       throw Exception('Failed to create assessment "$assessmentName": $e');
     }
   }
 
-  static Future<void> createOrg(String orgName) async {
+  static Future<void> createOrg({required String orgName}) async {
     final orgref = _instance.collection('orgs').doc();
     orgref.set({
       'orgName': orgName,

@@ -68,7 +68,7 @@ class _OrgCanvasState extends ConsumerState<OrgCanvas> {
               },
               onDoubleTap: () {
                 // Create new block at tap position
-                if (ref.read(appStateProvider.notifier).currentAssessmentMode != AssessmentMode.assessmentSend) {
+                if (ref.read(appStateProvider.notifier).assessmentMode != AssessmentMode.assessmentSend) {
                   // But only if not select blocks for assessment mode.
                   final blockID = FirestoreIdGenerator.generate();
                   ref.read(canvasProvider.notifier).addBlock(blockID, _lastTapPosition);
@@ -80,8 +80,7 @@ class _OrgCanvasState extends ConsumerState<OrgCanvas> {
                 color: Colors.grey,
                 child: Stack(
                   children: [
-                    ConnectionLayer(
-                    ),
+                    ConnectionLayer(),
 
                     ...canvasState.map(
                       (blockID) => Block(

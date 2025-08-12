@@ -32,8 +32,8 @@ class Block extends ConsumerWidget {
     );
 
     BlockBehaviorStrategy strategy = OrgBuildStrategy();
-    AssessmentMode? assessmentMode = ref.watch(appStateProvider).displayContext.assessmentMode;
-    AppView appView = ref.watch(appStateProvider).displayContext.appView;
+    AssessmentMode? assessmentMode = ref.watch(appStateProvider).assessmentMode;
+    AppView appView = ref.watch(appStateProvider).appView;
 
     if (appView == AppView.orgBuild) {
       strategy = OrgBuildStrategy();
