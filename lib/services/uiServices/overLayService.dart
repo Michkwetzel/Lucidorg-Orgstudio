@@ -4,12 +4,14 @@ import 'package:platform_v2/dataClasses/blockData.dart';
 import 'package:platform_v2/services/uiServices/blockDataViewOverlay.dart';
 import 'package:platform_v2/widgets/overlays/createAssessment.dart';
 import 'package:platform_v2/widgets/overlays/sendAssessmentOverlay.dart';
+import 'package:platform_v2/widgets/overlays/createGroupOverlay.dart';
 import 'package:platform_v2/widgets/overlays/blockInputOverlay.dart';
 import 'package:platform_v2/widgets/overlays/sendAssConfirmOverlay.dart';
 
 class OverlayService {
   static OverlayEntry? _activeBlockInputOverlay;
   static OverlayEntry? _activeSendAssessmentOverlay;
+  static OverlayEntry? _activeCreateGroupOverlay;
   static OverlayEntry? _activeAssessmentCreationOverlay;
   static OverlayEntry? _activeBlockDataViewOverlay;
 
@@ -124,6 +126,33 @@ class OverlayService {
     overlay.insert(overlayEntry);
   }
 
+  static void showCreateGroup(BuildContext context, {required Function(Options, String) onCreate, VoidCallback? onCancel}) {
+    // Close existing create group overlay if one exists
+    _activeCreateGroupOverlay?.remove();
+    _activeCreateGroupOverlay = null;
+
+    final overlay = Overlay.of(context);
+    late OverlayEntry overlayEntry;
+
+    overlayEntry = OverlayEntry(
+      builder: (context) => CreateGroupOverlay(
+        onCreate: (selectionType, groupName) {
+          overlayEntry.remove();
+          _activeCreateGroupOverlay = null;
+          onCreate(selectionType, groupName);
+        },
+        onClose: () {
+          overlayEntry.remove();
+          _activeCreateGroupOverlay = null;
+          onCancel?.call();
+        },
+      ),
+    );
+
+    _activeCreateGroupOverlay = overlayEntry;
+    overlay.insert(overlayEntry);
+  }
+
   static void showAssessmentSendConfirmation(BuildContext context, {required VoidCallback onSend, VoidCallback? onCancel}) {
     // Note: Confirmation overlay can stack over send assessment overlay
     final overlay = Overlay.of(context);
@@ -155,6 +184,9 @@ class OverlayService {
 
     _activeSendAssessmentOverlay?.remove();
     _activeSendAssessmentOverlay = null;
+
+    _activeCreateGroupOverlay?.remove();
+    _activeCreateGroupOverlay = null;
 
     _activeAssessmentCreationOverlay?.remove();
     _activeAssessmentCreationOverlay = null;

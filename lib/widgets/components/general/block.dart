@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:platform_v2/abstractClasses/assessmentBuildStrategy.dart';
 import 'package:platform_v2/abstractClasses/assessmentDataViewStrategy.dart';
+import 'package:platform_v2/abstractClasses/assessmentGroupCreateStrategy.dart';
 import 'package:platform_v2/abstractClasses/assessmentSendStrategy.dart';
 import 'package:platform_v2/abstractClasses/blockBehaviourStrategy.dart';
 import 'package:platform_v2/abstractClasses/blockContext.dart';
@@ -40,6 +41,8 @@ class Block extends ConsumerWidget {
     } else {
       if (assessmentMode == AssessmentMode.assessmentSend) {
         strategy = AssessmentSendStrategy();
+      } else if (assessmentMode == AssessmentMode.assessmentGroupCreate) {
+        strategy = AssessmentGroupCreateStrategy();
       } else if (assessmentMode == AssessmentMode.assessmentDataView) {
         strategy = AssessmentDataViewStrategy();
       } else if (assessmentMode == AssessmentMode.assessmentBuild) {

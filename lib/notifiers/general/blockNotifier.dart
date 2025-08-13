@@ -12,6 +12,7 @@ class BlockNotifier extends ChangeNotifier {
   Logger logger = Logger('BlockNotifier');
 
   final String blockID;
+  String blockResultDocId = '';
   Set<String> _descendants = {};
   bool positionLoaded = false;
   BlockData? _blockData;
@@ -99,6 +100,7 @@ class BlockNotifier extends ChangeNotifier {
           if (snapshot.docs.isNotEmpty) {
             DocumentSnapshot<Map<String, dynamic>> doc = snapshot.docs.first;
             if (doc.exists && doc.data() != null) {
+              blockResultDocId = doc.id;
               final data = doc.data()!;
               final rawResults = data['rawResults'] as List<dynamic>?;
               final sent = data['sentAssessment'] as bool? ?? false;

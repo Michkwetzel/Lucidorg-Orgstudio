@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:platform_v2/config/enums.dart';
 import 'package:platform_v2/config/provider.dart';
 import 'package:platform_v2/services/httpService.dart';
+import 'package:platform_v2/services/firestoreService.dart';
 import 'package:platform_v2/services/uiServices/overLayService.dart';
 
 class BotRightHud extends ConsumerWidget {
@@ -13,21 +15,40 @@ class BotRightHud extends ConsumerWidget {
     final appView = ref.watch(appStateProvider).appView;
     final assessmentMode = ref.watch(appStateProvider).assessmentMode;
 
-    if (appView != AppView.assessmentBuild || assessmentMode != AssessmentMode.assessmentBuild) return SizedBox.shrink();
+    // Show in both assessmentBuild and assessmentDataView modes
+    if (appView != AppView.assessmentBuild || (assessmentMode != AssessmentMode.assessmentBuild && assessmentMode != AssessmentMode.assessmentDataView)) {
+      return SizedBox.shrink();
+    }
 
-    return Tooltip(
-      message: 'Send Assessment',
-      child: FilledButton.tonal(
-        onPressed: () {
-          // unselect a block if it was selected.
-          ref.read(selectedBlockProvider.notifier).state = null;
-          // change mode to assessmentSendSelectBlocks
-          ref.read(appStateProvider.notifier).setAssessmentMode(AssessmentMode.assessmentSend);
-          _openSendAssessmentOverlay(context, ref);
-        },
-        child: Icon(Icons.add),
-      ),
-    );
+    // Different functionality based on mode
+    if (assessmentMode == AssessmentMode.assessmentDataView) {
+      return Tooltip(
+        message: 'Create Group',
+        child: FilledButton.tonal(
+          onPressed: () {
+            // unselect a block if it was selected.
+            ref.read(selectedBlockProvider.notifier).state = null;
+            ref.read(appStateProvider.notifier).setAssessmentMode(AssessmentMode.assessmentGroupCreate);
+            _openCreateGroupOverlay(context, ref);
+          },
+          child: Icon(Icons.add),
+        ),
+      );
+    } else {
+      return Tooltip(
+        message: 'Send Assessment',
+        child: FilledButton.tonal(
+          onPressed: () {
+            // unselect a block if it was selected.
+            ref.read(selectedBlockProvider.notifier).state = null;
+            // change mode to assessmentSendSelectBlocks
+            ref.read(appStateProvider.notifier).setAssessmentMode(AssessmentMode.assessmentSend);
+            _openSendAssessmentOverlay(context, ref);
+          },
+          child: Icon(Icons.add),
+        ),
+      );
+    }
   }
 
   void _openSendAssessmentOverlay(BuildContext context, WidgetRef ref) {
@@ -58,5 +79,74 @@ class BotRightHud extends ConsumerWidget {
         ref.read(appStateProvider.notifier).setAssessmentMode(AssessmentMode.assessmentBuild);
       },
     );
+  }
+
+  void _openCreateGroupOverlay(BuildContext context, WidgetRef ref) {
+    OverlayService.showCreateGroup(
+      context,
+      onCreate: (selectionType, groupName) {
+        _handleGroupCreation(context, ref, groupName);
+      },
+      onCancel: () {
+        // Clear selected blocks and reset mode
+        ref.read(selectedBlocksProvider.notifier).state = {};
+        ref.read(selectedDepartmentsProvider.notifier).state = {};
+        ref.read(appStateProvider.notifier).setAssessmentMode(AssessmentMode.assessmentDataView);
+      },
+    );
+  }
+
+  Future<void> _handleGroupCreation(BuildContext context, WidgetRef ref, String groupName) async {
+    final blockIds = ref.read(selectedBlocksProvider);
+    final assessmentId = ref.read(appStateProvider).assessmentId;
+    final orgId = ref.read(appStateProvider).orgId;
+
+    // Collect dataDoc IDs for selected blocks from blockNotifiers
+    final dataDocIds = <String>[];
+
+    for (final blockId in blockIds) {
+      final blockNotifier = ref.read(blockNotifierProvider(blockId));
+      if (blockNotifier.blockResultDocId.isNotEmpty) {
+        dataDocIds.add(blockNotifier.blockResultDocId);
+      }
+    }
+
+    final groupData = {
+      'groupName': groupName,
+      'dataDocIds': dataDocIds,
+      'blockIds': blockIds.toList(),
+      'createdAt': DateTime.now().toIso8601String(),
+    };
+
+    try {
+      // Create the group using existing FirestoreService method
+      await FirestoreService.createGroup(
+        orgId: orgId,
+        assessmentId: assessmentId,
+        groupData: groupData,
+      );
+
+      // Show success message
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Group "$groupName" created successfully!')),
+        );
+      }
+    } catch (e) {
+      // Show error message
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error creating group: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+
+    // Clear selections after creation attempt and reset mode
+    ref.read(selectedBlocksProvider.notifier).state = {};
+    ref.read(selectedDepartmentsProvider.notifier).state = {};
+    ref.read(appStateProvider.notifier).setAssessmentMode(AssessmentMode.assessmentDataView);
   }
 }
