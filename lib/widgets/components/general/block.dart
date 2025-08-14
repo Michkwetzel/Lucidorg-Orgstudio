@@ -1,5 +1,3 @@
-import 'dart:developer';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:platform_v2/abstractClasses/assessmentBuildStrategy.dart';
@@ -32,26 +30,41 @@ class Block extends ConsumerWidget {
       hitboxOffset: hitboxOffset,
     );
 
-    BlockBehaviorStrategy strategy = OrgBuildStrategy();
+    BlockBehaviorStrategy strategy;
     AssessmentMode? assessmentMode = ref.watch(appStateProvider).assessmentMode;
     AppView appView = ref.watch(appStateProvider).appView;
 
-    if (appView == AppView.orgBuild) {
-      strategy = OrgBuildStrategy();
-    } else {
-      if (assessmentMode == AssessmentMode.assessmentSend) {
-        strategy = AssessmentSendStrategy();
-      } else if (assessmentMode == AssessmentMode.assessmentGroupCreate) {
-        strategy = AssessmentGroupCreateStrategy();
-      } else if (assessmentMode == AssessmentMode.assessmentDataView) {
-        strategy = AssessmentDataViewStrategy();
-      } else if (assessmentMode == AssessmentMode.assessmentBuild) {
-        strategy = AssessmentBuildStrategy();
-      }
+    // Select block strategy depending on app state
+    switch (appView) {
+      case AppView.orgBuild:
+        strategy = OrgBuildStrategy();
+        break;
+      default:
+        switch (assessmentMode) {
+          case AssessmentMode.assessmentSend:
+            strategy = AssessmentSendStrategy();
+            break;
+          case AssessmentMode.assessmentGroupCreate:
+            strategy = AssessmentGroupCreateStrategy();
+            break;
+          case AssessmentMode.assessmentDataView:
+            strategy = AssessmentDataViewStrategy();
+            break;
+          case AssessmentMode.assessmentBuild:
+            strategy = AssessmentBuildStrategy();
+            break;
+          default:
+            strategy = AssessmentDataViewStrategy();
+            break;
+        }
     }
 
     final blockState = ref.watch(blockNotifierProvider(blockId));
     final blockNotifier = ref.read(blockNotifierProvider(blockId).notifier);
+
+    if (blockState.positionLoaded == false) {
+      return const SizedBox.shrink();
+    }
 
     ref.listen<String?>(selectedBlockProvider, (previous, next) {
       if (next != blockId && blockState.selected) {
@@ -59,11 +72,7 @@ class Block extends ConsumerWidget {
       }
     });
 
-    if (blockState.positionLoaded == false) {
-      return const SizedBox.shrink();
-    }
-
-    final result = Positioned(
+    return Positioned(
       left: blockState.position.dx - hitboxOffset,
       top: blockState.position.dy - hitboxOffset,
       child: GestureDetector(
@@ -74,7 +83,5 @@ class Block extends ConsumerWidget {
         child: strategy.getBlockWidget(blockContext),
       ),
     );
-
-    return result;
   }
 }

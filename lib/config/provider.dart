@@ -62,6 +62,9 @@ final blockNotifierProvider = ChangeNotifierProvider.family<BlockNotifier, Strin
   return notifier;
 });
 
+
+
+
 final connectionManagerProvider = StateNotifierProvider.autoDispose<ConnectionManager, ConnectionsState>((ref) {
   final appStateNotifier = ref.read(appStateProvider.notifier);
 

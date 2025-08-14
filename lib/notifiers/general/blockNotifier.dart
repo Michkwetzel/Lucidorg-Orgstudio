@@ -189,7 +189,7 @@ class BlockNotifier extends ChangeNotifier {
       _debounceTimer = Timer(_debounceDuration, () async {
         print("Single doc upload");
 
-        await FirestoreService.updatePosition(orgId: appState.orgId, assessmentId: appState.assessmentId, blockID: blockID, position: {'x': newPosition.dx, 'y': newPosition.dy});
+        await FirestoreService.updateBlockPosition(orgId: appState.orgId, assessmentId: appState.assessmentId, blockID: blockID, position: {'x': newPosition.dx, 'y': newPosition.dy});
       });
     }
   }

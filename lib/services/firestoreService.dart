@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:platform_v2/dataClasses/analysisBlockData.dart';
 import 'package:platform_v2/dataClasses/blockData.dart';
 import 'package:platform_v2/dataClasses/connection.dart';
 
@@ -57,12 +58,30 @@ class FirestoreService {
     await collection.doc(blockID).delete();
   }
 
-  static Future<void> updatePosition({required String? orgId, String? assessmentId, required String blockID, required Map<String, double> position}) async {
+  static Future<void> updateBlockPosition({required String? orgId, String? assessmentId, required String blockID, required Map<String, double> position}) async {
     final collection = _getBlocksCollection(orgId: orgId, assessmentId: assessmentId);
     await collection.doc(blockID).update({
       'position': position,
     });
   }
+
+  static Future<void> updateAnalysisBlockPosition({required String? orgId, String? assessmentId, required String blockID, required Map<String, double> position}) async {
+    final collection = _instance.collection('orgs').doc(orgId).collection('assessments').doc(assessmentId).collection('analysisBlocks');
+    await collection.doc(blockID).update({
+      'position': position,
+    });
+  }
+
+  static Future<void> updateAnalysisBlockData({required String? orgId, String? assessmentId, required String blockID, required AnalysisBlockData blockData}) async {
+    final collection = _getBlocksCollection(orgId: orgId, assessmentId: assessmentId);
+    await collection.doc(blockID).update({
+      'blockName': blockData.blockName,
+      'analysisBlockType': blockData.analysisBlockType,
+      'groupIds': blockData.groupIds,
+    });
+  }
+
+  
 
   static Future<void> updateData({required String? orgId, String? assessmentId, required String blockID, required BlockData blockData}) async {
     final collection = _getBlocksCollection(orgId: orgId, assessmentId: assessmentId);

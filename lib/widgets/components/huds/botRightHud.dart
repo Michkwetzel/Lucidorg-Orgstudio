@@ -101,20 +101,34 @@ class BotRightHud extends ConsumerWidget {
     final assessmentId = ref.read(appStateProvider).assessmentId;
     final orgId = ref.read(appStateProvider).orgId;
 
-    // Collect dataDoc IDs for selected blocks from blockNotifiers
+    // Collect dataDoc IDs and rawResults for selected blocks from blockNotifiers
     final dataDocIds = <String>[];
+    final allRawResults = <List<int>>[];
 
     for (final blockId in blockIds) {
       final blockNotifier = ref.read(blockNotifierProvider(blockId));
       if (blockNotifier.blockResultDocId.isNotEmpty) {
         dataDocIds.add(blockNotifier.blockResultDocId);
       }
+      
+      // Collect rawResults for averaging
+      final blockData = blockNotifier.blockData;
+      if (blockData != null && blockData.rawResults.isNotEmpty) {
+        // Only include blocks with complete rawResults (37 questions)
+        if (blockData.rawResults.length == 37) {
+          allRawResults.add(blockData.rawResults);
+        }
+      }
     }
+
+    // Calculate averaged raw results across all selected blocks
+    final averagedRawResults = _calculateAveragedRawResults(allRawResults);
 
     final groupData = {
       'groupName': groupName,
       'dataDocIds': dataDocIds,
       'blockIds': blockIds.toList(),
+      'averagedRawResults': averagedRawResults,
       'createdAt': DateTime.now().toIso8601String(),
     };
 
@@ -148,5 +162,33 @@ class BotRightHud extends ConsumerWidget {
     ref.read(selectedBlocksProvider.notifier).state = {};
     ref.read(selectedDepartmentsProvider.notifier).state = {};
     ref.read(appStateProvider.notifier).setAssessmentMode(AssessmentMode.assessmentDataView);
+  }
+
+  /// Calculate averaged raw results across multiple blocks
+  /// Returns a List<double> with 37 averaged values (one for each question)
+  List<double> _calculateAveragedRawResults(List<List<int>> allRawResults) {
+    if (allRawResults.isEmpty) {
+      // Return empty list if no valid raw results
+      return [];
+    }
+
+    const int expectedQuestions = 37;
+    final sums = List<double>.filled(expectedQuestions, 0.0);
+    final blockCount = allRawResults.length;
+
+    // Sum up all the raw results for each question
+    for (final rawResults in allRawResults) {
+      for (int i = 0; i < expectedQuestions && i < rawResults.length; i++) {
+        sums[i] += rawResults[i].toDouble();
+      }
+    }
+
+    // Calculate averages
+    final averages = <double>[];
+    for (int i = 0; i < expectedQuestions; i++) {
+      averages.add(sums[i] / blockCount);
+    }
+
+    return averages;
   }
 }
