@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logging/logging.dart';
+import 'package:platform_v2/config/enums.dart';
 import 'package:platform_v2/notifiers/general/appStateNotifier.dart';
 import 'package:platform_v2/notifiers/general/connectionsManager.dart';
 import 'package:platform_v2/services/firestoreService.dart';
@@ -26,6 +27,9 @@ class OrgCanvasNotifier extends StateNotifier<Set<String>> {
 
   bool get isInitialLoadComplete => _isInitialLoadComplete;
   Map<String, Offset> get initialPositions => _initialPositions;
+  
+  // Check if we're currently in analysis mode
+  bool get _isAnalysisMode => appState.assessmentMode == AssessmentMode.assessmentAnalyze;
 
   // Track pending operations to avoid duplicate updates
   Set<String> _pendingAdditions = {};
@@ -105,15 +109,31 @@ class OrgCanvasNotifier extends StateNotifier<Set<String>> {
     _initialPositions[blockID] = position;
 
     try {
-      await FirestoreService.addBlock(
-        orgId: appState.orgId,
-        assessmentId: appState.assessmentId,
-        blockData: {
-          'blockID': blockID,
-          'position': {'x': position.dx, 'y': position.dy},
-          if (department != null) 'department': department,
-        },
-      );
+      if (_isAnalysisMode) {
+        // Create analysis block with default settings
+        await FirestoreService.addAnalysisBlock(
+          orgId: appState.orgId,
+          assessmentId: appState.assessmentId,
+          blockData: {
+            'blockID': blockID,
+            'position': {'x': position.dx, 'y': position.dy},
+            'blockName': 'New Analysis Block',
+            'analysisBlockType': AnalysisBlockType.question.name, // Default to question type
+            'groupIds': [],
+          },
+        );
+      } else {
+        // Create regular block
+        await FirestoreService.addBlock(
+          orgId: appState.orgId,
+          assessmentId: appState.assessmentId,
+          blockData: {
+            'blockID': blockID,
+            'position': {'x': position.dx, 'y': position.dy},
+            if (department != null) 'department': department,
+          },
+        );
+      }
     } catch (e) {
       // If Firestore operation fails, revert UI changes
       _pendingAdditions.remove(blockID);
@@ -130,10 +150,18 @@ class OrgCanvasNotifier extends StateNotifier<Set<String>> {
     // Update UI immediately
     state = Set<String>.from(state)..remove(blockID);
     _initialPositions.remove(blockID);
-    connectionManager.onBlockDelete(blockID);
+    
+    // Only handle connections for regular blocks (analysis blocks don't use connections)
+    if (!_isAnalysisMode) {
+      connectionManager.onBlockDelete(blockID);
+    }
 
     try {
-      await FirestoreService.deleteBlock(orgId: appState.orgId, assessmentId: appState.assessmentId, blockID: blockID);
+      if (_isAnalysisMode) {
+        await FirestoreService.deleteAnalysisBlock(orgId: appState.orgId, assessmentId: appState.assessmentId, blockID: blockID);
+      } else {
+        await FirestoreService.deleteBlock(orgId: appState.orgId, assessmentId: appState.assessmentId, blockID: blockID);
+      }
     } catch (e) {
       // If Firestore operation fails, revert UI changes
       _pendingDeletions.remove(blockID);

@@ -18,7 +18,8 @@ class AnalysisBlockNotifer extends ChangeNotifier {
   StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>? _blockDataDocStreamSub;
 
   Timer? _debounceTimer;
-  static const Duration _debounceDuration = Duration(milliseconds: 500);
+  Timer? _groupsDebounceTimer;
+  static const Duration _debounceDuration = Duration(milliseconds: 2000);
 
   AnalysisBlockNotifer({required this.blockID, required this.appState}) {
     final stream = FirestoreService.getAnalysisBlockStream(orgId: appState.orgId, assessmentId: appState.assessmentId, blockId: blockID);
@@ -26,7 +27,14 @@ class AnalysisBlockNotifer extends ChangeNotifier {
     _blockDataDocStreamSub = stream.listen((snapshot) {
       if (snapshot.exists && snapshot.data() != null) {
         final data = snapshot.data()!;
-        final blockData = AnalysisBlockData.fromMap(data);
+        // Extract position with fallbacks
+        final positionMap = data['position'] as Map<String, dynamic>?;
+        _position = Offset(
+          (positionMap?['x'] as num?)?.toDouble() ?? 0.0,
+          (positionMap?['y'] as num?)?.toDouble() ?? 0.0,
+        );
+
+        blockData = AnalysisBlockData.fromMap(data);
         _dataLoaded = true;
         notifyListeners();
       }
@@ -63,8 +71,52 @@ class AnalysisBlockNotifer extends ChangeNotifier {
     }
   }
 
-  void addGroup(){
+  void addGroup(String groupId) {
+    if (!blockData.groupIds.contains(groupId)) {
+      final updatedGroupIds = [...blockData.groupIds, groupId];
+      blockData = blockData.copyWith(groupIds: updatedGroupIds);
+      notifyListeners();
+      _debouncedGroupUpdate();
+    }
+  }
 
+  void removeGroup(String groupId) {
+    if (blockData.groupIds.contains(groupId)) {
+      final updatedGroupIds = blockData.groupIds.where((id) => id != groupId).toList();
+      blockData = blockData.copyWith(groupIds: updatedGroupIds);
+      notifyListeners();
+      _debouncedGroupUpdate();
+    }
+  }
+
+  void updateGroups(List<String> newGroupIds) {
+    if (!_listEquals(blockData.groupIds, newGroupIds)) {
+      blockData = blockData.copyWith(groupIds: newGroupIds);
+      notifyListeners();
+      _debouncedGroupUpdate();
+    }
+  }
+
+  void _debouncedGroupUpdate() {
+    _groupsDebounceTimer?.cancel();
+
+    _groupsDebounceTimer = Timer(_debounceDuration, () async {
+      await FirestoreService.updateAnalysisBlockData(
+        orgId: appState.orgId,
+        assessmentId: appState.assessmentId,
+        blockID: blockID,
+        blockData: blockData,
+      );
+    });
+  }
+
+  // Helper method to compare lists
+  bool _listEquals<T>(List<T> a, List<T> b) {
+    if (a.length != b.length) return false;
+    for (int i = 0; i < a.length; i++) {
+      if (a[i] != b[i]) return false;
+    }
+    return true;
   }
 
   // Getters
@@ -78,6 +130,8 @@ class AnalysisBlockNotifer extends ChangeNotifier {
   @override
   void dispose() {
     _blockDataDocStreamSub?.cancel();
+    _debounceTimer?.cancel();
+    _groupsDebounceTimer?.cancel();
     super.dispose();
   }
 }

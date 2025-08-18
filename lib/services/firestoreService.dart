@@ -53,8 +53,20 @@ class FirestoreService {
     });
   }
 
+  static Future<void> addAnalysisBlock({required String? orgId, String? assessmentId, required Map<String, dynamic> blockData}) async {
+    final collection = _instance.collection('orgs').doc(orgId).collection('assessments').doc(assessmentId).collection('analysisBlocks');
+    await collection.doc(blockData['blockID']).set({
+      ...blockData,
+    });
+  }
+
   static Future<void> deleteBlock({required String? orgId, String? assessmentId, required String blockID}) async {
     final collection = _getBlocksCollection(orgId: orgId, assessmentId: assessmentId);
+    await collection.doc(blockID).delete();
+  }
+
+  static Future<void> deleteAnalysisBlock({required String? orgId, String? assessmentId, required String blockID}) async {
+    final collection = _instance.collection('orgs').doc(orgId).collection('assessments').doc(assessmentId).collection('analysisBlocks');
     await collection.doc(blockID).delete();
   }
 
@@ -73,10 +85,10 @@ class FirestoreService {
   }
 
   static Future<void> updateAnalysisBlockData({required String? orgId, String? assessmentId, required String blockID, required AnalysisBlockData blockData}) async {
-    final collection = _getBlocksCollection(orgId: orgId, assessmentId: assessmentId);
+    final collection = _instance.collection('orgs').doc(orgId).collection('assessments').doc(assessmentId).collection('analysisBlocks');
     await collection.doc(blockID).update({
       'blockName': blockData.blockName,
-      'analysisBlockType': blockData.analysisBlockType,
+      'analysisBlockType': blockData.analysisBlockType.name,
       'groupIds': blockData.groupIds,
     });
   }
@@ -123,6 +135,12 @@ class FirestoreService {
   // All blocks in Collection
   static Stream<QuerySnapshot> getAnalysisBlocksStream({required String? orgId, String? assessmentId}) {
     final collection = _instance.collection('orgs').doc(orgId).collection('assessments').doc(assessmentId).collection('analysisBlocks');
+    return collection.snapshots();
+  }
+
+  // All groups in Collection
+  static Stream<QuerySnapshot> getGroupsStream({required String? orgId, String? assessmentId}) {
+    final collection = _instance.collection('orgs').doc(orgId).collection('assessments').doc(assessmentId).collection('groups');
     return collection.snapshots();
   }
 

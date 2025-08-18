@@ -6,6 +6,8 @@ import 'package:platform_v2/notifiers/general/orgCanvasNotifier.dart';
 import 'package:platform_v2/notifiers/general/connectionsManager.dart';
 import 'package:platform_v2/notifiers/general/orgsScreenNotifier.dart';
 import 'package:platform_v2/notifiers/general/assessmentScreenNotifier.dart';
+import 'package:platform_v2/notifiers/general/analysisBlockNotifer.dart';
+import 'package:platform_v2/notifiers/general/groupsNotifier.dart';
 import 'package:platform_v2/config/enums.dart';
 import 'package:platform_v2/dataClasses/displayOption.dart';
 
@@ -62,10 +64,24 @@ final blockNotifierProvider = ChangeNotifierProvider.family<BlockNotifier, Strin
   return notifier;
 });
 
+// Analysis Block Notifier Provider - no autoDispose for caching
+final analysisBlockNotifierProvider = ChangeNotifierProvider.family<AnalysisBlockNotifer, String>((ref, blockID) {
+  final appStateNotifier = ref.read(appStateProvider.notifier);
+  return AnalysisBlockNotifer(blockID: blockID, appState: appStateNotifier);
+});
 
+// Groups Provider - no autoDispose for caching
+final groupsProvider = ChangeNotifierProvider<GroupsNotifier>((ref) {
+  final appStateNotifier = ref.read(appStateProvider.notifier);
+  
+  // Rebuild when orgId or assessmentId changes
+  ref.watch(appStateProvider.select((state) => state.orgId));
+  ref.watch(appStateProvider.select((state) => state.assessmentId));
+  
+  return GroupsNotifier(appState: appStateNotifier);
+});
 
-
-final connectionManagerProvider = StateNotifierProvider.autoDispose<ConnectionManager, ConnectionsState>((ref) {
+final connectionManagerProvider = StateNotifierProvider<ConnectionManager, ConnectionsState>((ref) {
   final appStateNotifier = ref.read(appStateProvider.notifier);
 
   return ConnectionManager(appState: appStateNotifier);

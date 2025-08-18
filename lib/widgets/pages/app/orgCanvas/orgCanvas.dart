@@ -6,6 +6,7 @@ import 'package:platform_v2/config/provider.dart';
 import 'package:platform_v2/services/customPainters/connectionPainter.dart';
 import 'package:platform_v2/services/firestoreIdGenerator.dart';
 import 'package:platform_v2/widgets/components/general/block.dart';
+import 'package:platform_v2/widgets/components/general/analysisBlock.dart';
 import 'package:platform_v2/widgets/pages/app/orgCanvas/connectionsLayer.dart';
 
 class OrgCanvas extends ConsumerStatefulWidget {
@@ -41,6 +42,7 @@ class _OrgCanvasState extends ConsumerState<OrgCanvas> {
   Widget build(BuildContext context) {
     final canvasState = ref.watch(canvasProvider);
     final canvasNotifier = ref.read(canvasProvider.notifier);
+    final assessmentMode = ref.watch(appStateProvider).assessmentMode;
 
     if (canvasNotifier.isInitialLoadComplete == false) {
       return const Center(child: CircularProgressIndicator());
@@ -80,14 +82,25 @@ class _OrgCanvasState extends ConsumerState<OrgCanvas> {
                 color: Colors.grey,
                 child: Stack(
                   children: [
-                    ConnectionLayer(),
+                    // Only show connections layer for non-analysis modes
+                    if (assessmentMode != AssessmentMode.assessmentAnalyze)
+                      ConnectionLayer(),
 
-                    ...canvasState.map(
-                      (blockID) => Block(
-                        key: ValueKey(blockID), // ValueKey for widget stability
-                        blockId: blockID,
+                    // Conditionally render analysis blocks or regular blocks
+                    if (assessmentMode == AssessmentMode.assessmentAnalyze)
+                      ...canvasState.map(
+                        (blockID) => AnalysisBlock(
+                          key: ValueKey('analysis_$blockID'), // Unique key for analysis blocks
+                          blockId: blockID,
+                        ),
+                      )
+                    else
+                      ...canvasState.map(
+                        (blockID) => Block(
+                          key: ValueKey('block_$blockID'), // Unique key for regular blocks
+                          blockId: blockID,
+                        ),
                       ),
-                    ),
                   ],
                 ),
               ),
