@@ -5,11 +5,13 @@ import 'package:flutter/material.dart';
 import 'package:platform_v2/config/enums.dart';
 import 'package:platform_v2/dataClasses/analysisBlockData.dart';
 import 'package:platform_v2/notifiers/general/appStateNotifier.dart';
+import 'package:platform_v2/notifiers/general/groupsNotifier.dart';
 import 'package:platform_v2/services/firestoreService.dart';
 import 'package:platform_v2/services/analysisDataService.dart';
 
 class AnalysisBlockNotifer extends ChangeNotifier {
   final String blockID;
+  final GroupsNotifier groupsNotifier; // Direct reference instead of ref
   bool _dataLoaded = false;
   bool _isDragging = false;
   Offset _position = const Offset(0, 0);
@@ -36,10 +38,16 @@ class AnalysisBlockNotifer extends ChangeNotifier {
 
   Timer? _debounceTimer;
   Timer? _groupsDebounceTimer;
+  Timer? _retryTimer;
+  Timer? _filtersDebounceTimer;
   static const Duration _debounceDuration = Duration(milliseconds: 2000);
+  static const Duration _filtersDebounceDuration = Duration(milliseconds: 10000);
 
-  AnalysisBlockNotifer({required this.blockID, required this.appState}) {
+  AnalysisBlockNotifer({required this.blockID, required this.appState, required this.groupsNotifier}) {
     final stream = FirestoreService.getAnalysisBlockStream(orgId: appState.orgId, assessmentId: appState.assessmentId, blockId: blockID);
+
+    // Listen to groups notifier to auto-retry when cache loading completes
+    groupsNotifier.addListener(_onGroupsNotifierChanged);
 
     _blockDataDocStreamSub = stream.listen((snapshot) {
       if (snapshot.exists && snapshot.data() != null) {
@@ -65,6 +73,18 @@ class AnalysisBlockNotifer extends ChangeNotifier {
         notifyListeners();
       }
     });
+  }
+
+  // Listener for GroupsNotifier changes to auto-retry data fetching
+  void _onGroupsNotifierChanged() {
+    // If we had a loading error and cache is now ready, retry fetching
+    if (_analysisDataError != null && 
+        _analysisDataError!.contains('cache still loading') &&
+        groupsNotifier.isAnalysisModeActive &&
+        !groupsNotifier.emailDataLoading &&
+        groupsNotifier.emailDataError == null) {
+      _fetchAnalysisData();
+    }
   }
 
   void updatePosition(Offset newPosition) async {
@@ -184,6 +204,98 @@ class AnalysisBlockNotifer extends ChangeNotifier {
     });
   }
 
+  void _debouncedFiltersUpdate() {
+    _filtersDebounceTimer?.cancel();
+
+    _filtersDebounceTimer = Timer(_filtersDebounceDuration, () async {
+      await FirestoreService.updateAnalysisBlockData(
+        orgId: appState.orgId,
+        assessmentId: appState.assessmentId,
+        blockID: blockID,
+        blockData: blockData,
+      );
+    });
+  }
+
+  // Filter management methods
+  void toggleQuestion(int questionNumber) {
+    if (questionNumber < 1 || questionNumber > 37) return;
+    
+    final updatedQuestions = Set<int>.from(blockData.selectedQuestions);
+    if (updatedQuestions.contains(questionNumber)) {
+      updatedQuestions.remove(questionNumber);
+    } else {
+      updatedQuestions.add(questionNumber);
+    }
+    
+    blockData = blockData.copyWith(selectedQuestions: updatedQuestions);
+    notifyListeners();
+    _debouncedFiltersUpdate();
+  }
+
+  void toggleIndicator(Benchmark indicator) {
+    final updatedIndicators = Set<Benchmark>.from(blockData.selectedIndicators);
+    if (updatedIndicators.contains(indicator)) {
+      updatedIndicators.remove(indicator);
+    } else {
+      updatedIndicators.add(indicator);
+    }
+    
+    blockData = blockData.copyWith(selectedIndicators: updatedIndicators);
+    notifyListeners();
+    _debouncedFiltersUpdate();
+  }
+
+  void selectAllQuestions() {
+    final allQuestions = Set<int>.from(List.generate(37, (i) => i + 1));
+    if (!_setEquals(blockData.selectedQuestions, allQuestions)) {
+      blockData = blockData.copyWith(selectedQuestions: allQuestions);
+      notifyListeners();
+      _debouncedFiltersUpdate();
+    }
+  }
+
+  void deselectAllQuestions() {
+    if (blockData.selectedQuestions.isNotEmpty) {
+      blockData = blockData.copyWith(selectedQuestions: <int>{});
+      notifyListeners();
+      _debouncedFiltersUpdate();
+    }
+  }
+
+  void selectAllIndicators() {
+    final allIndicators = Set<Benchmark>.from(indicators());
+    if (!_setEquals(blockData.selectedIndicators, allIndicators)) {
+      blockData = blockData.copyWith(selectedIndicators: allIndicators);
+      notifyListeners();
+      _debouncedFiltersUpdate();
+    }
+  }
+
+  void deselectAllIndicators() {
+    if (blockData.selectedIndicators.isNotEmpty) {
+      blockData = blockData.copyWith(selectedIndicators: <Benchmark>{});
+      notifyListeners();
+      _debouncedFiltersUpdate();
+    }
+  }
+
+  void updateSelectedQuestions(Set<int> selectedQuestions) {
+    if (!_setEquals(blockData.selectedQuestions, selectedQuestions)) {
+      blockData = blockData.copyWith(selectedQuestions: selectedQuestions);
+      notifyListeners();
+      _debouncedFiltersUpdate();
+    }
+  }
+
+  void updateSelectedIndicators(Set<Benchmark> selectedIndicators) {
+    if (!_setEquals(blockData.selectedIndicators, selectedIndicators)) {
+      blockData = blockData.copyWith(selectedIndicators: selectedIndicators);
+      notifyListeners();
+      _debouncedFiltersUpdate();
+    }
+  }
+
   // Helper method to compare lists
   bool _listEquals<T>(List<T> a, List<T> b) {
     if (a.length != b.length) return false;
@@ -191,6 +303,11 @@ class AnalysisBlockNotifer extends ChangeNotifier {
       if (a[i] != b[i]) return false;
     }
     return true;
+  }
+
+  // Helper method to compare sets
+  bool _setEquals<T>(Set<T> a, Set<T> b) {
+    return a.length == b.length && a.containsAll(b);
   }
 
   // Check if data-relevant configuration has changed
@@ -202,13 +319,14 @@ class AnalysisBlockNotifer extends ChangeNotifier {
     return changed;
   }
 
-  // Fetch analysis data based on current configuration
+  // Fetch analysis data from cache (no Firestore reads!)
   void _fetchAnalysisData() async {
     // Only fetch if block is properly configured
     if (blockData.analysisBlockType == AnalysisBlockType.none ||
         blockData.analysisSubType == AnalysisSubType.none ||
         blockData.groupIds.isEmpty) {
       _analysisData = [];
+      _groupedAnalysisData = {};
       _analysisDataLoading = false;
       _analysisDataError = null;
       notifyListeners();
@@ -220,80 +338,37 @@ class AnalysisBlockNotifer extends ChangeNotifier {
     notifyListeners();
 
     try {
-      // For Group Comparison: fetch data per group separately to maintain grouping
-      // For Group Analysis: fetch all data together (existing behavior)
-      if (blockData.isGroupComparison) {
-        _groupedAnalysisData = {};
-        _analysisData = [];
+      // Check if analysis mode is initialized and cache is ready
+      if (!groupsNotifier.isAnalysisModeActive) {
+        throw Exception('Analysis mode not initialized. Please ensure analysis cache is loaded.');
+      }
+      
+      // If still loading, wait instead of throwing error
+      if (groupsNotifier.emailDataLoading) {
+        // Show loading message and set up retry timer
+        _analysisDataLoading = false; // Reset to allow retry
+        _analysisDataError = 'Email data cache still loading. Please wait...';
+        notifyListeners();
         
-        // Fetch data for each group separately
-        for (final groupId in blockData.groupIds) {
-          final groupDoc = await FirestoreService.instance
-              .collection('orgs')
-              .doc(appState.orgId)
-              .collection('assessments')
-              .doc(appState.assessmentId)
-              .collection('groups')
-              .doc(groupId)
-              .get();
-              
-          if (groupDoc.exists && groupDoc.data() != null) {
-            final groupData = groupDoc.data()!;
-            final dataDocIds = (groupData['dataDocIds'] as List?)?.cast<String>() ?? [];
-            
-            if (dataDocIds.isNotEmpty) {
-              final groupAnalysisData = await AnalysisDataService.fetchGroupRawData(
-                orgId: appState.orgId!,
-                assessmentId: appState.assessmentId!,
-                dataDocIds: dataDocIds,
-              );
-              
-              _groupedAnalysisData[groupId] = groupAnalysisData;
-              _analysisData.addAll(groupAnalysisData); // Keep combined data for other uses
-            } else {
-              _groupedAnalysisData[groupId] = [];
-            }
-          } else {
-            _groupedAnalysisData[groupId] = [];
-          }
-        }
-      } else {
-        // Original behavior for Group Analysis or single group
-        final allDataDocIds = <String>[];
-        _groupedAnalysisData = {};
-        
-        for (final groupId in blockData.groupIds) {
-          final groupDoc = await FirestoreService.instance
-              .collection('orgs')
-              .doc(appState.orgId)
-              .collection('assessments')
-              .doc(appState.assessmentId)
-              .collection('groups')
-              .doc(groupId)
-              .get();
-              
-          if (groupDoc.exists && groupDoc.data() != null) {
-            final groupData = groupDoc.data()!;
-            final dataDocIds = (groupData['dataDocIds'] as List?)?.cast<String>() ?? [];
-            allDataDocIds.addAll(dataDocIds);
-          }
-        }
-        
-        if (allDataDocIds.isEmpty) {
-          _analysisData = [];
-          _analysisDataLoading = false;
-          _analysisDataError = null;
-          notifyListeners();
-          return;
-        }
-        
-        final analysisData = await AnalysisDataService.fetchGroupRawData(
-          orgId: appState.orgId!,
-          assessmentId: appState.assessmentId!,
-          dataDocIds: allDataDocIds,
-        );
+        // Set up retry timer to check again after cache loading might complete
+        _retryTimer?.cancel();
+        _retryTimer = Timer(const Duration(milliseconds: 1000), () {
+          _fetchAnalysisData(); // Retry fetching data
+        });
+        return;
+      }
+      
+      if (groupsNotifier.emailDataError != null) {
+        throw Exception('Email data cache error: ${groupsNotifier.emailDataError}');
+      }
 
-        _analysisData = analysisData;
+      // Get data from cache - instant, no Firestore reads!
+      _groupedAnalysisData = groupsNotifier.getEmailDataForGroups(blockData.groupIds);
+      
+      // Combine all group data for backward compatibility
+      _analysisData = [];
+      for (final emailList in _groupedAnalysisData.values) {
+        _analysisData.addAll(emailList);
       }
 
       _analysisDataLoading = false;
@@ -307,9 +382,10 @@ class AnalysisBlockNotifer extends ChangeNotifier {
       
     } catch (e) {
       _analysisData = [];
+      _groupedAnalysisData = {};
       _analysisDataLoading = false;
       _analysisDataError = e.toString();
-      print("Error fetching analysis data for block $blockID: $e");
+      print("Error fetching cached analysis data for block $blockID: $e");
     }
     
     notifyListeners();
@@ -567,6 +643,9 @@ class AnalysisBlockNotifer extends ChangeNotifier {
     _blockDataDocStreamSub?.cancel();
     _debounceTimer?.cancel();
     _groupsDebounceTimer?.cancel();
+    _retryTimer?.cancel();
+    _filtersDebounceTimer?.cancel();
+    groupsNotifier.removeListener(_onGroupsNotifierChanged);
     super.dispose();
   }
 }

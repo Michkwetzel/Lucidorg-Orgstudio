@@ -15,8 +15,8 @@ class BotRightHud extends ConsumerWidget {
     final appView = ref.watch(appStateProvider).appView;
     final assessmentMode = ref.watch(appStateProvider).assessmentMode;
 
-    // Show in both assessmentBuild and assessmentDataView modes
-    if (appView != AppView.assessmentBuild || (assessmentMode != AssessmentMode.assessmentBuild && assessmentMode != AssessmentMode.assessmentDataView)) {
+    // Show in assessmentBuild, assessmentDataView, and assessmentAnalyze modes
+    if (appView != AppView.assessmentBuild || (assessmentMode != AssessmentMode.assessmentBuild && assessmentMode != AssessmentMode.assessmentDataView && assessmentMode != AssessmentMode.assessmentAnalyze)) {
       return SizedBox.shrink();
     }
 
@@ -32,6 +32,25 @@ class BotRightHud extends ConsumerWidget {
             _openCreateGroupOverlay(context, ref);
           },
           child: Icon(Icons.add),
+        ),
+      );
+    } else if (assessmentMode == AssessmentMode.assessmentAnalyze) {
+      final groupsNotifier = ref.watch(groupsProvider);
+      final isRefreshing = groupsNotifier.emailDataLoading;
+      
+      return Tooltip(
+        message: 'Refresh Analysis Data',
+        child: FilledButton.tonal(
+          onPressed: isRefreshing ? null : () async {
+            await ref.read(groupsProvider).refreshEmailCache();
+          },
+          child: isRefreshing 
+              ? SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : Icon(Icons.refresh),
         ),
       );
     } else {

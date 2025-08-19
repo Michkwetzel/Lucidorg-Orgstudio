@@ -118,6 +118,8 @@ class OrgCanvasNotifier extends StateNotifier<Set<String>> {
           analysisBlockType: AnalysisBlockType.none, // Start unselected
           analysisSubType: AnalysisSubType.none,
           groupIds: [],
+          selectedQuestions: Set<int>.from(List.generate(37, (i) => i + 1)),
+          selectedIndicators: Set<Benchmark>.from(indicators()),
         );
         
         await FirestoreService.addAnalysisBlock(

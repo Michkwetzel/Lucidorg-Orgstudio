@@ -5,12 +5,16 @@ class AnalysisBlockData {
   final AnalysisBlockType analysisBlockType;
   final AnalysisSubType analysisSubType;
   final List<String> groupIds;
+  final Set<int> selectedQuestions;
+  final Set<Benchmark> selectedIndicators;
 
   const AnalysisBlockData({
     required this.blockName,
     required this.analysisBlockType,
     required this.analysisSubType,
     required this.groupIds,
+    required this.selectedQuestions,
+    required this.selectedIndicators,
   });
 
   factory AnalysisBlockData.empty() {
@@ -19,6 +23,8 @@ class AnalysisBlockData {
       analysisBlockType: AnalysisBlockType.none,
       analysisSubType: AnalysisSubType.none,
       groupIds: [],
+      selectedQuestions: Set<int>.from(List.generate(37, (i) => i + 1)),
+      selectedIndicators: Set<Benchmark>.from(indicators()),
     );
   }
 
@@ -43,6 +49,8 @@ class AnalysisBlockData {
       analysisBlockType: analysisBlockType,
       analysisSubType: finalSubType,
       groupIds: (data['groupIds'] as List?)?.cast<String>() ?? [],
+      selectedQuestions: _parseSelectedQuestions(data['selectedQuestions']),
+      selectedIndicators: _parseSelectedIndicators(data['selectedIndicators']),
     );
   }
 
@@ -53,6 +61,8 @@ class AnalysisBlockData {
       'analysisBlockType': analysisBlockType.name,
       'analysisSubType': analysisSubType.name,
       'groupIds': groupIds,
+      'selectedQuestions': selectedQuestions.toList(),
+      'selectedIndicators': selectedIndicators.map((e) => e.name).toList(),
     };
   }
 
@@ -93,18 +103,59 @@ class AnalysisBlockData {
     }
   }
 
+  // Helper method to parse selected questions
+  static Set<int> _parseSelectedQuestions(dynamic value) {
+    if (value == null) {
+      return Set<int>.from(List.generate(37, (i) => i + 1)); // Default to all questions
+    }
+    
+    if (value is List) {
+      return Set<int>.from(value.where((e) => e is int).cast<int>());
+    }
+    
+    return Set<int>.from(List.generate(37, (i) => i + 1)); // Fallback to all questions
+  }
+
+  // Helper method to parse selected indicators
+  static Set<Benchmark> _parseSelectedIndicators(dynamic value) {
+    if (value == null) {
+      return Set<Benchmark>.from(indicators()); // Default to all indicators
+    }
+    
+    if (value is List) {
+      final result = <Benchmark>{};
+      for (final item in value) {
+        if (item is String) {
+          for (final benchmark in Benchmark.values) {
+            if (benchmark.name == item) {
+              result.add(benchmark);
+              break;
+            }
+          }
+        }
+      }
+      return result.isEmpty ? Set<Benchmark>.from(indicators()) : result;
+    }
+    
+    return Set<Benchmark>.from(indicators()); // Fallback to all indicators
+  }
+
   // Copy with method for immutable updates
   AnalysisBlockData copyWith({
     String? blockName,
     AnalysisBlockType? analysisBlockType,
     AnalysisSubType? analysisSubType,
     List<String>? groupIds,
+    Set<int>? selectedQuestions,
+    Set<Benchmark>? selectedIndicators,
   }) {
     return AnalysisBlockData(
       blockName: blockName ?? this.blockName,
       analysisBlockType: analysisBlockType ?? this.analysisBlockType,
       analysisSubType: analysisSubType ?? this.analysisSubType,
       groupIds: groupIds ?? this.groupIds,
+      selectedQuestions: selectedQuestions ?? this.selectedQuestions,
+      selectedIndicators: selectedIndicators ?? this.selectedIndicators,
     );
   }
 
@@ -117,7 +168,9 @@ class AnalysisBlockData {
     return blockName == other.blockName && 
            analysisBlockType == other.analysisBlockType && 
            analysisSubType == other.analysisSubType &&
-           _listEquals(groupIds, other.groupIds);
+           _listEquals(groupIds, other.groupIds) &&
+           _setEquals(selectedQuestions, other.selectedQuestions) &&
+           _setEquals(selectedIndicators, other.selectedIndicators);
   }
 
   @override
@@ -126,11 +179,13 @@ class AnalysisBlockData {
     analysisBlockType,
     analysisSubType,
     Object.hashAll(groupIds),
+    Object.hashAll(selectedQuestions),
+    Object.hashAll(selectedIndicators),
   );
 
   @override
   String toString() {
-    return 'AnalysisBlockData(blockName: $blockName, analysisBlockType: $analysisBlockType, analysisSubType: $analysisSubType, groupIds: $groupIds)';
+    return 'AnalysisBlockData(blockName: $blockName, analysisBlockType: $analysisBlockType, analysisSubType: $analysisSubType, groupIds: $groupIds, selectedQuestions: ${selectedQuestions.length}, selectedIndicators: ${selectedIndicators.length})';
   }
 
   // Validation methods
@@ -159,5 +214,10 @@ class AnalysisBlockData {
       if (a[i] != b[i]) return false;
     }
     return true;
+  }
+
+  // Helper method to compare sets
+  bool _setEquals<T>(Set<T> a, Set<T> b) {
+    return a.length == b.length && a.containsAll(b);
   }
 }

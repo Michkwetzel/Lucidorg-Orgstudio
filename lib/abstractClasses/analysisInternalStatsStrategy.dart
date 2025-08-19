@@ -262,6 +262,14 @@ class AnalysisInternalStatsStrategy extends AnalysisBlockBehaviorStrategy {
         groupedDataPoints: groupedDataPoints,
         analysisSubType: blockData.analysisSubType,
         groupIdToNameMap: const {}, // Chart will handle group name resolution internally
+        selectedQuestions: blockData.selectedQuestions,
+        selectedIndicators: blockData.selectedIndicators,
+        onToggleQuestion: analysisNotifier.toggleQuestion,
+        onToggleIndicator: analysisNotifier.toggleIndicator,
+        onSelectAllQuestions: analysisNotifier.selectAllQuestions,
+        onDeselectAllQuestions: analysisNotifier.deselectAllQuestions,
+        onSelectAllIndicators: analysisNotifier.selectAllIndicators,
+        onDeselectAllIndicators: analysisNotifier.deselectAllIndicators,
       ),
     );
   }

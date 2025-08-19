@@ -67,7 +67,8 @@ final blockNotifierProvider = ChangeNotifierProvider.family<BlockNotifier, Strin
 // Analysis Block Notifier Provider - no autoDispose for caching
 final analysisBlockNotifierProvider = ChangeNotifierProvider.family<AnalysisBlockNotifer, String>((ref, blockID) {
   final appStateNotifier = ref.read(appStateProvider.notifier);
-  return AnalysisBlockNotifer(blockID: blockID, appState: appStateNotifier);
+  final groupsNotifier = ref.read(groupsProvider);
+  return AnalysisBlockNotifer(blockID: blockID, appState: appStateNotifier, groupsNotifier: groupsNotifier);
 });
 
 // Groups Provider - no autoDispose for caching

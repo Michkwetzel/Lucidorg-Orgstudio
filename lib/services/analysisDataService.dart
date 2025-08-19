@@ -15,6 +15,57 @@ class EmailDataPoint {
   });
 }
 
+class CachedEmailData {
+  final String docId;
+  final String email;
+  final List<int> rawResults;
+  final Map<Benchmark, double>? benchmarks;
+  final String? groupId; // Which group this email belongs to (nullable for unassigned)
+
+  CachedEmailData({
+    required this.docId,
+    required this.email,
+    required this.rawResults,
+    this.benchmarks,
+    this.groupId,
+  });
+
+  // Create from EmailDataPoint
+  factory CachedEmailData.fromEmailDataPoint(
+    EmailDataPoint emailDataPoint,
+    String docId,
+    String? groupId,
+  ) {
+    return CachedEmailData(
+      docId: docId,
+      email: emailDataPoint.email,
+      rawResults: emailDataPoint.rawResults,
+      benchmarks: emailDataPoint.benchmarks,
+      groupId: groupId,
+    );
+  }
+
+  // Convert to EmailDataPoint for backward compatibility
+  EmailDataPoint toEmailDataPoint() {
+    return EmailDataPoint(
+      email: email,
+      rawResults: rawResults,
+      benchmarks: benchmarks,
+    );
+  }
+
+  // Copy with new groupId
+  CachedEmailData copyWith({String? groupId}) {
+    return CachedEmailData(
+      docId: docId,
+      email: email,
+      rawResults: rawResults,
+      benchmarks: benchmarks,
+      groupId: groupId ?? this.groupId,
+    );
+  }
+}
+
 class AnalysisDataService {
   static final Logger _logger = Logger('AnalysisDataService');
 

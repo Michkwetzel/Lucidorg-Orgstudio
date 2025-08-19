@@ -62,6 +62,8 @@ class TopRightHud extends ConsumerWidget {
 
   Widget _buildSegmentedButton(BuildContext context, WidgetRef ref) {
     final currentAssessmentMode = ref.watch(appStateProvider).assessmentMode;
+    final groupsNotifier = ref.watch(groupsProvider);
+    final isAnalyzeLoading = groupsNotifier.isAnalysisModeActive && groupsNotifier.emailDataLoading;
 
     return Container(
       decoration: BoxDecoration(
@@ -77,7 +79,11 @@ class TopRightHud extends ConsumerWidget {
             ref: ref,
             text: 'Builder',
             isActive: currentAssessmentMode == AssessmentMode.assessmentBuild,
-            onTap: () => ref.read(appStateProvider.notifier).setAssessmentMode(AssessmentMode.assessmentBuild),
+            onTap: () {
+              // Clear analysis cache when leaving analysis mode
+              ref.read(groupsProvider).exitAnalysisMode();
+              ref.read(appStateProvider.notifier).setAssessmentMode(AssessmentMode.assessmentBuild);
+            },
             isFirst: true,
           ),
           _buildSegmentButton(
@@ -85,7 +91,11 @@ class TopRightHud extends ConsumerWidget {
             ref: ref,
             text: 'Data View',
             isActive: currentAssessmentMode == AssessmentMode.assessmentDataView,
-            onTap: () => ref.read(appStateProvider.notifier).setAssessmentMode(AssessmentMode.assessmentDataView),
+            onTap: () {
+              // Clear analysis cache when leaving analysis mode
+              ref.read(groupsProvider).exitAnalysisMode();
+              ref.read(appStateProvider.notifier).setAssessmentMode(AssessmentMode.assessmentDataView);
+            },
             isFirst: false,
           ),
           _buildSegmentButton(
@@ -93,7 +103,13 @@ class TopRightHud extends ConsumerWidget {
             ref: ref,
             text: 'Analyze',
             isActive: currentAssessmentMode == AssessmentMode.assessmentAnalyze,
-            onTap: () {
+            isLoading: isAnalyzeLoading,
+            onTap: () async {
+              // Initialize analysis mode cache before switching
+              final groupsNotifier = ref.read(groupsProvider);
+              
+              // Only switch mode after cache initialization completes
+              await groupsNotifier.initializeAnalysisMode();
               ref.read(appStateProvider.notifier).setAssessmentMode(AssessmentMode.assessmentAnalyze);
             },
             isFirst: false,
@@ -112,6 +128,7 @@ class TopRightHud extends ConsumerWidget {
     required VoidCallback onTap,
     required bool isFirst,
     bool isLast = false,
+    bool isLoading = false,
   }) {
     return GestureDetector(
       onTap: onTap,
@@ -124,14 +141,37 @@ class TopRightHud extends ConsumerWidget {
             right: isLast ? Radius.circular(7) : Radius.zero,
           ),
         ),
-        child: Text(
-          text,
-          style: TextStyle(
-            color: isActive ? Colors.blue.shade700 : Colors.grey.shade600,
-            fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
-            fontSize: 14,
-          ),
-        ),
+        child: isLoading 
+            ? Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SizedBox(
+                    width: 12,
+                    height: 12,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.blue.shade700,
+                    ),
+                  ),
+                  SizedBox(width: 6),
+                  Text(
+                    text,
+                    style: TextStyle(
+                      color: Colors.blue.shade700,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
+                    ),
+                  ),
+                ],
+              )
+            : Text(
+                text,
+                style: TextStyle(
+                  color: isActive ? Colors.blue.shade700 : Colors.grey.shade600,
+                  fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
+                  fontSize: 14,
+                ),
+              ),
       ),
     );
   }
