@@ -2,7 +2,9 @@ enum AssessmentMode { none, assessmentSend, assessmentBuild, assessmentDataView,
 
 enum AppView { none, logIn, orgSelect, orgBuild, assessmentBuild, assessmentSelect }
 
-enum AnalysisBlockType { none, question, indicator, internalStats }
+enum AnalysisBlockType { none, groupAnalysis, groupComparison }
+
+enum AnalysisSubType { none, indicators, questions }
 
 enum Permission { admin, error }
 

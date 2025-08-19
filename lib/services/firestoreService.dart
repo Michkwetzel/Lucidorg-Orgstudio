@@ -89,6 +89,7 @@ class FirestoreService {
     await collection.doc(blockID).update({
       'blockName': blockData.blockName,
       'analysisBlockType': blockData.analysisBlockType.name,
+      'analysisSubType': blockData.analysisSubType.name,
       'groupIds': blockData.groupIds,
     });
   }

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logging/logging.dart';
 import 'package:platform_v2/config/enums.dart';
+import 'package:platform_v2/dataClasses/analysisBlockData.dart';
 import 'package:platform_v2/notifiers/general/appStateNotifier.dart';
 import 'package:platform_v2/notifiers/general/connectionsManager.dart';
 import 'package:platform_v2/services/firestoreService.dart';
@@ -111,15 +112,21 @@ class OrgCanvasNotifier extends StateNotifier<Set<String>> {
     try {
       if (_isAnalysisMode) {
         // Create analysis block with default settings
+        // Create default analysis block data
+        final analysisBlockData = AnalysisBlockData(
+          blockName: 'New Analysis Block',
+          analysisBlockType: AnalysisBlockType.none, // Start unselected
+          analysisSubType: AnalysisSubType.none,
+          groupIds: [],
+        );
+        
         await FirestoreService.addAnalysisBlock(
           orgId: appState.orgId,
           assessmentId: appState.assessmentId,
           blockData: {
             'blockID': blockID,
             'position': {'x': position.dx, 'y': position.dy},
-            'blockName': 'New Analysis Block',
-            'analysisBlockType': AnalysisBlockType.question.name, // Default to question type
-            'groupIds': [],
+            ...analysisBlockData.toMap(),
           },
         );
       } else {
