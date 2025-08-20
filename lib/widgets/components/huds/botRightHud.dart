@@ -87,7 +87,7 @@ class BotRightHud extends ConsumerWidget {
               'blockIds': blockIds.toList(),
             };
 
-            HttpService.postRequest(path: 'http://127.0.0.1:5001/efficiency-1st/us-central1/sendAssessmentToBlockIds', request: request);
+            HttpService.postRequest(path: 'https://us-central1-efficiency-1st.cloudfunctions.net/sendAssessmentToBlockIdsV2', request: request);
           },
           onCancel: () {},
         );
@@ -126,12 +126,24 @@ class BotRightHud extends ConsumerWidget {
 
     for (final blockId in blockIds) {
       final blockNotifier = ref.read(blockNotifierProvider(blockId));
-      if (blockNotifier.blockResultDocId.isNotEmpty) {
+      final blockData = blockNotifier.blockData;
+      
+      // Check data availability instead of email count - more reliable
+      final allDataDocs = blockNotifier.allDataDocs;
+      if (allDataDocs.isNotEmpty) {
+        // Multi-email data available: collect all doc IDs
+        for (final docData in allDataDocs) {
+          final docId = docData['id'] as String?;
+          if (docId != null && docId.isNotEmpty) {
+            dataDocIds.add(docId);
+          }
+        }
+      } else if (blockNotifier.blockResultDocId.isNotEmpty) {
+        // Single-email data available: use blockResultDocId
         dataDocIds.add(blockNotifier.blockResultDocId);
       }
       
-      // Collect rawResults for averaging
-      final blockData = blockNotifier.blockData;
+      // Collect rawResults for averaging (this works for both single and multi-email)
       if (blockData != null && blockData.rawResults.isNotEmpty) {
         // Only include blocks with complete rawResults (37 questions)
         if (blockData.rawResults.length == 37) {

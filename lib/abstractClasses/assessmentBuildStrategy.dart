@@ -37,8 +37,8 @@ class AssessmentBuildStrategy extends BlockBehaviorStrategy {
   @override
   Widget blockData(BlockContext context) {
     final blockData = context.blockNotifier.blockData;
-    // print('AssessmentBuildStrategy blockData: name=${blockData?.name}, role=${blockData?.role}, department=${blockData?.department}');
-    // print('AssessmentBuildStrategy blockData null? ${blockData == null}');
+    final hasMultipleEmails = blockData?.hasMultipleEmails ?? false;
+    final emailRatio = context.blockNotifier.emailStatusRatio;
 
     return Column(
       spacing: 4,
@@ -67,32 +67,70 @@ class AssessmentBuildStrategy extends BlockBehaviorStrategy {
             color: Colors.black54,
           ),
         ),
+        if (hasMultipleEmails && emailRatio.isNotEmpty)
+          Text(
+            emailRatio,
+            style: const TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.bold,
+              color: Colors.black,
+            ),
+          ),
       ],
     );
   }
 
   @override
   BoxDecoration blockDecoration(BlockContext context) {
-    final sent = context.blockNotifier.sent;
-    final submitted = context.blockNotifier.submitted;
-
-    // print(sent);
-    // print(submitted);
-    // Color based on explicit assessment status flags
+    final hasMultipleEmails = context.blockNotifier.blockData?.hasMultipleEmails ?? false;
+    
+    // Determine base color based on status
     Color blockColor;
+    BoxDecoration baseDecoration;
 
-    if (!sent) {
-      // White - Assessment not sent yet (same as orgBuild)
-      return kboxShadowNormal;
-    } else if (sent && !submitted) {
-      // Amber - Assessment sent but not submitted
-      blockColor = Colors.amber[300]!;
+    if (hasMultipleEmails) {
+      // Multi-email block logic
+      final sent = context.blockNotifier.sent;
+      final allSubmitted = context.blockNotifier.allEmailsSubmitted;
+      final partialSubmitted = context.blockNotifier.partialEmailsSubmitted;
+
+      if (!sent) {
+        // White - No emails sent yet
+        baseDecoration = kboxShadowNormal;
+      } else if (allSubmitted) {
+        // Green - All emails submitted
+        blockColor = Colors.green[300]!;
+        baseDecoration = kboxShadowNormal.copyWith(color: blockColor);
+      } else {
+        // Yellow - Some emails sent/submitted but not all
+        blockColor = Colors.amber[300]!;
+        baseDecoration = kboxShadowNormal.copyWith(color: blockColor);
+      }
+
+      // Always add border for multi-email blocks
+      return baseDecoration.copyWith(
+        border: Border.all(color: Colors.black, width: 2),
+      );
     } else {
-      // Green - Assessment submitted
-      blockColor = Colors.green[300]!;
-    }
+      // Single email block logic (unchanged)
+      final sent = context.blockNotifier.sent;
+      final submitted = context.blockNotifier.submitted;
 
-    return kboxShadowNormal.copyWith(color: blockColor);
+      if (!sent) {
+        // White - Assessment not sent yet
+        baseDecoration = kboxShadowNormal;
+      } else if (sent && !submitted) {
+        // Amber - Assessment sent but not submitted
+        blockColor = Colors.amber[300]!;
+        baseDecoration = kboxShadowNormal.copyWith(color: blockColor);
+      } else {
+        // Green - Assessment submitted
+        blockColor = Colors.green[300]!;
+        baseDecoration = kboxShadowNormal.copyWith(color: blockColor);
+      }
+
+      return baseDecoration;
+    }
   }
 
   List<Widget> buildDotWidgets(BlockContext context) {

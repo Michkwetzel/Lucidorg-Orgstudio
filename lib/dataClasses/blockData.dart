@@ -24,6 +24,7 @@ class BlockData {
   String get primaryEmail => emails.isNotEmpty ? emails.first : '';
   bool get hasMultipleEmails => emails.length > 1;
   bool get hasEmails => emails.isNotEmpty;
+  int get totalEmailCount => emails.length;
 
   // Add this method to your BlockData class
   BlockData copyWith({

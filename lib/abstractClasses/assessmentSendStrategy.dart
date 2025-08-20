@@ -46,8 +46,6 @@ class AssessmentSendStrategy extends BlockBehaviorStrategy {
     final sent = context.blockNotifier.sent;
     final submitted = context.blockNotifier.submitted;
 
-    print(sent);
-    print(submitted);
     // Color based on explicit assessment status flags
     Color blockColor = Colors.white;
 
@@ -60,14 +58,26 @@ class AssessmentSendStrategy extends BlockBehaviorStrategy {
     }
 
     Set<String> selectedBlocks = context.ref.watch(selectedBlocksProvider);
-    if (selectedBlocks.contains(context.blockId)) {
-      return kboxShadowNormal.copyWith(
-        border: Border.all(color: Colors.blue, width: 6),
-        color: blockColor,
-      );
-    } else {
-      return kboxShadowNormal.copyWith(color: blockColor);
+    bool isSelected = selectedBlocks.contains(context.blockId);
+    bool hasMultipleEmails = context.blockNotifier.blockData?.hasMultipleEmails ?? false;
+
+    // Determine border based on selection and multiple emails
+    Border? border;
+    if (isSelected && hasMultipleEmails) {
+      // Both selected and has multiple emails - use selection border (blue takes priority)
+      border = Border.all(color: Colors.blue, width: 6);
+    } else if (isSelected) {
+      // Only selected
+      border = Border.all(color: Colors.blue, width: 6);
+    } else if (hasMultipleEmails) {
+      // Only has multiple emails
+      border = Border.all(color: Colors.black, width: 2);
     }
+
+    return kboxShadowNormal.copyWith(
+      border: border,
+      color: blockColor,
+    );
   }
 
   @override

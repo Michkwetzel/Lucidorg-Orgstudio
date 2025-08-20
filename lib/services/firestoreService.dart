@@ -115,6 +115,15 @@ class FirestoreService {
     return collection.where('blockId', isEqualTo: blockID).limit(1).snapshots();
   }
 
+  // Get ALL data docs for a block (for multi-email blocks)
+  static Stream<QuerySnapshot<Map<String, dynamic>>> getAllBlockResultsStream({required String? orgId, required String? assessmentId, required String blockID}) {
+    final collectionPath = 'orgs/$orgId/assessments/$assessmentId/data';
+    print('All block results stream collection path: $collectionPath (where blockId == $blockID)');
+
+    final collection = _instance.collection('orgs').doc(orgId).collection('assessments').doc(assessmentId).collection('data');
+    return collection.where('blockId', isEqualTo: blockID).snapshots();
+  }
+
   // 1 Block. BlockNotifier subscribes to this
   static Stream<DocumentSnapshot<Map<String, dynamic>>> getBlockStream({required String? orgId, String? assessmentId, required String blockID}) {
     final collection = _getBlocksCollection(orgId: orgId, assessmentId: assessmentId);

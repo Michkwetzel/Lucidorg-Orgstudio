@@ -29,6 +29,11 @@ class BlockNotifier extends ChangeNotifier {
   StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? _blockResultStreamSub;
   late final Stream<QuerySnapshot<Map<String, dynamic>>> blockResultStream;
 
+  // Multi-email tracking
+  List<Map<String, dynamic>> _allDataDocs = [];
+  int _sentCount = 0;
+  int _submittedCount = 0;
+
   // Timers for debouncing
   Timer? _debounceTimer;
   Timer? _batchDebounceTimer;
@@ -69,6 +74,9 @@ class BlockNotifier extends ChangeNotifier {
 
           // Update if something actually changed or if this is the first load
           if (dataChanged || !positionLoaded) {
+            bool isFirstLoad = !positionLoaded;
+            bool emailCountChanged = _blockData?.emails.length != newBlockData.emails.length;
+            
             _blockData = newBlockData;
             _position = position;
 
@@ -76,6 +84,13 @@ class BlockNotifier extends ChangeNotifier {
               positionLoaded = true;
               // print("Initial load completed for block $blockID");
             }
+
+            // Set up result stream on first load or if email count changed
+            if (appState.appView == AppView.assessmentBuild && (isFirstLoad || emailCountChanged)) {
+              _blockResultStreamSub?.cancel();
+              _setupResultStream();
+            }
+
             // logger.info("Block update state");
             notifyListeners();
           } else {
@@ -87,64 +102,6 @@ class BlockNotifier extends ChangeNotifier {
         debugPrint('BlockNotifier stream error: $error');
       },
     );
-
-    // Only set up result stream if we're in an assessment context
-    print(appState.appView);
-    if (appState.appView == AppView.assessmentBuild) {
-      // print("*************Getting Block Results Stream");
-      blockResultStream = FirestoreService.getBlockResultStream(orgId: appState.orgId, assessmentId: appState.assessmentId, blockID: blockID);
-
-      _blockResultStreamSub = blockResultStream.listen(
-        (event) {
-          QuerySnapshot<Map<String, dynamic>> snapshot = event;
-          if (snapshot.docs.isNotEmpty) {
-            DocumentSnapshot<Map<String, dynamic>> doc = snapshot.docs.first;
-            if (doc.exists && doc.data() != null) {
-              blockResultDocId = doc.id;
-              final data = doc.data()!;
-              final rawResults = data['rawResults'] as List<dynamic>?;
-              final sent = data['sentAssessment'] as bool? ?? false;
-              final submitted = data['submitted'] ?? false;
-
-              // Update BlockData with assessment data
-              final rawResultsInt = rawResults?.cast<int>() ?? [];
-
-              _blockData =
-                  _blockData?.copyWith(
-                    rawResults: rawResultsInt,
-                    sent: sent,
-                    submitted: submitted,
-                  ) ??
-                  BlockData(
-                    name: '',
-                    role: '',
-                    department: '',
-                    emails: [],
-                    rawResults: rawResultsInt,
-                    sent: sent,
-                    submitted: submitted,
-                  );
-
-              // Calculate benchmarks when rawResults are available
-              if (rawResultsInt.isNotEmpty) {
-                try {
-                  _benchmarks = _calculateBenchmarks(rawResultsInt);
-                  print("Calculated benchmarks for block $blockID: ${_benchmarks?.length} benchmarks");
-                } catch (e) {
-                  print("Error calculating benchmarks for block $blockID: $e");
-                  _benchmarks = null;
-                }
-              }
-
-              notifyListeners();
-            }
-          }
-        },
-        onError: (error) {
-          debugPrint('BlockNotifier result stream error: $error');
-        },
-      );
-    }
   }
 
   // Getters with proper encapsulation
@@ -155,6 +112,201 @@ class BlockNotifier extends ChangeNotifier {
   Map<Benchmark, double>? get benchmarks => _benchmarks;
   bool get sent => _blockData?.sent ?? false;
   bool get submitted => _blockData?.submitted ?? false;
+  
+  // Multi-email getters
+  List<Map<String, dynamic>> get allDataDocs => _allDataDocs;
+  int get sentCount => _sentCount;
+  int get submittedCount => _submittedCount;
+  String get emailStatusRatio {
+    final totalEmails = _blockData?.totalEmailCount ?? 0;
+    if (totalEmails <= 1) return '';
+    return '$_submittedCount/$totalEmails';
+  }
+  bool get allEmailsSubmitted {
+    final totalEmails = _blockData?.totalEmailCount ?? 0;
+    return totalEmails > 1 && _submittedCount == totalEmails;
+  }
+  bool get partialEmailsSubmitted {
+    final totalEmails = _blockData?.totalEmailCount ?? 0;
+    return totalEmails > 1 && _submittedCount > 0 && _submittedCount < totalEmails;
+  }
+
+  void _setupResultStream() {
+    // Use conditional logic based on whether block has multiple emails
+    if (_blockData?.hasMultipleEmails == true) {
+      _setupMultiEmailResultStream();
+    } else {
+      _setupSingleEmailResultStream();
+    }
+  }
+
+  void _setupSingleEmailResultStream() {
+    blockResultStream = FirestoreService.getBlockResultStream(orgId: appState.orgId, assessmentId: appState.assessmentId, blockID: blockID);
+
+    _blockResultStreamSub = blockResultStream.listen(
+      (event) {
+        QuerySnapshot<Map<String, dynamic>> snapshot = event;
+        if (snapshot.docs.isNotEmpty) {
+          DocumentSnapshot<Map<String, dynamic>> doc = snapshot.docs.first;
+          if (doc.exists && doc.data() != null) {
+            blockResultDocId = doc.id;
+            final data = doc.data()!;
+            final rawResults = data['rawResults'] as List<dynamic>?;
+            final sent = data['sentAssessment'] as bool? ?? false;
+            final submitted = data['submitted'] ?? false;
+
+            // Update BlockData with assessment data
+            final rawResultsInt = rawResults?.cast<int>() ?? [];
+
+            _blockData =
+                _blockData?.copyWith(
+                  rawResults: rawResultsInt,
+                  sent: sent,
+                  submitted: submitted,
+                ) ??
+                BlockData(
+                  name: '',
+                  role: '',
+                  department: '',
+                  emails: [],
+                  rawResults: rawResultsInt,
+                  sent: sent,
+                  submitted: submitted,
+                );
+
+            // Calculate benchmarks when rawResults are available
+            if (rawResultsInt.isNotEmpty) {
+              try {
+                _benchmarks = _calculateBenchmarks(rawResultsInt);
+                print("Calculated benchmarks for block $blockID: ${_benchmarks?.length} benchmarks");
+              } catch (e) {
+                print("Error calculating benchmarks for block $blockID: $e");
+                _benchmarks = null;
+              }
+            }
+
+            notifyListeners();
+          }
+        }
+      },
+      onError: (error) {
+        debugPrint('BlockNotifier result stream error: $error');
+      },
+    );
+  }
+
+  void _setupMultiEmailResultStream() {
+    blockResultStream = FirestoreService.getAllBlockResultsStream(orgId: appState.orgId, assessmentId: appState.assessmentId, blockID: blockID);
+
+    _blockResultStreamSub = blockResultStream.listen(
+      (event) {
+        QuerySnapshot<Map<String, dynamic>> snapshot = event;
+        _allDataDocs = snapshot.docs.map((doc) => {'id': doc.id, ...doc.data()}).toList();
+        
+        _processMultiEmailData();
+        notifyListeners();
+      },
+      onError: (error) {
+        debugPrint('BlockNotifier multi-email result stream error: $error');
+      },
+    );
+  }
+
+  void _processMultiEmailData() {
+    if (_allDataDocs.isEmpty) {
+      _sentCount = 0;
+      _submittedCount = 0;
+      return;
+    }
+
+    int sentCount = 0;
+    int submittedCount = 0;
+    List<List<int>> allRawResultsLists = [];
+
+    for (final docData in _allDataDocs) {
+      final sent = docData['sentAssessment'] as bool? ?? false;
+      final submitted = docData['submitted'] as bool? ?? false;
+      final rawResults = docData['rawResults'] as List<dynamic>?;
+
+      if (sent) sentCount++;
+      if (submitted) submittedCount++;
+
+      // Collect all rawResults that have data
+      if (rawResults != null && rawResults.isNotEmpty) {
+        try {
+          final resultsList = rawResults.cast<int>();
+          if (resultsList.length == 37) { // Ensure we have complete data
+            allRawResultsLists.add(resultsList);
+          }
+        } catch (e) {
+          print("Error casting rawResults for block $blockID: $e");
+        }
+      }
+    }
+
+    // Average all available rawResults
+    List<int> averagedRawResults = _calculateAveragedResults(allRawResultsLists);
+
+    _sentCount = sentCount;
+    _submittedCount = submittedCount;
+
+    // Update BlockData with aggregated status
+    final overallSent = sentCount > 0;
+    final overallSubmitted = submittedCount == (_blockData?.totalEmailCount ?? 0);
+
+    _blockData = _blockData?.copyWith(
+      rawResults: averagedRawResults,
+      sent: overallSent,
+      submitted: overallSubmitted,
+    );
+
+    // Calculate benchmarks when rawResults are available
+    if (averagedRawResults.isNotEmpty) {
+      try {
+        _benchmarks = _calculateBenchmarks(averagedRawResults);
+        print("Calculated benchmarks for multi-email block $blockID: ${_benchmarks?.length} benchmarks from ${allRawResultsLists.length} submissions");
+      } catch (e) {
+        print("Error calculating benchmarks for multi-email block $blockID: $e");
+        _benchmarks = null;
+      }
+    }
+  }
+
+  List<int> _calculateAveragedResults(List<List<int>> allRawResultsLists) {
+    if (allRawResultsLists.isEmpty) {
+      return [];
+    }
+
+    // If only one set of results, return it as-is
+    if (allRawResultsLists.length == 1) {
+      return allRawResultsLists.first;
+    }
+
+    // Calculate averages for each question (assuming 37 questions)
+    List<int> averagedResults = [];
+    
+    for (int questionIndex = 0; questionIndex < 37; questionIndex++) {
+      double sum = 0;
+      int count = 0;
+      
+      for (final resultsList in allRawResultsLists) {
+        if (questionIndex < resultsList.length) {
+          sum += resultsList[questionIndex];
+          count++;
+        }
+      }
+      
+      if (count > 0) {
+        // Round to nearest integer
+        averagedResults.add((sum / count).round());
+      } else {
+        // Fallback to 0 if no data available for this question
+        averagedResults.add(0);
+      }
+    }
+    
+    return averagedResults;
+  }
 
   void updateDescendants(Map<String, Set<String>> parentAndChildren) {
     //Finds all decendants of current block and adds to internal state map
