@@ -7,6 +7,7 @@ class AnalysisBlockData {
   final List<String> groupIds;
   final Set<int> selectedQuestions;
   final Set<Benchmark> selectedIndicators;
+  final ChartType chartType;
 
   const AnalysisBlockData({
     required this.blockName,
@@ -15,6 +16,7 @@ class AnalysisBlockData {
     required this.groupIds,
     required this.selectedQuestions,
     required this.selectedIndicators,
+    required this.chartType,
   });
 
   factory AnalysisBlockData.empty() {
@@ -25,6 +27,7 @@ class AnalysisBlockData {
       groupIds: [],
       selectedQuestions: Set<int>.from(List.generate(37, (i) => i + 1)),
       selectedIndicators: Set<Benchmark>.from(indicators()),
+      chartType: ChartType.bar,
     );
   }
 
@@ -51,6 +54,7 @@ class AnalysisBlockData {
       groupIds: (data['groupIds'] as List?)?.cast<String>() ?? [],
       selectedQuestions: _parseSelectedQuestions(data['selectedQuestions']),
       selectedIndicators: _parseSelectedIndicators(data['selectedIndicators']),
+      chartType: _parseChartType(data['chartType'] as String?),
     );
   }
 
@@ -63,6 +67,7 @@ class AnalysisBlockData {
       'groupIds': groupIds,
       'selectedQuestions': selectedQuestions.toList(),
       'selectedIndicators': selectedIndicators.map((e) => e.name).toList(),
+      'chartType': chartType.name,
     };
   }
 
@@ -100,6 +105,22 @@ class AnalysisBlockData {
         return AnalysisSubType.questions;
       default:
         return AnalysisSubType.none;
+    }
+  }
+
+  // Helper method to parse string to ChartType enum
+  static ChartType _parseChartType(String? value) {
+    if (value == null) return ChartType.bar;
+
+    switch (value) {
+      case 'bar':
+        return ChartType.bar;
+      case 'radar':
+        return ChartType.radar;
+      case 'both':
+        return ChartType.both;
+      default:
+        return ChartType.bar;
     }
   }
 
@@ -148,6 +169,7 @@ class AnalysisBlockData {
     List<String>? groupIds,
     Set<int>? selectedQuestions,
     Set<Benchmark>? selectedIndicators,
+    ChartType? chartType,
   }) {
     return AnalysisBlockData(
       blockName: blockName ?? this.blockName,
@@ -156,6 +178,7 @@ class AnalysisBlockData {
       groupIds: groupIds ?? this.groupIds,
       selectedQuestions: selectedQuestions ?? this.selectedQuestions,
       selectedIndicators: selectedIndicators ?? this.selectedIndicators,
+      chartType: chartType ?? this.chartType,
     );
   }
 
@@ -170,7 +193,8 @@ class AnalysisBlockData {
            analysisSubType == other.analysisSubType &&
            _listEquals(groupIds, other.groupIds) &&
            _setEquals(selectedQuestions, other.selectedQuestions) &&
-           _setEquals(selectedIndicators, other.selectedIndicators);
+           _setEquals(selectedIndicators, other.selectedIndicators) &&
+           chartType == other.chartType;
   }
 
   @override
@@ -181,11 +205,12 @@ class AnalysisBlockData {
     Object.hashAll(groupIds),
     Object.hashAll(selectedQuestions),
     Object.hashAll(selectedIndicators),
+    chartType,
   );
 
   @override
   String toString() {
-    return 'AnalysisBlockData(blockName: $blockName, analysisBlockType: $analysisBlockType, analysisSubType: $analysisSubType, groupIds: $groupIds, selectedQuestions: ${selectedQuestions.length}, selectedIndicators: ${selectedIndicators.length})';
+    return 'AnalysisBlockData(blockName: $blockName, analysisBlockType: $analysisBlockType, analysisSubType: $analysisSubType, groupIds: $groupIds, selectedQuestions: ${selectedQuestions.length}, selectedIndicators: ${selectedIndicators.length}, chartType: $chartType)';
   }
 
   // Validation methods

@@ -64,7 +64,170 @@ class _AnalysisBlockState extends ConsumerState<AnalysisBlock> {
         onTap: () => strategy.onTap(analysisBlockContext),
         onDoubleTapDown: (details) => strategy.onDoubleTapDown(analysisBlockContext),
         onPanUpdate: (details) => strategy.onPanUpdate(analysisBlockContext, details, hitboxOffset),
-        child: _buildIntegratedBlock(context, ref, analysisBlockState, strategy, analysisBlockContext),
+        child: _buildDynamicSizedBlock(context, ref, analysisBlockState, strategy, analysisBlockContext),
+      ),
+    );
+  }
+
+  Widget _buildDynamicSizedBlock(BuildContext context, WidgetRef ref, dynamic analysisBlockState, AnalysisBlockBehaviorStrategy strategy, AnalysisBlockContext analysisBlockContext) {
+    final blockData = analysisBlockState.blockData;
+
+    // Get dynamic size from strategy
+    double blockWidth = 1500.0;
+    double blockHeight = 500.0;
+    
+    if (blockData.isGroupComparison) {
+      switch (blockData.chartType) {
+        case ChartType.bar:
+          blockWidth = 1500.0;
+          blockHeight = 500.0;
+          break;
+        case ChartType.radar:
+          blockWidth = 900.0;
+          blockHeight = 750.0;
+          break;
+        case ChartType.both:
+          blockWidth = 2500.0;
+          blockHeight = 750.0;
+          break;
+      }
+    }
+
+    return SizedBox(
+      width: blockWidth,
+      height: blockHeight,
+      child: Container(
+        width: blockWidth,
+        height: blockHeight,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: Colors.purple.shade300, width: 2),
+          boxShadow: const [
+            BoxShadow(
+              color: Colors.black26,
+              blurRadius: 4,
+              offset: Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          children: [
+            // Header with title and controls
+            _buildBlockHeader(analysisBlockState),
+            // Content area
+            Expanded(
+              child: _buildContent(context, ref, analysisBlockState, ref.watch(groupsProvider), strategy, analysisBlockContext),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBlockHeader(dynamic analysisBlockState) {
+    String getBlockTitle() {
+      switch (analysisBlockState.analysisBlockType) {
+        case AnalysisBlockType.groupAnalysis:
+          return 'Group Analysis';
+        case AnalysisBlockType.groupComparison:
+          return 'Group Comparison';
+        case AnalysisBlockType.none:
+        default:
+          return 'Analysis Block';
+      }
+    }
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.purple.shade50,
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(6),
+          topRight: Radius.circular(6),
+        ),
+        border: Border(
+          bottom: BorderSide(color: Colors.purple.shade200, width: 1),
+        ),
+      ),
+      child: Row(
+        children: [
+          // Block title
+          Expanded(
+            child: Text(
+              getBlockTitle(),
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Colors.purple.shade800,
+              ),
+            ),
+          ),
+          // Delete button
+          IconButton(
+            onPressed: () async {
+              // Show confirmation dialog
+              final shouldDelete = await showDialog<bool>(
+                context: context,
+                builder: (BuildContext context) {
+                  return AlertDialog(
+                    title: const Text('Delete Analysis Block'),
+                    content: const Text('Are you sure you want to delete this analysis block? This action cannot be undone.'),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.of(context).pop(false),
+                        child: const Text('Cancel'),
+                      ),
+                      TextButton(
+                        onPressed: () => Navigator.of(context).pop(true),
+                        style: TextButton.styleFrom(
+                          foregroundColor: Colors.red,
+                        ),
+                        child: const Text('Delete'),
+                      ),
+                    ],
+                  );
+                },
+              );
+
+              if (shouldDelete == true && context.mounted) {
+                try {
+                  await analysisBlockState.deleteBlock();
+                } catch (e) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Error deleting block: $e'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  }
+                }
+              }
+            },
+            icon: Icon(
+              Icons.delete,
+              color: Colors.red.shade600,
+              size: 18,
+            ),
+            tooltip: 'Delete Analysis Block',
+          ),
+          // Minimize/Expand chevron
+          IconButton(
+            onPressed: () {
+              setState(() {
+                _isPanelExpanded = !_isPanelExpanded;
+              });
+            },
+            icon: Icon(
+              _isPanelExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+              size: 20,
+              color: Colors.purple.shade600,
+            ),
+            tooltip: _isPanelExpanded ? 'Minimize' : 'Expand',
+          ),
+        ],
       ),
     );
   }

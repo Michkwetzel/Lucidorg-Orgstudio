@@ -17,6 +17,7 @@ class ComparisonBarChart extends ConsumerWidget {
   final VoidCallback onDeselectAllQuestions;
   final VoidCallback onSelectAllIndicators;
   final VoidCallback onDeselectAllIndicators;
+  final bool showHeader; // New parameter to control header display
 
   const ComparisonBarChart({
     super.key,
@@ -31,6 +32,7 @@ class ComparisonBarChart extends ConsumerWidget {
     required this.onDeselectAllQuestions,
     required this.onSelectAllIndicators,
     required this.onDeselectAllIndicators,
+    this.showHeader = true, // Default to true for backward compatibility
   });
 
   @override
@@ -42,13 +44,15 @@ class ComparisonBarChart extends ConsumerWidget {
     }
 
     return Container(
-      width: 1460,
+      width: showHeader ? 1460 : null, // Only constrain width when showing header
       height: 460, // Back to original height
-      padding: const EdgeInsets.all(20),
+      padding: EdgeInsets.all(showHeader ? 20 : 10), // Less padding when side-by-side
       child: Column(
         children: [
-          _buildHeaderWithFilters(ref),
-          const SizedBox(height: 16),
+          if (showHeader) ...[
+            _buildHeaderWithFilters(ref),
+            const SizedBox(height: 16),
+          ],
           Expanded(
             child: analysisSubType == AnalysisSubType.questions ? _buildQuestionsChart(ref) : _buildIndicatorsChart(ref),
           ),
@@ -404,8 +408,8 @@ class ComparisonBarChart extends ConsumerWidget {
         if (dataPoints.isEmpty) {
           rods.add(
             BarChartRodData(
-              toY: 0,
-              color: _getGroupColor(groupIndex),
+              toY: 1.0, // Changed from 0 to 1.0 to make it visible
+              color: _getGroupColor(groupIndex).withOpacity(0.3), // Make it lighter to indicate no data
               width: 8,
             ),
           );
@@ -419,15 +423,23 @@ class ComparisonBarChart extends ConsumerWidget {
           if (dataPoint.rawResults.length > questionIndex) {
             sum += dataPoint.rawResults[questionIndex];
             count++;
+          } else {
+            print('DEBUG: DataPoint for group $groupId has rawResults length ${dataPoint.rawResults.length}, needed $questionIndex');
           }
         }
 
-        final average = count > 0 ? sum / count : 0.0;
+        final average = count > 0 ? sum / count : 1.0; // Changed from 0.0 to 1.0 to make it visible
+        
+        if (count == 0) {
+          print('DEBUG: Group $groupId Q${questionIndex + 1} has no valid data (count=0) - using default value 1.0');
+        } else {
+          print('DEBUG: Group $groupId Q${questionIndex + 1} average: $average (from $count data points)');
+        }
 
         rods.add(
           BarChartRodData(
             toY: average.toDouble(),
-            color: _getGroupColor(groupIndex),
+            color: count > 0 ? _getGroupColor(groupIndex) : _getGroupColor(groupIndex).withOpacity(0.3),
             width: 8,
           ),
         );
@@ -464,11 +476,14 @@ class ComparisonBarChart extends ConsumerWidget {
         final groupId = groupIds[groupIndex];
         final dataPoints = groupedDataPoints[groupId] ?? [];
 
+        print('DEBUG: Indicator ${indicator.name} - Group $groupId has ${dataPoints.length} data points');
+
         if (dataPoints.isEmpty) {
+          print('DEBUG: Indicator ${indicator.name} - Group $groupId has no data points');
           rods.add(
             BarChartRodData(
-              toY: 0,
-              color: _getGroupColor(groupIndex),
+              toY: 5.0, // Show at 5% to make it visible
+              color: _getGroupColor(groupIndex).withOpacity(0.3),
               width: 12,
             ),
           );
@@ -482,16 +497,24 @@ class ComparisonBarChart extends ConsumerWidget {
           if (dataPoint.benchmarks != null && dataPoint.benchmarks!.containsKey(indicator)) {
             sum += dataPoint.benchmarks![indicator]!;
             count++;
+          } else {
+            print('DEBUG: DataPoint for group $groupId missing benchmark ${indicator.name}');
           }
         }
 
         final average = count > 0 ? sum / count : 0.0;
 
+        if (count == 0) {
+          print('DEBUG: Indicator ${indicator.name} - Group $groupId has no valid benchmark data');
+        } else {
+          print('DEBUG: Indicator ${indicator.name} - Group $groupId average: ${(average * 100).toStringAsFixed(1)}% (from $count data points)');
+        }
+
         // Convert from 0-1 scale to 0-100 percentage
         rods.add(
           BarChartRodData(
-            toY: (average * 100).toDouble(),
-            color: _getGroupColor(groupIndex),
+            toY: count > 0 ? (average * 100).toDouble() : 5.0, // Show at 5% if no data
+            color: count > 0 ? _getGroupColor(groupIndex) : _getGroupColor(groupIndex).withOpacity(0.3),
             width: 12,
           ),
         );

@@ -19,7 +19,6 @@ class BotLeftHud extends ConsumerWidget {
           FilledButton.tonal(
             onPressed: () {
               NavigationService.navigateToAssessmentSelect(ref);
-              ref.read(canvasProvider.notifier).dispose();
             },
             child: Text("Assessments"),
           ),

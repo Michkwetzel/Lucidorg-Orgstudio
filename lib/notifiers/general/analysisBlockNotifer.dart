@@ -156,6 +156,20 @@ class AnalysisBlockNotifer extends ChangeNotifier {
     }
   }
 
+  void changeChartType(ChartType newChartType) async {
+    if (blockData.chartType != newChartType) {
+      blockData = blockData.copyWith(chartType: newChartType);
+      notifyListeners();
+
+      await FirestoreService.updateAnalysisBlockData(
+        orgId: appState.orgId,
+        assessmentId: appState.assessmentId,
+        blockID: blockID,
+        blockData: blockData,
+      );
+    }
+  }
+
   void addGroup(String groupId) {
     if (!blockData.groupIds.contains(groupId)) {
       List<String> updatedGroupIds;
@@ -364,6 +378,20 @@ class AnalysisBlockNotifer extends ChangeNotifier {
 
       // Get data from cache - instant, no Firestore reads!
       _groupedAnalysisData = groupsNotifier.getEmailDataForGroups(blockData.groupIds);
+      
+      // If we got empty data for all groups, try refreshing the analysis cache once
+      bool allGroupsEmpty = _groupedAnalysisData.values.every((emails) => emails.isEmpty);
+      if (allGroupsEmpty && blockData.groupIds.isNotEmpty) {
+        print('AnalysisBlock $blockID: All groups empty, attempting to refresh cache...');
+        try {
+          await groupsNotifier.refreshEmailCache();
+          // Retry getting the data after refresh
+          _groupedAnalysisData = groupsNotifier.getEmailDataForGroups(blockData.groupIds);
+          print('AnalysisBlock $blockID: Cache refreshed successfully');
+        } catch (refreshError) {
+          print('AnalysisBlock $blockID: Cache refresh failed: $refreshError');
+        }
+      }
       
       // Combine all group data for backward compatibility
       _analysisData = [];

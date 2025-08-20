@@ -85,13 +85,30 @@ class GroupsNotifier extends ChangeNotifier {
 
   // Initialize analysis mode - lazy load all email data
   Future<void> initializeAnalysisMode() async {
-    if (_isAnalysisModeActive && !_emailDataLoading && _emailDataError == null && _emailCache.isNotEmpty) {
-      return; // Already initialized and cache is ready
-    }
-    
     _logger.info('Initializing analysis mode - loading email data cache');
     _isAnalysisModeActive = true;
-    await _initializeEmailCache();
+    
+    // Check if we need to refresh the cache due to new groups
+    bool needsRefresh = false;
+    if (_emailCache.isEmpty) {
+      needsRefresh = true;
+      _logger.info('Cache is empty, needs initial load');
+    } else {
+      // Check if current groups match cached groups
+      final currentGroupIds = _groups.map((g) => g.id).toSet();
+      final cachedGroupIds = _emailCache.values.map((e) => e.groupId).toSet();
+      
+      if (!currentGroupIds.containsAll(cachedGroupIds) || !cachedGroupIds.containsAll(currentGroupIds)) {
+        needsRefresh = true;
+        _logger.info('Group mismatch detected - Current: $currentGroupIds, Cached: $cachedGroupIds');
+      }
+    }
+    
+    if (needsRefresh || _emailDataLoading || _emailDataError != null) {
+      await _initializeEmailCache();
+    } else {
+      _logger.info('Cache is already up to date with ${_emailCache.length} documents');
+    }
   }
 
   // Force refresh of email data cache
@@ -133,6 +150,7 @@ class GroupsNotifier extends ChangeNotifier {
           .where((email) => email.groupId == groupId)
           .map((cachedEmail) => cachedEmail.toEmailDataPoint())
           .toList();
+      
       result[groupId] = emailsInGroup;
     }
     
@@ -142,12 +160,6 @@ class GroupsNotifier extends ChangeNotifier {
   // Initialize email cache with all assessment data
   Future<void> _initializeEmailCache() async {
     if (_emailDataLoading) return;
-    
-    // Don't reload if cache is already populated and no errors
-    if (_emailCache.isNotEmpty && _emailDataError == null) {
-      _logger.info('Email cache already populated with ${_emailCache.length} documents');
-      return;
-    }
     
     _emailDataLoading = true;
     _emailDataError = null;
@@ -182,6 +194,11 @@ class GroupsNotifier extends ChangeNotifier {
         final emailData = emailDataPoints[i];
         final docId = allDataDocIds[i];
         final groupId = docIdToGroupId[docId];
+
+        if (groupId == null) {
+          _logger.warning('No group ID found for document $docId, skipping');
+          continue;
+        }
 
         final cachedEmail = CachedEmailData.fromEmailDataPoint(
           emailData,
@@ -251,6 +268,11 @@ class GroupsNotifier extends ChangeNotifier {
           final emailData = newEmailDataPoints[i];
           final docId = newDataDocIds[i];
           final groupId = newDocIdToGroupId[docId];
+
+          if (groupId == null) {
+            _logger.warning('No group ID found for document $docId during update, skipping');
+            continue;
+          }
 
           final cachedEmail = CachedEmailData.fromEmailDataPoint(
             emailData,

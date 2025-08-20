@@ -120,6 +120,7 @@ class OrgCanvasNotifier extends StateNotifier<Set<String>> {
           groupIds: [],
           selectedQuestions: Set<int>.from(List.generate(37, (i) => i + 1)),
           selectedIndicators: Set<Benchmark>.from(indicators()),
+          chartType: ChartType.bar,
         );
         
         await FirestoreService.addAnalysisBlock(

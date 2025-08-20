@@ -5,7 +5,7 @@ import 'package:platform_v2/config/enums.dart';
 import 'package:platform_v2/services/analysisDataService.dart';
 import 'package:platform_v2/widgets/components/analysis/questionHeatmapTable.dart';
 import 'package:platform_v2/widgets/components/analysis/indicatorTable.dart';
-import 'package:platform_v2/widgets/components/analysis/comparisonBarChart.dart';
+import 'package:platform_v2/widgets/components/analysis/comparisonChartSelector.dart';
 
 /// Strategy for analysis blocks that display internal statistics with data visualization
 class AnalysisInternalStatsStrategy extends AnalysisBlockBehaviorStrategy {
@@ -13,9 +13,28 @@ class AnalysisInternalStatsStrategy extends AnalysisBlockBehaviorStrategy {
   Widget getBlockWidget(AnalysisBlockContext context) {
     // Larger block size for actual data tables
     final analysisNotifier = context.analysisBlockNotifier;
+    final blockData = analysisNotifier.blockData;
 
-    final blockWidth = analysisNotifier.blockData.analysisSubType == AnalysisSubType.questions ? 1500.0 : 1500.0;
-    const blockHeight = 500.0; // Increased height to accommodate configuration header
+    // Adjust size based on chart type for group comparison blocks
+    double blockWidth = 1500.0;
+    double blockHeight = 500.0;
+    
+    if (blockData.isGroupComparison) {
+      switch (blockData.chartType) {
+        case ChartType.bar:
+          blockWidth = 1500.0;
+          blockHeight = 500.0;
+          break;
+        case ChartType.radar:
+          blockWidth = 900.0; // Good width for radar
+          blockHeight = 750.0; // Much taller for radar
+          break;
+        case ChartType.both:
+          blockWidth = 2500.0; // Much wider for both
+          blockHeight = 750.0; // Taller for both
+          break;
+      }
+    }
 
     return SizedBox(
       width: blockWidth + (context.hitboxOffset * 2),
@@ -25,7 +44,7 @@ class AnalysisInternalStatsStrategy extends AnalysisBlockBehaviorStrategy {
         width: blockWidth,
         height: blockHeight,
         decoration: blockDecoration(context),
-        child: blockData(context),
+        child: this.blockData(context),
       ),
     );
   }
@@ -258,7 +277,7 @@ class AnalysisInternalStatsStrategy extends AnalysisBlockBehaviorStrategy {
     }
 
     return RepaintBoundary(
-      child: ComparisonBarChart(
+      child: ComparisonChartSelector(
         groupedDataPoints: groupedDataPoints,
         analysisSubType: blockData.analysisSubType,
         groupIdToNameMap: const {}, // Chart will handle group name resolution internally
@@ -270,6 +289,8 @@ class AnalysisInternalStatsStrategy extends AnalysisBlockBehaviorStrategy {
         onDeselectAllQuestions: analysisNotifier.deselectAllQuestions,
         onSelectAllIndicators: analysisNotifier.selectAllIndicators,
         onDeselectAllIndicators: analysisNotifier.deselectAllIndicators,
+        chartType: blockData.chartType,
+        onChartTypeChanged: analysisNotifier.changeChartType,
       ),
     );
   }
@@ -302,6 +323,7 @@ class AnalysisInternalStatsStrategy extends AnalysisBlockBehaviorStrategy {
       ),
     );
   }
+
 
   @override
   void onDoubleTapDown(AnalysisBlockContext context) {

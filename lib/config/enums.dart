@@ -6,6 +6,8 @@ enum AnalysisBlockType { none, groupAnalysis, groupComparison }
 
 enum AnalysisSubType { none, indicators, questions }
 
+enum ChartType { bar, radar, both }
+
 enum Permission { admin, error }
 
 enum Options { select, department, all }
