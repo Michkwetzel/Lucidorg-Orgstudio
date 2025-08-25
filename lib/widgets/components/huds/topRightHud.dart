@@ -62,8 +62,6 @@ class TopRightHud extends ConsumerWidget {
 
   Widget _buildSegmentedButton(BuildContext context, WidgetRef ref) {
     final currentAssessmentMode = ref.watch(appStateProvider).assessmentMode;
-    final groupsNotifier = ref.watch(groupsProvider);
-    final isAnalyzeLoading = groupsNotifier.isAnalysisModeActive && groupsNotifier.emailDataLoading;
 
     return Container(
       decoration: BoxDecoration(
@@ -80,8 +78,6 @@ class TopRightHud extends ConsumerWidget {
             text: 'Builder',
             isActive: currentAssessmentMode == AssessmentMode.assessmentBuild,
             onTap: () {
-              // Clear analysis cache when leaving analysis mode
-              ref.read(groupsProvider).exitAnalysisMode();
               ref.read(appStateProvider.notifier).setAssessmentMode(AssessmentMode.assessmentBuild);
             },
             isFirst: true,
@@ -92,8 +88,6 @@ class TopRightHud extends ConsumerWidget {
             text: 'Data View',
             isActive: currentAssessmentMode == AssessmentMode.assessmentDataView,
             onTap: () {
-              // Clear analysis cache when leaving analysis mode
-              ref.read(groupsProvider).exitAnalysisMode();
               ref.read(appStateProvider.notifier).setAssessmentMode(AssessmentMode.assessmentDataView);
             },
             isFirst: false,
@@ -103,13 +97,16 @@ class TopRightHud extends ConsumerWidget {
             ref: ref,
             text: 'Analyze',
             isActive: currentAssessmentMode == AssessmentMode.assessmentAnalyze,
-            isLoading: isAnalyzeLoading,
+            isLoading: false,
             onTap: () async {
-              // Initialize analysis mode cache before switching
+              // Simple approach: just ensure groups are loaded and switch mode
               final groupsNotifier = ref.read(groupsProvider);
               
-              // Only switch mode after cache initialization completes
-              await groupsNotifier.initializeAnalysisMode();
+              // Groups are automatically loaded via stream, but we can trigger a manual load if needed
+              if (!groupsNotifier.dataLoaded) {
+                await groupsNotifier.loadGroups();
+              }
+              
               ref.read(appStateProvider.notifier).setAssessmentMode(AssessmentMode.assessmentAnalyze);
             },
             isFirst: false,

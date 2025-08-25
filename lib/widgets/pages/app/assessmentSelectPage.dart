@@ -21,7 +21,7 @@ class AssessmentSelectPage extends ConsumerWidget {
     final bool isLoading = ref.watch(assessmentsSelectProvider.select((state) => state.isLoading));
     final String loadingMessage = ref.watch(assessmentsSelectProvider.select((state) => state.loadingMessage));
 
-    logger.info("Assessment Screen, Build run");
+    // logger.info("Assessment Screen, Build run");
 
     return Padding(
       padding: const EdgeInsets.only(left: 32, right: 32, top: 105, bottom: 32),

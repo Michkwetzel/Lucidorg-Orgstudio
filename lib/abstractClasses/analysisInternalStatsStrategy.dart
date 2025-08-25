@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:platform_v2/abstractClasses/analysisBlockBehaviorStrategy.dart';
 import 'package:platform_v2/abstractClasses/analysisBlockContext.dart';
 import 'package:platform_v2/config/enums.dart';
+import 'package:platform_v2/config/provider.dart';
+import 'package:platform_v2/notifiers/general/blockNotifier.dart';
 import 'package:platform_v2/services/analysisDataService.dart';
 import 'package:platform_v2/widgets/components/analysis/questionHeatmapTable.dart';
 import 'package:platform_v2/widgets/components/analysis/indicatorTable.dart';
@@ -64,28 +66,13 @@ class AnalysisInternalStatsStrategy extends AnalysisBlockBehaviorStrategy {
       return _buildErrorState('Group Analysis requires exactly 1 group');
     }
 
-    // Show loading state
-    if (analysisNotifier.analysisDataLoading) {
-      return _buildLoadingState();
-    }
-
-    // Show error state
-    if (analysisNotifier.analysisDataError != null) {
-      return _buildErrorState('Error loading data: ${analysisNotifier.analysisDataError}');
-    }
-
-    // Show empty state
-    if (analysisNotifier.analysisData.isEmpty) {
-      return _buildEmptyState('No data available for selected group(s)');
-    }
-
-    // Show lightweight placeholder during drag, full table when not dragging
+    // Show lightweight placeholder during drag
     if (analysisNotifier.isDragging) {
-      return _buildDragPlaceholder(blockData, analysisNotifier.analysisData);
+      return _buildDragPlaceholder(blockData);
     }
 
     // Show data visualization
-    return _buildDataVisualization(blockData, analysisNotifier.analysisData, analysisNotifier);
+    return _buildDataVisualization(blockData, analysisNotifier, context);
   }
 
   Widget _buildConfigurationPrompt(blockData) {
@@ -128,19 +115,6 @@ class AnalysisInternalStatsStrategy extends AnalysisBlockBehaviorStrategy {
     );
   }
 
-  Widget _buildLoadingState() {
-    return const Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        CircularProgressIndicator(),
-        SizedBox(height: 8),
-        Text(
-          'Loading data...',
-          style: TextStyle(fontSize: 12, color: Colors.grey),
-        ),
-      ],
-    );
-  }
 
   Widget _buildErrorState(String message) {
     return Column(
@@ -199,7 +173,7 @@ class AnalysisInternalStatsStrategy extends AnalysisBlockBehaviorStrategy {
     );
   }
 
-  Widget _buildDragPlaceholder(blockData, List<EmailDataPoint> dataPoints) {
+  Widget _buildDragPlaceholder(blockData) {
     return Container(
       width: 1000,
       height: 400,
@@ -227,7 +201,7 @@ class AnalysisInternalStatsStrategy extends AnalysisBlockBehaviorStrategy {
           ),
           const SizedBox(height: 8),
           Text(
-            '${dataPoints.length} responses • Dragging...',
+            'Dragging...',
             style: TextStyle(
               fontSize: 12,
               color: Colors.grey.shade500,
@@ -238,10 +212,72 @@ class AnalysisInternalStatsStrategy extends AnalysisBlockBehaviorStrategy {
     );
   }
 
-  Widget _buildDataVisualization(blockData, List<EmailDataPoint> dataPoints, analysisNotifier) {
+  Widget _buildDataVisualization(blockData, analysisNotifier, context) {
     // Check if this is group comparison - show bar chart for any number of groups
     if (blockData.isGroupComparison) {
-      return _buildComparisonChart(blockData, dataPoints, analysisNotifier);
+      return _buildComparisonChart(blockData, analysisNotifier, context);
+    }
+
+    // For Group Analysis, get individual email data from the notifier
+    // Build blockNotifiers map from the selected groups
+    final selectedGroups = analysisNotifier.getSelectedGroups();
+    final Map<String, BlockNotifier> blockNotifiers = {};
+    
+    for (final group in selectedGroups) {
+      for (final blockId in group.blockIds) {
+        if (!blockNotifiers.containsKey(blockId)) {
+          blockNotifiers[blockId] = context.ref.read(blockNotifierProvider(blockId));
+        }
+      }
+    }
+    
+    final emailData = analysisNotifier.getIndividualEmailData(blockNotifiers);
+    
+    if (emailData.isEmpty) {
+      return _buildEmptyState('No data available for selected group(s)');
+    }
+
+    // Convert to EmailDataPoint format for the tables
+    final List<EmailDataPoint> dataPoints = <EmailDataPoint>[];
+    
+    for (final data in emailData) {
+      try {
+        final rawResultsList = data['rawResults'] as List;
+        final List<int> intResults = [];
+        
+        // Safely convert each element to int
+        for (final result in rawResultsList) {
+          if (result is int) {
+            intResults.add(result);
+          } else if (result is double) {
+            intResults.add(result.round());
+          } else if (result is num) {
+            intResults.add(result.toInt());
+          } else {
+            intResults.add(0); // fallback
+          }
+        }
+        
+        // Calculate benchmarks for indicator display
+        Map<Benchmark, double>? benchmarks;
+        try {
+          if (intResults.length == 37) {
+            benchmarks = _calculateBenchmarks(intResults);
+          }
+        } catch (e) {
+          // If calculation fails, leave benchmarks as null
+          benchmarks = null;
+        }
+        
+        dataPoints.add(EmailDataPoint(
+          email: data['email'] as String,
+          rawResults: intResults,
+          benchmarks: benchmarks,
+        ));
+      } catch (e) {
+        // Skip this data point if conversion fails
+        continue;
+      }
     }
 
     // Wrap in RepaintBoundary to isolate from position changes during dragging
@@ -250,30 +286,51 @@ class AnalysisInternalStatsStrategy extends AnalysisBlockBehaviorStrategy {
           ? QuestionHeatmapTable(
               dataPoints: dataPoints,
               isCompact: false, // Use full table view
-              // Pass pre-calculated data to avoid expensive calculations on rebuild
-              maxQuestions: analysisNotifier.maxQuestions,
-              processedEmails: analysisNotifier.processedEmails,
-              heatmapColors: analysisNotifier.heatmapColors,
-              questionStatistics: analysisNotifier.questionStatistics,
             )
           : blockData.analysisSubType == AnalysisSubType.indicators
           ? IndicatorTable(
               dataPoints: dataPoints,
               isCompact: false, // Use full table view
-              indicatorStatistics: analysisNotifier.indicatorStatistics,
             )
           : _buildErrorState('Unknown analysis sub-type'),
     );
   }
 
-  Widget _buildComparisonChart(blockData, List<EmailDataPoint> dataPoints, analysisNotifier) {
-    // Use the properly grouped data from the notifier
-    final Map<String, List<EmailDataPoint>> groupedDataPoints = analysisNotifier.groupedAnalysisData;
+  Widget _buildComparisonChart(blockData, analysisNotifier, context) {
+    // For Group Comparison, get group data from the notifier
+    final groupData = analysisNotifier.getGroupComparisonData();
     
-    if (groupedDataPoints.isEmpty) {
+    if (groupData.isEmpty) {
       return const Center(
-        child: Text('No grouped data available for comparison'),
+        child: Text('No group data available for comparison'),
       );
+    }
+
+    // Convert group data to the format expected by ComparisonChartSelector
+    final Map<String, List<EmailDataPoint>> groupedDataPoints = {};
+    for (final group in groupData) {
+      final groupId = group['groupId'] as String;
+      final groupName = group['groupName'] as String;
+      final averagedResults = group['averagedRawResults'] as List<double>;
+      final List<int> intResults = averagedResults.map((e) => e.round()).toList();
+      
+      // Calculate benchmarks for the group averages
+      Map<Benchmark, double>? benchmarks;
+      try {
+        benchmarks = _calculateBenchmarks(intResults);
+      } catch (e) {
+        // If calculation fails, leave benchmarks as null
+        benchmarks = null;
+      }
+      
+      // Create a single EmailDataPoint representing the group average
+      groupedDataPoints[groupId] = [
+        EmailDataPoint(
+          email: groupName,
+          rawResults: intResults,
+          benchmarks: benchmarks,
+        )
+      ];
     }
 
     return RepaintBoundary(
@@ -351,5 +408,60 @@ class AnalysisInternalStatsStrategy extends AnalysisBlockBehaviorStrategy {
     );
 
     context.analysisBlockNotifier.updatePosition(newPosition);
+  }
+
+  /// Calculate benchmarks from raw results (same logic as BlockNotifier)
+  Map<Benchmark, double> _calculateBenchmarks(List<int> rawResults) {
+    // Validate input
+    if (rawResults.length != 37) {
+      throw ArgumentError('rawResults must contain exactly 37 values');
+    }
+    Map<Benchmark, double> benchmarks = {};
+    // Indicator Calculations (Q1-Q37)
+    benchmarks[Benchmark.growthAlign] = (rawResults[0] + rawResults[1] + rawResults[2]) / 21.0;
+    benchmarks[Benchmark.orgAlign] = (rawResults[3] + rawResults[4] + rawResults[5]) / 21.0;
+    benchmarks[Benchmark.collabKPIs] = (rawResults[6] + rawResults[7] + rawResults[8]) / 21.0;
+    benchmarks[Benchmark.crossFuncComms] = (rawResults[9] + rawResults[10] + rawResults[11]) / 21.0;
+    benchmarks[Benchmark.crossFuncAcc] = (rawResults[12] + rawResults[13] + rawResults[14]) / 21.0;
+    benchmarks[Benchmark.engagedCommunity] = (rawResults[15] + rawResults[16] + rawResults[17]) / 21.0;
+    benchmarks[Benchmark.collabProcesses] = (rawResults[18] + rawResults[19] + rawResults[20]) / 21.0;
+    benchmarks[Benchmark.alignedTech] = (rawResults[21] + rawResults[22] + rawResults[23]) / 21.0;
+    benchmarks[Benchmark.meetingEfficacy] = (rawResults[24] + rawResults[25] + rawResults[26]) / 21.0;
+    benchmarks[Benchmark.empoweredLeadership] = (rawResults[27] + rawResults[28] + rawResults[29]) / 21.0;
+    benchmarks[Benchmark.purposeDriven] = (rawResults[30] + rawResults[31] + rawResults[32]) / 21.0;
+    benchmarks[Benchmark.engagement] = (rawResults[33] + rawResults[34]) / 14.0;
+    benchmarks[Benchmark.productivity] = (rawResults[35] + rawResults[36]) / 14.0;
+    // Pillar Calculations
+    double growthAlign = benchmarks[Benchmark.growthAlign]!;
+    double orgAlign = benchmarks[Benchmark.orgAlign]!;
+    double collabKPIs = benchmarks[Benchmark.collabKPIs]!;
+    double alignedTech = benchmarks[Benchmark.alignedTech]!;
+    double collabProcesses = benchmarks[Benchmark.collabProcesses]!;
+    double meetingEfficacy = benchmarks[Benchmark.meetingEfficacy]!;
+    double crossFuncComms = benchmarks[Benchmark.crossFuncComms]!;
+    double crossFuncAcc = benchmarks[Benchmark.crossFuncAcc]!;
+    double engagedCommunity = benchmarks[Benchmark.engagedCommunity]!;
+    double empoweredLeadership = benchmarks[Benchmark.empoweredLeadership]!;
+    double purposeDriven = benchmarks[Benchmark.purposeDriven]!;
+    double engagement = benchmarks[Benchmark.engagement]!;
+    double productivity = benchmarks[Benchmark.productivity]!;
+    benchmarks[Benchmark.alignP] = (growthAlign * 0.3) + (orgAlign * 0.2) + (collabKPIs * 0.5);
+    benchmarks[Benchmark.processP] = (alignedTech * 0.4) + (collabProcesses * 0.4) + (meetingEfficacy * 0.2);
+    benchmarks[Benchmark.peopleP] = (crossFuncComms * 0.3) + (crossFuncAcc * 0.3) + (engagedCommunity * 0.4);
+    benchmarks[Benchmark.leadershipP] = (empoweredLeadership * 0.6) + (purposeDriven * 0.4);
+    // Final Calculations
+    double alignP = benchmarks[Benchmark.alignP]!;
+    double processP = benchmarks[Benchmark.processP]!;
+    double peopleP = benchmarks[Benchmark.peopleP]!;
+    double leadershipP = benchmarks[Benchmark.leadershipP]!;
+    benchmarks[Benchmark.workforce] = (alignP * 0.4) + (productivity * 0.2) + (processP * 0.4);
+    benchmarks[Benchmark.operations] = (peopleP * 0.4) + (engagement * 0.2) + (leadershipP * 0.4);
+    
+    // Calculate final indices
+    double workforce = benchmarks[Benchmark.workforce]!;
+    double operations = benchmarks[Benchmark.operations]!;
+    benchmarks[Benchmark.orgIndex] = (workforce * 0.5) + (operations * 0.5);
+    
+    return benchmarks;
   }
 }

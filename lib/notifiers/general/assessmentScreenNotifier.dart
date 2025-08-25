@@ -34,7 +34,7 @@ class AssessmentScreenNotifier extends StateNotifier<AssessmentScreenState> {
   void getAssessments() async {
     try {
       state = state.copyWith(isLoading: true, loadingMessage: "Getting assessments...");
-      logger.info("Getting assessments from firestore for org: $orgId");
+      // logger.info("Getting assessments from firestore for org: $orgId");
       
       final assessmentCollection = await FirestoreService.instance
           .collection('orgs')
@@ -51,7 +51,7 @@ class AssessmentScreenNotifier extends StateNotifier<AssessmentScreenState> {
       }
 
       state = state.copyWith(assessments: assessments, isLoading: false);
-      logger.info("assessments: ${assessmentNames.join(", ")}");
+      // logger.info("assessments: ${assessmentNames.join(", ")}");
     } catch (e) {
       state = state.copyWith(error: "Error getting assessments", isLoading: false);
       logger.severe("Error getting assessments: $e");

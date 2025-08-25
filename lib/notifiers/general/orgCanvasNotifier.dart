@@ -84,13 +84,11 @@ class OrgCanvasNotifier extends StateNotifier<Set<String>> {
 
   void subscribeToBlocks() {
     state = {};
-    print("******Getting blocks for orgId: ${appState.orgId} and assessmentId: ${appState.assessmentId}");
     _subscribeToStream(FirestoreService.getBlocksStream(orgId: appState.orgId, assessmentId: appState.assessmentId));
   }
 
   void subscribeToAnalysisBlocks() {
     state = {};
-    print("******Getting Analysis blocks for orgId: ${appState.orgId} and assessmentId: ${appState.assessmentId}");
     _subscribeToStream(FirestoreService.getAnalysisBlocksStream(orgId: appState.orgId, assessmentId: appState.assessmentId));
   }
 

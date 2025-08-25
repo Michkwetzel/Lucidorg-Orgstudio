@@ -43,7 +43,7 @@ class ConnectionManager extends StateNotifier<ConnectionsState> {
   Map<String, Set<String>> get parentAndChildren => _buildParentToChildrenMap(state.connections);
 
   ConnectionManager({required this.appState}) : super(ConnectionsState()) {
-    _subscribeToConnections();
+    subscribeToConnections();
   }
 
   @override
@@ -52,7 +52,7 @@ class ConnectionManager extends StateNotifier<ConnectionsState> {
     super.dispose();
   }
 
-  void _subscribeToConnections() {
+  void subscribeToConnections() {
     _connectionSubscription?.cancel();
     _connectionSubscription = FirestoreService.getConnectionsStream(orgId: appState.orgId, assessmentId: appState.assessmentId).listen(
       (snapshot) {

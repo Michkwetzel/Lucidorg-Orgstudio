@@ -74,18 +74,24 @@ final analysisBlockNotifierProvider = ChangeNotifierProvider.family<AnalysisBloc
 // Groups Provider - no autoDispose for caching
 final groupsProvider = ChangeNotifierProvider<GroupsNotifier>((ref) {
   final appStateNotifier = ref.read(appStateProvider.notifier);
-  
+
   // Rebuild when orgId or assessmentId changes
   ref.watch(appStateProvider.select((state) => state.orgId));
   ref.watch(appStateProvider.select((state) => state.assessmentId));
-  
+
   return GroupsNotifier(appState: appStateNotifier);
 });
 
 final connectionManagerProvider = StateNotifierProvider<ConnectionManager, ConnectionsState>((ref) {
   final appStateNotifier = ref.read(appStateProvider.notifier);
 
-  return ConnectionManager(appState: appStateNotifier);
+  final notifier = ConnectionManager(appState: appStateNotifier);
+  ref.listen(appStateProvider, (previous, next) {
+    if (next.assessmentId != previous?.assessmentId || next.orgId != previous?.orgId) {
+      notifier.subscribeToConnections();
+    }
+  });
+  return notifier;
 });
 
 // For assessment Send Mode - Tracks which blocks are selected to send assessments too

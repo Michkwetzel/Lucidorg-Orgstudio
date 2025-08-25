@@ -131,6 +131,7 @@ class BlockNotifier extends ChangeNotifier {
     return totalEmails > 1 && _submittedCount > 0 && _submittedCount < totalEmails;
   }
 
+
   void _setupResultStream() {
     // Use conditional logic based on whether block has multiple emails
     if (_blockData?.hasMultipleEmails == true) {

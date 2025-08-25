@@ -430,11 +430,11 @@ class ComparisonBarChart extends ConsumerWidget {
 
         final average = count > 0 ? sum / count : 1.0; // Changed from 0.0 to 1.0 to make it visible
         
-        if (count == 0) {
-          print('DEBUG: Group $groupId Q${questionIndex + 1} has no valid data (count=0) - using default value 1.0');
-        } else {
-          print('DEBUG: Group $groupId Q${questionIndex + 1} average: $average (from $count data points)');
-        }
+        // if (count == 0) {
+        //   print('DEBUG: Group $groupId Q${questionIndex + 1} has no valid data (count=0) - using default value 1.0');
+        // } else {
+        //   print('DEBUG: Group $groupId Q${questionIndex + 1} average: $average (from $count data points)');
+        // }
 
         rods.add(
           BarChartRodData(

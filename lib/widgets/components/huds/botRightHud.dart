@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:platform_v2/config/enums.dart';
 import 'package:platform_v2/config/provider.dart';
 import 'package:platform_v2/services/httpService.dart';
@@ -35,22 +34,13 @@ class BotRightHud extends ConsumerWidget {
         ),
       );
     } else if (assessmentMode == AssessmentMode.assessmentAnalyze) {
-      final groupsNotifier = ref.watch(groupsProvider);
-      final isRefreshing = groupsNotifier.emailDataLoading;
-      
       return Tooltip(
-        message: 'Refresh Analysis Data',
+        message: 'Reload Groups',
         child: FilledButton.tonal(
-          onPressed: isRefreshing ? null : () async {
-            await ref.read(groupsProvider).refreshEmailCache();
+          onPressed: () async {
+            await ref.read(groupsProvider).loadGroups();
           },
-          child: isRefreshing 
-              ? SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              : Icon(Icons.refresh),
+          child: Icon(Icons.refresh),
         ),
       );
     } else {

@@ -458,7 +458,7 @@ class _AnalysisBlockState extends ConsumerState<AnalysisBlock> {
                           children: analysisBlockState.groupIds.map<Widget>((groupId) {
                             final group = groupsNotifier.groups.firstWhere(
                               (g) => g.id == groupId,
-                              orElse: () => GroupData(id: groupId, groupName: 'Unknown Group', dataDocIds: [], blockIds: [], averagedRawResults: [], createdAt: ''),
+                              orElse: () => GroupData(id: groupId, groupName: 'Unknown Group', blockIds: [], averagedRawResults: [], createdAt: ''),
                             );
                             return Chip(
                               label: Text(group.groupName, style: const TextStyle(fontSize: 10)),

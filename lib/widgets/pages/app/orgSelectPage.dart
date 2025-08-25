@@ -4,6 +4,7 @@ import 'package:logging/logging.dart';
 import 'package:platform_v2/config/enums.dart';
 import 'package:platform_v2/config/provider.dart';
 import 'package:platform_v2/dataClasses/org.dart';
+import 'package:platform_v2/services/firestoreService.dart';
 import 'package:platform_v2/services/uiServices/inputDialogService.dart';
 import 'package:platform_v2/services/uiServices/navigationService.dart';
 import 'package:platform_v2/widgets/components/buildingBlocks/buttons/addButton.dart';
@@ -44,6 +45,7 @@ class OrgSelectPage extends ConsumerWidget {
                   ),
                   AddButton(
                     onPressed: () async {
+                      // FirestoreService.addQuestiontoDB();
                       Map<String, String>? neworgInfo = await InputDialogService.showorgForm();
                       if (neworgInfo != null) {
                         ref.read(orgsSelectProvider.notifier).createorg(neworgInfo['orgName']!);

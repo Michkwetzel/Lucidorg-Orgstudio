@@ -48,7 +48,7 @@ class _OrgCanvasState extends ConsumerState<OrgCanvas> {
       return const Center(child: CircularProgressIndicator());
     }
 
-    logger.info("Building Canvas");
+    // logger.info("Building Canvas");
     return SizedBox.expand(
       child: InteractiveViewer(
         transformationController: _transformationController,
