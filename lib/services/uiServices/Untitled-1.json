@@ -1,0 +1,422 @@
+{
+  "orgId": "EHlohZUHf4W7DbdyeM31",
+  "assessmentId": "QS3Jcf2K5AsNwloweVo7",
+  "context_data": {
+    "questions": {
+      "0": {
+        "questionText": "Our organization clearly communicates the 2-3 year growth strategy",
+        "whatItMeasures": "Strategic clarity from leadership to all levels",
+        "benchmarkGroup": "growthAlignment",
+        "benchmarkDefinition": "Measures whether organizational vision cascades clearly from leadership to individual contributors",
+        "pillar": "alignment",
+        "pillarDefinition": "Organizational GPS measuring whether strategy translates into coordinated action"
+      },
+      "1": {
+        "questionText": "Teams coordinate their objectives to achieve the organization's roadmap for growth",
+        "whatItMeasures": "Goal alignment and coordination between teams",
+        "benchmarkGroup": "growthAlignment",
+        "benchmarkDefinition": "Measures whether organizational vision cascades clearly from leadership to individual contributors",
+        "pillar": "alignment",
+        "pillarDefinition": "Organizational GPS measuring whether strategy translates into coordinated action"
+      },
+      "2": {
+        "questionText": "I understand how my role contributes to the organization's strategic objectives",
+        "whatItMeasures": "Individual connection to organizational strategy",
+        "benchmarkGroup": "growthAlignment",
+        "benchmarkDefinition": "Measures whether organizational vision cascades clearly from leadership to individual contributors",
+        "pillar": "alignment",
+        "pillarDefinition": "Organizational GPS measuring whether strategy translates into coordinated action"
+      },
+      "3": {
+        "questionText": "Our organization has systems that make key resources easily accessible",
+        "whatItMeasures": "Access to tools and resources needed for work",
+        "benchmarkGroup": "orgAlignment",
+        "benchmarkDefinition": "Measures whether infrastructure (tools, processes, information) supports coordinated execution",
+        "pillar": "alignment",
+        "pillarDefinition": "Organizational GPS measuring whether strategy translates into coordinated action"
+      },
+      "4": {
+        "questionText": "Teams effectively navigate across departments for cross-functional work",
+        "whatItMeasures": "Cross-functional collaboration infrastructure",
+        "benchmarkGroup": "orgAlignment",
+        "benchmarkDefinition": "Measures whether infrastructure (tools, processes, information) supports coordinated execution",
+        "pillar": "alignment",
+        "pillarDefinition": "Organizational GPS measuring whether strategy translates into coordinated action"
+      },
+      "5": {
+        "questionText": "I can easily access the information I need to do my work effectively",
+        "whatItMeasures": "Information accessibility and flow",
+        "benchmarkGroup": "orgAlignment",
+        "benchmarkDefinition": "Measures whether infrastructure (tools, processes, information) supports coordinated execution",
+        "pillar": "alignment",
+        "pillarDefinition": "Organizational GPS measuring whether strategy translates into coordinated action"
+      },
+      "6": {
+        "questionText": "Our organization tracks shared performance metrics across departments",
+        "whatItMeasures": "Cross-departmental performance measurement",
+        "benchmarkGroup": "collaborativeKPIs",
+        "benchmarkDefinition": "Measures whether metrics reinforce teamwork or create competition between teams",
+        "pillar": "alignment",
+        "pillarDefinition": "Organizational GPS measuring whether strategy translates into coordinated action"
+      },
+      "7": {
+        "questionText": "Teams execute effectively around shared performance metrics",
+        "whatItMeasures": "Execution on collaborative performance measures",
+        "benchmarkGroup": "collaborativeKPIs",
+        "benchmarkDefinition": "Measures whether metrics reinforce teamwork or create competition between teams",
+        "pillar": "alignment",
+        "pillarDefinition": "Organizational GPS measuring whether strategy translates into coordinated action"
+      },
+      "8": {
+        "questionText": "My performance metrics connect to shared business objectives",
+        "whatItMeasures": "Individual performance connection to organizational goals",
+        "benchmarkGroup": "collaborativeKPIs",
+        "benchmarkDefinition": "Measures whether metrics reinforce teamwork or create competition between teams",
+        "pillar": "alignment",
+        "pillarDefinition": "Organizational GPS measuring whether strategy translates into coordinated action"
+      },
+      "9": {
+        "questionText": "Our organization uses structured communication systems that help departments collaborate",
+        "whatItMeasures": "Communication infrastructure effectiveness",
+        "benchmarkGroup": "crossFuncCommunication",
+        "benchmarkDefinition": "Measures how effectively information flows across teams and levels",
+        "pillar": "people",
+        "pillarDefinition": "Communication and accountability infrastructure determining execution quality"
+      },
+      "10": {
+        "questionText": "Teams communicate effectively to deliver on shared initiatives",
+        "whatItMeasures": "Cross-team communication quality on joint projects",
+        "benchmarkGroup": "crossFuncCommunication",
+        "benchmarkDefinition": "Measures how effectively information flows across teams and levels",
+        "pillar": "people",
+        "pillarDefinition": "Communication and accountability infrastructure determining execution quality"
+      },
+      "11": {
+        "questionText": "People I work with ensure relevant information reaches the right teams across the organization",
+        "whatItMeasures": "Information targeting and timing accuracy",
+        "benchmarkGroup": "crossFuncCommunication",
+        "benchmarkDefinition": "Measures how effectively information flows across teams and levels",
+        "pillar": "people",
+        "pillarDefinition": "Communication and accountability infrastructure determining execution quality"
+      },
+      "12": {
+        "questionText": "Our organization has processes for employees to hold leadership accountable",
+        "whatItMeasures": "Upward accountability mechanisms and culture",
+        "benchmarkGroup": "crossFuncAccountability",
+        "benchmarkDefinition": "Measures whether people can hold each other accountable regardless of hierarchy or department",
+        "pillar": "people",
+        "pillarDefinition": "Communication and accountability infrastructure determining execution quality"
+      },
+      "13": {
+        "questionText": "Teams are accountable to each other for delivering on cross-functional initiatives",
+        "whatItMeasures": "Peer accountability across team boundaries",
+        "benchmarkGroup": "crossFuncAccountability",
+        "benchmarkDefinition": "Measures whether people can hold each other accountable regardless of hierarchy or department",
+        "pillar": "people",
+        "pillarDefinition": "Communication and accountability infrastructure determining execution quality"
+      },
+      "14": {
+        "questionText": "I am able to hold people accountable regardless of their role or level",
+        "whatItMeasures": "Individual empowerment for cross-functional accountability",
+        "benchmarkGroup": "crossFuncAccountability",
+        "benchmarkDefinition": "Measures whether people can hold each other accountable regardless of hierarchy or department",
+        "pillar": "people",
+        "pillarDefinition": "Communication and accountability infrastructure determining execution quality"
+      },
+      "15": {
+        "questionText": "Our organization uses systems that promote community participation across departments",
+        "whatItMeasures": "Structural support for cross-departmental engagement",
+        "benchmarkGroup": "engagedCommunity",
+        "benchmarkDefinition": "Measures how connected and invested people feel in the broader organization",
+        "pillar": "people",
+        "pillarDefinition": "Communication and accountability infrastructure determining execution quality"
+      },
+      "16": {
+        "questionText": "People across teams actively engage with each other regardless of role or level",
+        "whatItMeasures": "Inclusive participation across hierarchy levels",
+        "benchmarkGroup": "engagedCommunity",
+        "benchmarkDefinition": "Measures how connected and invested people feel in the broader organization",
+        "pillar": "people",
+        "pillarDefinition": "Communication and accountability infrastructure determining execution quality"
+      },
+      "17": {
+        "questionText": "I take active responsibility for contributing to our workplace community",
+        "whatItMeasures": "Individual ownership of organizational culture",
+        "benchmarkGroup": "engagedCommunity",
+        "benchmarkDefinition": "Measures how connected and invested people feel in the broader organization",
+        "pillar": "people",
+        "pillarDefinition": "Communication and accountability infrastructure determining execution quality"
+      },
+      "18": {
+        "questionText": "Our organization uses documented processes that effectively guide how teams work together on shared projects",
+        "whatItMeasures": "Process documentation and clarity for collaboration",
+        "benchmarkGroup": "collaborativeProcesses",
+        "benchmarkDefinition": "Measures how well documented processes support cross-team work",
+        "pillar": "process",
+        "pillarDefinition": "Operational infrastructure determining execution speed and quality"
+      },
+      "19": {
+        "questionText": "Teams effectively use collaborative processes to achieve shared goals",
+        "whatItMeasures": "Process adherence and effectiveness in practice",
+        "benchmarkGroup": "collaborativeProcesses",
+        "benchmarkDefinition": "Measures how well documented processes support cross-team work",
+        "pillar": "process",
+        "pillarDefinition": "Operational infrastructure determining execution speed and quality"
+      },
+      "20": {
+        "questionText": "It is clear how my role supports the objectives of cross-team initiatives",
+        "whatItMeasures": "Role clarity in cross-functional initiatives",
+        "benchmarkGroup": "collaborativeProcesses",
+        "benchmarkDefinition": "Measures how well documented processes support cross-team work",
+        "pillar": "process",
+        "pillarDefinition": "Operational infrastructure determining execution speed and quality"
+      },
+      "21": {
+        "questionText": "Our organization clearly communicates how its technology strategy supports the business objectives",
+        "whatItMeasures": "Alignment between technology investments and business goals",
+        "benchmarkGroup": "alignedTech",
+        "benchmarkDefinition": "Measures whether technology strategy supports business objectives and cross-team collaboration",
+        "pillar": "process",
+        "pillarDefinition": "Operational infrastructure determining execution speed and quality"
+      },
+      "22": {
+        "questionText": "Technology systems are integrated across departments, enabling teams to execute on shared objectives",
+        "whatItMeasures": "Cross-functional technology integration and interoperability",
+        "benchmarkGroup": "alignedTech",
+        "benchmarkDefinition": "Measures whether technology strategy supports business objectives and cross-team collaboration",
+        "pillar": "process",
+        "pillarDefinition": "Operational infrastructure determining execution speed and quality"
+      },
+      "23": {
+        "questionText": "I am periodically asked to provide input and feedback on technology that affects shared work",
+        "whatItMeasures": "User input integration into technology improvement",
+        "benchmarkGroup": "alignedTech",
+        "benchmarkDefinition": "Measures whether technology strategy supports business objectives and cross-team collaboration",
+        "pillar": "process",
+        "pillarDefinition": "Operational infrastructure determining execution speed and quality"
+      },
+      "24": {
+        "questionText": "Our organization follows effective processes for running meetings",
+        "whatItMeasures": "Meeting structure and facilitation quality",
+        "benchmarkGroup": "meetingEfficacy",
+        "benchmarkDefinition": "Measures whether meetings drive decisions and progress or waste time",
+        "pillar": "process",
+        "pillarDefinition": "Operational infrastructure determining execution speed and quality"
+      },
+      "25": {
+        "questionText": "Teams effectively follow through on action items made during meetings",
+        "whatItMeasures": "Follow-through on meeting outcomes and commitments",
+        "benchmarkGroup": "meetingEfficacy",
+        "benchmarkDefinition": "Measures whether meetings drive decisions and progress or waste time",
+        "pillar": "process",
+        "pillarDefinition": "Operational infrastructure determining execution speed and quality"
+      },
+      "26": {
+        "questionText": "I am able to participate meaningfully in the meetings I attend",
+        "whatItMeasures": "Meeting inclusion and voice equity",
+        "benchmarkGroup": "meetingEfficacy",
+        "benchmarkDefinition": "Measures whether meetings drive decisions and progress or waste time",
+        "pillar": "process",
+        "pillarDefinition": "Operational infrastructure determining execution speed and quality"
+      },
+      "27": {
+        "questionText": "Our organization develops leadership capabilities in employees at all levels",
+        "whatItMeasures": "Distribution of leadership development throughout organization",
+        "benchmarkGroup": "empoweredLeadership",
+        "benchmarkDefinition": "Measures whether leadership capability exists at all levels and people can make decisions in their domain",
+        "pillar": "leadership",
+        "pillarDefinition": "Decision-making quality and speed determining organizational agility"
+      },
+      "28": {
+        "questionText": "Teams execute on initiatives with different people taking the lead based on their expertise",
+        "whatItMeasures": "Situational leadership based on competence rather than hierarchy",
+        "benchmarkGroup": "empoweredLeadership",
+        "benchmarkDefinition": "Measures whether leadership capability exists at all levels and people can make decisions in their domain",
+        "pillar": "leadership",
+        "pillarDefinition": "Decision-making quality and speed determining organizational agility"
+      },
+      "29": {
+        "questionText": "I make decisions in my role without constantly seeking approval from others",
+        "whatItMeasures": "Decision-making autonomy and empowerment",
+        "benchmarkGroup": "empoweredLeadership",
+        "benchmarkDefinition": "Measures whether leadership capability exists at all levels and people can make decisions in their domain",
+        "pillar": "leadership",
+        "pillarDefinition": "Decision-making quality and speed determining organizational agility"
+      },
+      "30": {
+        "questionText": "Purpose is incorporated across the organization from onboarding to exit",
+        "whatItMeasures": "Integration of organizational purpose into daily operations",
+        "benchmarkGroup": "purposeDriven",
+        "benchmarkDefinition": "Measures how well organizational purpose guides decision-making and execution",
+        "pillar": "leadership",
+        "pillarDefinition": "Decision-making quality and speed determining organizational agility"
+      },
+      "31": {
+        "questionText": "Teams execute initiatives in ways that directly support our organization's purpose",
+        "whatItMeasures": "Alignment between team actions and organizational purpose",
+        "benchmarkGroup": "purposeDriven",
+        "benchmarkDefinition": "Measures how well organizational purpose guides decision-making and execution",
+        "pillar": "leadership",
+        "pillarDefinition": "Decision-making quality and speed determining organizational agility"
+      },
+      "32": {
+        "questionText": "I can explain how my work contributes to our organization's overall purpose",
+        "whatItMeasures": "Individual understanding of personal contribution to organizational mission",
+        "benchmarkGroup": "purposeDriven",
+        "benchmarkDefinition": "Measures how well organizational purpose guides decision-making and execution",
+        "pillar": "leadership",
+        "pillarDefinition": "Decision-making quality and speed determining organizational agility"
+      },
+      "33": {
+        "questionText": "Our organization regularly acts on feedback about employee experience",
+        "whatItMeasures": "Leadership responsiveness to employee input and concerns",
+        "benchmarkGroup": "engagement",
+        "benchmarkDefinition": "Measures employee psychological safety and leadership responsiveness to feedback",
+        "pillar": "operations",
+        "pillarDefinition": "Key outcome of organizational health - engagement directly correlates with performance, retention, and innovation"
+      },
+      "34": {
+        "questionText": "I can raise concerns at work without fear of negative consequences",
+        "whatItMeasures": "Psychological safety for honest communication",
+        "benchmarkGroup": "engagement",
+        "benchmarkDefinition": "Measures employee psychological safety and leadership responsiveness to feedback",
+        "pillar": "operations",
+        "pillarDefinition": "Key outcome of organizational health - engagement directly correlates with performance, retention, and innovation"
+      },
+      "35": {
+        "questionText": "Our organizations workflows minimize wasted time & effort",
+        "whatItMeasures": "Organizational efficiency and waste elimination",
+        "benchmarkGroup": "productivity",
+        "benchmarkDefinition": "Measures whether organizational design enables sustainable high performance",
+        "pillar": "workforce",
+        "pillarDefinition": "True productivity comes from eliminating waste and enabling focus, not from working harder"
+      },
+      "36": {
+        "questionText": "Our team's workload is sustainable and lets us deliver high-quality work without feeling overwhelmed",
+        "whatItMeasures": "Sustainable workload management and capacity planning",
+        "benchmarkGroup": "productivity",
+        "benchmarkDefinition": "Measures whether organizational design enables sustainable high performance",
+        "pillar": "workforce",
+        "pillarDefinition": "True productivity comes from eliminating waste and enabling focus, not from working harder"
+      }
+    },
+    "benchmarks": {
+      "growthAlignment": {
+        "definition": "Measures whether organizational vision cascades clearly from leadership to individual contributors",
+        "purpose": "Without strategic alignment, teams work in silos, waste resources, and pull in different directions",
+        "children": [0, 1, 2],
+        "pillar": "alignment",
+        "pillarDefinition": "Organizational GPS measuring whether strategy translates into coordinated action"
+      },
+      "orgAlignment": {
+        "definition": "Measures whether infrastructure (tools, processes, information) supports coordinated execution",
+        "purpose": "Even with clear strategy, teams fail if they can't access what they need or navigate cross-functional work",
+        "children": [3, 4, 5],
+        "pillar": "alignment",
+        "pillarDefinition": "Organizational GPS measuring whether strategy translates into coordinated action"
+      },
+      "collaborativeKPIs": {
+        "definition": "Measures whether metrics reinforce teamwork or create competition between teams",
+        "purpose": "Individual metrics without shared accountability create optimization at the expense of overall success",
+        "children": [6, 7, 8],
+        "pillar": "alignment",
+        "pillarDefinition": "Organizational GPS measuring whether strategy translates into coordinated action"
+      },
+      "crossFuncCommunication": {
+        "definition": "Measures how effectively information flows across teams and levels",
+        "purpose": "Poor communication creates project delays, duplicate work, and frustrated employees",
+        "children": [9, 10, 11],
+        "pillar": "people",
+        "pillarDefinition": "Communication and accountability infrastructure determining execution quality"
+      },
+      "crossFuncAccountability": {
+        "definition": "Measures whether people can hold each other accountable regardless of hierarchy or department",
+        "purpose": "Without mutual accountability, commitments become suggestions and quality standards erode",
+        "children": [12, 13, 14],
+        "pillar": "people",
+        "pillarDefinition": "Communication and accountability infrastructure determining execution quality"
+      },
+      "engagedCommunity": {
+        "definition": "Measures how connected and invested people feel in the broader organization",
+        "purpose": "Disengaged employees do minimum work; engaged communities self-organize and drive innovation",
+        "children": [15, 16, 17],
+        "pillar": "people",
+        "pillarDefinition": "Communication and accountability infrastructure determining execution quality"
+      },
+      "collaborativeProcesses": {
+        "definition": "Measures how well documented processes support cross-team work",
+        "purpose": "Poor processes create confusion, delays, and quality issues; good processes enable speed and consistency",
+        "children": [18, 19, 20],
+        "pillar": "process",
+        "pillarDefinition": "Operational infrastructure determining execution speed and quality"
+      },
+      "alignedTech": {
+        "definition": "Measures whether technology strategy supports business objectives and cross-team collaboration",
+        "purpose": "Misaligned technology creates technical debt, reduces productivity, and frustrates employees",
+        "children": [21, 22, 23],
+        "pillar": "process",
+        "pillarDefinition": "Operational infrastructure determining execution speed and quality"
+      },
+      "meetingEfficacy": {
+        "definition": "Measures whether meetings drive decisions and progress or waste time",
+        "purpose": "Ineffective meetings are one of the biggest productivity drains in modern organizations",
+        "children": [24, 25, 26],
+        "pillar": "process",
+        "pillarDefinition": "Operational infrastructure determining execution speed and quality"
+      },
+      "empoweredLeadership": {
+        "definition": "Measures whether leadership capability exists at all levels and people can make decisions in their domain",
+        "purpose": "Centralized decision-making creates bottlenecks; organizations need distributed leadership where expertise exists",
+        "children": [27, 28, 29],
+        "pillar": "leadership",
+        "pillarDefinition": "Decision-making quality and speed determining organizational agility"
+      },
+      "purposeDriven": {
+        "definition": "Measures how well organizational purpose guides decision-making and execution",
+        "purpose": "Without clear purpose, decisions become political or arbitrary; purpose enables autonomous decision-making",
+        "children": [30, 31, 32],
+        "pillar": "leadership",
+        "pillarDefinition": "Decision-making quality and speed determining organizational agility"
+      },
+      "engagement": {
+        "definition": "Measures employee psychological safety and leadership responsiveness to feedback. Note this score does not contribute to the final score but is rather a symptome benchmark",
+        "purpose": "Engagement directly correlates with performance, retention, and innovation - key outcome of organizational health",
+        "children": [33, 34]
+      },
+      "productivity": {
+        "definition": "Measures whether organizational design enables sustainable high performance.  Note this score does not contribute to the final score but is rather a symptome benchmark",
+        "purpose": "True productivity comes from eliminating waste and enabling focus, not from working harder",
+        "children": [35, 36]
+      }
+    },
+    "pillars": {
+      "alignment": {
+        "definition": "Organizational GPS measuring whether strategy translates into coordinated action",
+        "purpose": "Foundation pillar - without alignment, teams work in silos and waste resources pulling in different directions",
+        "children": ["growthAlignment", "orgAlignment", "collaborativeKPIs"]
+      },
+      "people": {
+        "definition": "Communication and accountability infrastructure determining execution quality",
+        "purpose": "Foundation pillar - determines whether organization has systems for effective cross-functional work",
+        "children": ["crossFuncCommunication", "crossFuncAccountability", "engagedCommunity"]
+      },
+      "process": {
+        "definition": "Operational infrastructure determining execution speed and quality",
+        "purpose": "Foundation pillar - measures whether systems and workflows accelerate or slow down value creation",
+        "children": ["collaborativeProcesses", "alignedTech", "meetingEfficacy"]
+      },
+      "leadership": {
+        "definition": "Decision-making quality and speed determining organizational agility",
+        "purpose": "Execution pillar - measures whether leadership capability is distributed where expertise and context exist",
+        "children": ["empoweredLeadership", "purposeDriven"]
+      }
+    },
+    "orgIndex": {
+      "orgIndex": {
+        "definition": "Overall organizational effectiveness combining all 4 pillars",
+        "purpose": "Comprehensive measure of organizational health and performance capability",
+        "children": ["alignment", "process", "people", "leadership"]
+      }
+    }
+  }
+}

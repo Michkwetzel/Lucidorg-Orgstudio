@@ -100,6 +100,7 @@ class FirestoreService {
       'name': blockData.name,
       'role': blockData.role,
       'department': blockData.department,
+      'hierarchy': blockData.hierarchy.name,
       'emails': blockData.emails,
     });
   }

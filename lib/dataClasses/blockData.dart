@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:platform_v2/config/enums.dart';
 
 class BlockData {
   final String name;
   final String role;
   final String department;
+  final Hierarchy hierarchy;
   final List<String> emails;
   final List<int> rawResults;
   final bool sent;
@@ -14,6 +16,7 @@ class BlockData {
     required this.name,
     required this.role,
     required this.department,
+    this.hierarchy = Hierarchy.none,
     required this.emails,
     this.rawResults = const [],
     this.sent = false,
@@ -31,6 +34,7 @@ class BlockData {
     String? name,
     String? role,
     String? department,
+    Hierarchy? hierarchy,
     List<String>? emails,
     List<int>? rawResults,
     Offset? position,
@@ -41,6 +45,7 @@ class BlockData {
       name: name ?? this.name,
       role: role ?? this.role,
       department: department ?? this.department,
+      hierarchy: hierarchy ?? this.hierarchy,
       emails: emails ?? this.emails,
       rawResults: rawResults ?? this.rawResults,
       sent: sent ?? this.sent,
@@ -62,6 +67,7 @@ class BlockData {
     return name == other.name &&
         role == other.role &&
         department == other.department &&
+        hierarchy == other.hierarchy &&
         _listEquals(emails, other.emails) &&
         _listEquals(rawResults, other.rawResults) &&
         sent == other.sent &&
@@ -75,6 +81,7 @@ class BlockData {
       name,
       role,
       department,
+      hierarchy,
       Object.hashAll(emails),
       Object.hashAll(rawResults),
       sent,
@@ -96,6 +103,7 @@ class BlockData {
       name: '',
       role: '',
       department: '',
+      hierarchy: Hierarchy.none,
       emails: [],
       sent: false,
       submitted: false,
@@ -107,6 +115,7 @@ class BlockData {
     required String name,
     required String role,
     required String department,
+    Hierarchy hierarchy = Hierarchy.none,
     required String email,
     bool sent = false,
     bool submitted = false,
@@ -115,6 +124,7 @@ class BlockData {
       name: name,
       role: role,
       department: department,
+      hierarchy: hierarchy,
       emails: [email],
       sent: sent,
       submitted: submitted,

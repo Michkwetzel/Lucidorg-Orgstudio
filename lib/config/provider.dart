@@ -97,6 +97,7 @@ final connectionManagerProvider = StateNotifierProvider<ConnectionManager, Conne
 // For assessment Send Mode - Tracks which blocks are selected to send assessments too
 final selectedBlocksProvider = StateProvider<Set<String>>((ref) => {});
 final selectedDepartmentsProvider = StateProvider<Set<String>>((ref) => {});
+final selectedHierarchiesProvider = StateProvider<Set<Hierarchy>>((ref) => {});
 
 // For Assessment/Org Builder. Tracks which block is selected
 final selectedBlockProvider = StateProvider<String?>((ref) => null);

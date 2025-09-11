@@ -47,6 +47,7 @@ class BlockNotifier extends ChangeNotifier {
     _blockDataDocStream = FirestoreService.getBlockStream(orgId: appState.orgId, assessmentId: appState.assessmentId, blockID: blockID);
     _blockDataDocStreamSub = _blockDataDocStream.listen(
       (snapshot) {
+        print("Updating block data");
         DocumentSnapshot<Map<String, dynamic>> doc = snapshot;
         // Check if document exists before accessing data
         if (doc.exists && doc.data() != null) {
@@ -58,12 +59,29 @@ class BlockNotifier extends ChangeNotifier {
           String department = data['department'] ?? '';
           List<String> emails = List<String>.from(data['emails'] ?? []);
           Offset position = Offset(data['position']['x'] ?? 0, data['position']['y'] ?? 0);
+          Hierarchy hierarchy = Hierarchy.none;
+          switch (data['hierarchy'] ?? 'none') {
+            case 'ceo':
+              hierarchy = Hierarchy.ceo;
+              break;
+            case 'csuite':
+              hierarchy = Hierarchy.csuite;
+              break;
+            case 'team':
+              hierarchy = Hierarchy.team;
+              break;
+            default:
+              hierarchy = Hierarchy.none;
+              break;
+          }
+          print("blockID: $blockID, hierarchy: ${data['hierarchy']}");
 
           BlockData newBlockData = BlockData(
             name: name,
             role: role,
             department: department,
             emails: emails,
+            hierarchy: hierarchy,
             // Keep existing rawResults, sent, submitted if they exist
             rawResults: _blockData?.rawResults ?? [],
             sent: _blockData?.sent ?? false,
@@ -76,7 +94,7 @@ class BlockNotifier extends ChangeNotifier {
           if (dataChanged || !positionLoaded) {
             bool isFirstLoad = !positionLoaded;
             bool emailCountChanged = _blockData?.emails.length != newBlockData.emails.length;
-            
+
             _blockData = newBlockData;
             _position = position;
 
@@ -112,7 +130,7 @@ class BlockNotifier extends ChangeNotifier {
   Map<Benchmark, double>? get benchmarks => _benchmarks;
   bool get sent => _blockData?.sent ?? false;
   bool get submitted => _blockData?.submitted ?? false;
-  
+
   // Multi-email getters
   List<Map<String, dynamic>> get allDataDocs => _allDataDocs;
   int get sentCount => _sentCount;
@@ -122,15 +140,16 @@ class BlockNotifier extends ChangeNotifier {
     if (totalEmails <= 1) return '';
     return '$_submittedCount/$totalEmails';
   }
+
   bool get allEmailsSubmitted {
     final totalEmails = _blockData?.totalEmailCount ?? 0;
     return totalEmails > 1 && _submittedCount == totalEmails;
   }
+
   bool get partialEmailsSubmitted {
     final totalEmails = _blockData?.totalEmailCount ?? 0;
     return totalEmails > 1 && _submittedCount > 0 && _submittedCount < totalEmails;
   }
-
 
   void _setupResultStream() {
     // Use conditional logic based on whether block has multiple emails
@@ -146,6 +165,8 @@ class BlockNotifier extends ChangeNotifier {
 
     _blockResultStreamSub = blockResultStream.listen(
       (event) {
+        print("Updating block results");
+
         QuerySnapshot<Map<String, dynamic>> snapshot = event;
         if (snapshot.docs.isNotEmpty) {
           DocumentSnapshot<Map<String, dynamic>> doc = snapshot.docs.first;
@@ -179,7 +200,7 @@ class BlockNotifier extends ChangeNotifier {
             if (rawResultsInt.isNotEmpty) {
               try {
                 _benchmarks = _calculateBenchmarks(rawResultsInt);
-                print("Calculated benchmarks for block $blockID: ${_benchmarks?.length} benchmarks");
+                // print("Calculated benchmarks for block $blockID: ${_benchmarks?.length} benchmarks");
               } catch (e) {
                 print("Error calculating benchmarks for block $blockID: $e");
                 _benchmarks = null;
@@ -203,7 +224,7 @@ class BlockNotifier extends ChangeNotifier {
       (event) {
         QuerySnapshot<Map<String, dynamic>> snapshot = event;
         _allDataDocs = snapshot.docs.map((doc) => {'id': doc.id, ...doc.data()}).toList();
-        
+
         _processMultiEmailData();
         notifyListeners();
       },
@@ -236,7 +257,8 @@ class BlockNotifier extends ChangeNotifier {
       if (rawResults != null && rawResults.isNotEmpty) {
         try {
           final resultsList = rawResults.cast<int>();
-          if (resultsList.length == 37) { // Ensure we have complete data
+          if (resultsList.length == 37) {
+            // Ensure we have complete data
             allRawResultsLists.add(resultsList);
           }
         } catch (e) {
@@ -265,7 +287,7 @@ class BlockNotifier extends ChangeNotifier {
     if (averagedRawResults.isNotEmpty) {
       try {
         _benchmarks = _calculateBenchmarks(averagedRawResults);
-        print("Calculated benchmarks for multi-email block $blockID: ${_benchmarks?.length} benchmarks from ${allRawResultsLists.length} submissions");
+        // print("Calculated benchmarks for multi-email block $blockID: ${_benchmarks?.length} benchmarks from ${allRawResultsLists.length} submissions");
       } catch (e) {
         print("Error calculating benchmarks for multi-email block $blockID: $e");
         _benchmarks = null;
@@ -285,18 +307,18 @@ class BlockNotifier extends ChangeNotifier {
 
     // Calculate averages for each question (assuming 37 questions)
     List<int> averagedResults = [];
-    
+
     for (int questionIndex = 0; questionIndex < 37; questionIndex++) {
       double sum = 0;
       int count = 0;
-      
+
       for (final resultsList in allRawResultsLists) {
         if (questionIndex < resultsList.length) {
           sum += resultsList[questionIndex];
           count++;
         }
       }
-      
+
       if (count > 0) {
         // Round to nearest integer
         averagedResults.add((sum / count).round());
@@ -305,7 +327,7 @@ class BlockNotifier extends ChangeNotifier {
         averagedResults.add(0);
       }
     }
-    
+
     return averagedResults;
   }
 
@@ -431,13 +453,13 @@ class BlockNotifier extends ChangeNotifier {
   void updateData(BlockData newData) {
     if (_blockData != newData) {
       _blockData = newData;
-      notifyListeners();
       FirestoreService.updateData(
         orgId: appState.orgId,
         assessmentId: appState.assessmentId,
         blockID: blockID,
         blockData: newData,
       );
+      notifyListeners();
     }
   }
 

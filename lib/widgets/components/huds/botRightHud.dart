@@ -85,6 +85,8 @@ class BotRightHud extends ConsumerWidget {
       onCancel: () {
         // Clear AssessmentSend Blocks
         ref.read(selectedBlocksProvider.notifier).state = {};
+        ref.read(selectedDepartmentsProvider.notifier).state = {};
+        ref.read(selectedHierarchiesProvider.notifier).state = {};
         ref.read(appStateProvider.notifier).setAssessmentMode(AssessmentMode.assessmentBuild);
       },
     );
@@ -93,19 +95,20 @@ class BotRightHud extends ConsumerWidget {
   void _openCreateGroupOverlay(BuildContext context, WidgetRef ref) {
     OverlayService.showCreateGroup(
       context,
-      onCreate: (selectionType, groupName) {
-        _handleGroupCreation(context, ref, groupName);
+      onCreate: (selectionType, groupName, description) {
+        _handleGroupCreation(context, ref, groupName, description);
       },
       onCancel: () {
         // Clear selected blocks and reset mode
         ref.read(selectedBlocksProvider.notifier).state = {};
         ref.read(selectedDepartmentsProvider.notifier).state = {};
+        ref.read(selectedHierarchiesProvider.notifier).state = {};
         ref.read(appStateProvider.notifier).setAssessmentMode(AssessmentMode.assessmentDataView);
       },
     );
   }
 
-  Future<void> _handleGroupCreation(BuildContext context, WidgetRef ref, String groupName) async {
+  Future<void> _handleGroupCreation(BuildContext context, WidgetRef ref, String groupName, String description) async {
     final blockIds = ref.read(selectedBlocksProvider);
     final assessmentId = ref.read(appStateProvider).assessmentId;
     final orgId = ref.read(appStateProvider).orgId;
@@ -147,6 +150,7 @@ class BotRightHud extends ConsumerWidget {
 
     final groupData = {
       'groupName': groupName,
+      'description': description,
       'dataDocIds': dataDocIds,
       'blockIds': blockIds.toList(),
       'averagedRawResults': averagedRawResults,
@@ -182,6 +186,7 @@ class BotRightHud extends ConsumerWidget {
     // Clear selections after creation attempt and reset mode
     ref.read(selectedBlocksProvider.notifier).state = {};
     ref.read(selectedDepartmentsProvider.notifier).state = {};
+    ref.read(selectedHierarchiesProvider.notifier).state = {};
     ref.read(appStateProvider.notifier).setAssessmentMode(AssessmentMode.assessmentDataView);
   }
 

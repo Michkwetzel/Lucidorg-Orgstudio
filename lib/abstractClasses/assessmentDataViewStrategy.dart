@@ -47,6 +47,8 @@ class AssessmentDataViewStrategy extends BlockBehaviorStrategy {
   Widget _buildBasicView(BlockContext context) {
     final blockData = context.blockNotifier.blockData;
     final benchmarks = context.blockNotifier.benchmarks;
+    final hierarchy = blockData?.hierarchy;
+    final showHierarchy = hierarchy != null && hierarchy != Hierarchy.none;
 
     // Get selected display option
     final selectedOption = context.ref.watch(selectedDisplayOptionProvider);
@@ -96,6 +98,20 @@ class AssessmentDataViewStrategy extends BlockBehaviorStrategy {
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
+        if (showHierarchy) ...[
+          const SizedBox(height: 2),
+          Text(
+            hierarchy.name,
+            style: const TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w600,
+              color: Colors.black87,
+            ),
+            textAlign: TextAlign.center,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
         const SizedBox(height: 4),
         // Display the extracted data
         if (displayText != null) ...[

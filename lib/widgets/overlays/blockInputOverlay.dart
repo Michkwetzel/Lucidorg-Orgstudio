@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:platform_v2/config/enums.dart';
 import 'package:platform_v2/config/provider.dart';
 import 'package:platform_v2/dataClasses/blockData.dart';
 import 'package:platform_v2/services/firestoreService.dart';
@@ -38,6 +39,7 @@ class _BlockInputOverlayState extends ConsumerState<BlockInputOverlay> {
   String assessmentResultsErrorMessage = '';
   bool isLoadingAssessmentResults = false;
   bool isSavingAssessmentResults = false;
+  Hierarchy selectedHierarchy = Hierarchy.none;
 
   @override
   void initState() {
@@ -61,6 +63,8 @@ class _BlockInputOverlayState extends ConsumerState<BlockInputOverlay> {
         isMultipleEmails = false;
         emailController.text = data.emails.first;
       }
+
+      selectedHierarchy = data.hierarchy;
     }
   }
 
@@ -104,6 +108,7 @@ class _BlockInputOverlayState extends ConsumerState<BlockInputOverlay> {
       isMultipleEmails = false;
       csvEmails.clear();
       csvError = false;
+      selectedHierarchy = Hierarchy.none;
     });
   }
 
@@ -124,7 +129,12 @@ class _BlockInputOverlayState extends ConsumerState<BlockInputOverlay> {
       name: nameController.text.trim(),
       role: roleController.text.trim(),
       department: departmentController.text.trim(),
+      hierarchy: selectedHierarchy,
       emails: isMultipleEmails ? emails : [emailController.text.trim()],
+      // Preserve existing rawResults, sent, and submitted status
+      rawResults: widget.initialData?.rawResults ?? [],
+      sent: widget.initialData?.sent ?? false,
+      submitted: widget.initialData?.submitted ?? false,
     );
 
     // Save assessment results if provided
@@ -225,7 +235,13 @@ class _BlockInputOverlayState extends ConsumerState<BlockInputOverlay> {
 
   Future<void> _updateAssessmentDataRawResults(String orgId, String assessmentId, String docId, List<int> rawResults) async {
     try {
-      await FirestoreService.instance.collection('orgs').doc(orgId).collection('assessments').doc(assessmentId).collection('data').doc(docId).update({'rawResults': rawResults});
+      await FirestoreService.instance.collection('orgs').doc(orgId).collection('assessments').doc(assessmentId).collection('data').doc(docId).update(
+        {
+          'rawResults': rawResults,
+          'sentAssessment': true,
+          'submitted': true,
+        },
+      );
     } catch (e) {
       throw Exception('Failed to update assessment data: $e');
     }
@@ -326,6 +342,10 @@ class _BlockInputOverlayState extends ConsumerState<BlockInputOverlay> {
 
                     // Department field
                     _buildTextField('Department', departmentController),
+                    const SizedBox(height: 12),
+
+                    // Hierarchy field
+                    _buildHierarchySelector(),
                     const SizedBox(height: 12),
 
                     // Assessment Results field
@@ -617,6 +637,65 @@ class _BlockInputOverlayState extends ConsumerState<BlockInputOverlay> {
             ),
           ),
         ],
+      ],
+    );
+  }
+
+  Widget _buildHierarchySelector() {
+    const List<Hierarchy> hierarchyOptions = [Hierarchy.none, Hierarchy.ceo, Hierarchy.csuite, Hierarchy.team];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Hierarchy',
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: Colors.grey.shade300),
+          ),
+          child: Row(
+            children: hierarchyOptions.map((option) {
+              final index = hierarchyOptions.indexOf(option);
+              final isSelected = selectedHierarchy == option;
+
+              return Expanded(
+                child: GestureDetector(
+                  onTap: () => setState(() {
+                    selectedHierarchy = option;
+                  }),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    decoration: BoxDecoration(
+                      color: isSelected ? Colors.blue : Colors.transparent,
+                      borderRadius: BorderRadius.only(
+                        topLeft: index == 0 ? const Radius.circular(7) : Radius.zero,
+                        bottomLeft: index == 0 ? const Radius.circular(7) : Radius.zero,
+                        topRight: index == hierarchyOptions.length - 1 ? const Radius.circular(7) : Radius.zero,
+                        bottomRight: index == hierarchyOptions.length - 1 ? const Radius.circular(7) : Radius.zero,
+                      ),
+                    ),
+                    child: Text(
+                      option.name,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: isSelected ? Colors.white : Colors.grey.shade700,
+                        fontWeight: FontWeight.w500,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+        ),
       ],
     );
   }

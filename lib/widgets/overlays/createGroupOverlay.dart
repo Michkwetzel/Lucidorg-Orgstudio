@@ -5,7 +5,7 @@ import 'package:platform_v2/config/enums.dart';
 import 'package:platform_v2/config/provider.dart';
 
 class CreateGroupOverlay extends ConsumerStatefulWidget {
-  final Function(Options, String)? onCreate;
+  final Function(Options, String, String)? onCreate;
   final VoidCallback? onClose;
 
   const CreateGroupOverlay({
@@ -20,8 +20,10 @@ class CreateGroupOverlay extends ConsumerStatefulWidget {
 
 class _CreateGroupOverlayState extends ConsumerState<CreateGroupOverlay> {
   final TextEditingController groupNameController = TextEditingController();
+  final TextEditingController descriptionController = TextEditingController();
   Options selectedOption = Options.select;
   List<String> availableDepartments = [];
+  List<Hierarchy> availableHierarchies = [];
 
   void _handleCreate() {
     final groupName = groupNameController.text.trim();
@@ -31,7 +33,8 @@ class _CreateGroupOverlayState extends ConsumerState<CreateGroupOverlay> {
       );
       return;
     }
-    widget.onCreate?.call(selectedOption, groupName);
+    final description = descriptionController.text.trim();
+    widget.onCreate?.call(selectedOption, groupName, description);
   }
 
   void _scanForDepartments() {
@@ -80,13 +83,72 @@ class _CreateGroupOverlayState extends ConsumerState<CreateGroupOverlay> {
     ref.read(selectedBlocksProvider.notifier).state = selectedBlocks;
   }
 
+  void _scanForHierarchies() {
+    final blockIds = ref.read(canvasProvider);
+    final hierarchies = <Hierarchy>{};
+
+    for (final blockId in blockIds) {
+      final blockNotifier = ref.read(blockNotifierProvider(blockId));
+      final blockData = blockNotifier.blockData;
+      if (blockData != null && blockData.hierarchy != Hierarchy.none) {
+        hierarchies.add(blockData.hierarchy);
+      }
+    }
+
+    setState(() {
+      availableHierarchies = hierarchies.toList()..sort((a, b) => a.name.compareTo(b.name));
+    });
+  }
+
+  void _toggleHierarchy(Hierarchy hierarchy) {
+    final selectedHierarchies = ref.read(selectedHierarchiesProvider);
+    final newSelectedHierarchies = Set<Hierarchy>.from(selectedHierarchies);
+
+    if (selectedHierarchies.contains(hierarchy)) {
+      newSelectedHierarchies.remove(hierarchy);
+    } else {
+      newSelectedHierarchies.add(hierarchy);
+    }
+
+    ref.read(selectedHierarchiesProvider.notifier).state = newSelectedHierarchies;
+    _updateSelectedBlocksFromHierarchies(newSelectedHierarchies);
+  }
+
+  void _updateSelectedBlocksFromHierarchies(Set<Hierarchy> selectedHierarchies) {
+    final blockIds = ref.read(canvasProvider);
+    final selectedBlocks = <String>{};
+
+    for (final blockId in blockIds) {
+      final blockNotifier = ref.read(blockNotifierProvider(blockId));
+      final blockData = blockNotifier.blockData;
+      if (blockData != null && selectedHierarchies.contains(blockData.hierarchy)) {
+        selectedBlocks.add(blockId);
+      }
+    }
+
+    ref.read(selectedBlocksProvider.notifier).state = selectedBlocks;
+  }
+
   void _selectAllBlocks() {
     final blockIds = ref.read(canvasProvider);
     ref.read(selectedBlocksProvider.notifier).state = Set.from(blockIds);
     ref.read(selectedDepartmentsProvider.notifier).state = {};
+    ref.read(selectedHierarchiesProvider.notifier).state = {};
   }
 
   void _handleOptionTap(Options option) {
+    // Clear all selection providers when switching options
+    ref.read(selectedBlocksProvider.notifier).state = {};
+    ref.read(selectedDepartmentsProvider.notifier).state = {};
+    ref.read(selectedHierarchiesProvider.notifier).state = {};
+    
+    // Reset local overlay state
+    setState(() {
+      selectedOption = option;
+      availableDepartments = [];
+      availableHierarchies = [];
+    });
+    
     switch (option) {
       case Options.select:
         // Enable manual block selection mode
@@ -95,25 +157,43 @@ class _CreateGroupOverlayState extends ConsumerState<CreateGroupOverlay> {
       case Options.department:
         _scanForDepartments();
         break;
+      case Options.hierarchy:
+        _scanForHierarchies();
+        break;
       case Options.all:
         _selectAllBlocks();
         break;
     }
-    setState(() => selectedOption = option);
   }
 
   @override
   void dispose() {
     groupNameController.dispose();
+    descriptionController.dispose();
     super.dispose();
   }
 
   @override
   void initState() {
     super.initState();
+    
+    // Clear all selection providers to ensure clean state
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(selectedBlocksProvider.notifier).state = {};
+      ref.read(selectedDepartmentsProvider.notifier).state = {};
+      ref.read(selectedHierarchiesProvider.notifier).state = {};
+    });
+    
     // Listen for app view changes
     ref.listenManual(appStateProvider.select((state) => state.appView), (previous, next) {
       if (next != AppView.assessmentBuild) {
+        widget.onClose?.call();
+      }
+    });
+    
+    // Listen for assessment mode changes
+    ref.listenManual(appStateProvider.select((state) => state.assessmentMode), (previous, next) {
+      if (next != AssessmentMode.assessmentGroupCreate) {
         widget.onClose?.call();
       }
     });
@@ -183,6 +263,27 @@ class _CreateGroupOverlayState extends ConsumerState<CreateGroupOverlay> {
                     ),
                     const SizedBox(height: 16),
 
+                    // Group Description Input
+                    const Text(
+                      'Description (Optional)',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: descriptionController,
+                      maxLines: 3,
+                      decoration: const InputDecoration(
+                        hintText: 'Enter group description...',
+                        border: OutlineInputBorder(),
+                        isDense: true,
+                        alignLabelWithHint: true,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
                     // Selection options (segmented buttons)
                     const Text(
                       'Selection Type',
@@ -211,6 +312,13 @@ class _CreateGroupOverlayState extends ConsumerState<CreateGroupOverlay> {
                               option: 'Department',
                               isSelected: selectedOption == Options.department,
                               onTap: () => _handleOptionTap(Options.department),
+                            ),
+                          ),
+                          Expanded(
+                            child: SegmentedOption(
+                              option: 'Hierarchy',
+                              isSelected: selectedOption == Options.hierarchy,
+                              onTap: () => _handleOptionTap(Options.hierarchy),
                             ),
                           ),
                           Expanded(
@@ -262,8 +370,45 @@ class _CreateGroupOverlayState extends ConsumerState<CreateGroupOverlay> {
                       const SizedBox(height: 16),
                     ],
 
+                    // Hierarchy Selection Section
+                    if (selectedOption == Options.hierarchy) ...[
+                      const Text(
+                        'Select Hierarchies',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      if (availableHierarchies.isNotEmpty)
+                        Consumer(
+                          builder: (context, ref, child) {
+                            final selectedHierarchies = ref.watch(selectedHierarchiesProvider);
+                            return Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: availableHierarchies.map((hierarchy) {
+                                final isSelected = selectedHierarchies.contains(hierarchy);
+                                return FilterChip(
+                                  label: Text(hierarchy.name),
+                                  selected: isSelected,
+                                  onSelected: (selected) => _toggleHierarchy(hierarchy),
+                                  selectedColor: Colors.blue.shade100,
+                                  checkmarkColor: Colors.blue.shade700,
+                                  backgroundColor: Colors.grey.shade100,
+                                  side: BorderSide(
+                                    color: isSelected ? Colors.blue.shade300 : Colors.grey.shade300,
+                                  ),
+                                );
+                              }).toList(),
+                            );
+                          },
+                        ),
+                      const SizedBox(height: 16),
+                    ],
+
                     // Selected Blocks Section
-                    if (selectedBlockIds.isNotEmpty && selectedOption != Options.department) ...[
+                    if (selectedBlockIds.isNotEmpty && selectedOption != Options.department && selectedOption != Options.hierarchy) ...[
                       const Text(
                         'Selected Blocks',
                         style: TextStyle(
@@ -325,6 +470,14 @@ class _CreateGroupOverlayState extends ConsumerState<CreateGroupOverlay> {
                                             color: Colors.grey.shade600,
                                           ),
                                         ),
+                                      if (blockData.hierarchy != Hierarchy.none)
+                                        Text(
+                                          'Hierarchy: ${blockData.hierarchy.name}',
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            color: Colors.grey.shade600,
+                                          ),
+                                        ),
                                       if (blockData.primaryEmail.isNotEmpty)
                                         Text(
                                           'Email: ${blockData.primaryEmail}',
@@ -353,6 +506,7 @@ class _CreateGroupOverlayState extends ConsumerState<CreateGroupOverlay> {
                               // Handle cancel logic here
                               ref.read(selectedBlocksProvider.notifier).state = {};
                               ref.read(selectedDepartmentsProvider.notifier).state = {};
+                              ref.read(selectedHierarchiesProvider.notifier).state = {};
                               ref.read(appStateProvider.notifier).setAssessmentMode(AssessmentMode.assessmentDataView);
                               widget.onClose?.call();
                             },
@@ -412,7 +566,7 @@ class SegmentedOption extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 6),
         decoration: BoxDecoration(
           color: isSelected ? Colors.blue : Colors.transparent,
           borderRadius: BorderRadius.only(
@@ -431,6 +585,7 @@ class SegmentedOption extends StatelessWidget {
           style: TextStyle(
             color: isSelected ? Colors.white : Colors.grey.shade700,
             fontWeight: FontWeight.w500,
+            fontSize: 13,
           ),
         ),
       ),

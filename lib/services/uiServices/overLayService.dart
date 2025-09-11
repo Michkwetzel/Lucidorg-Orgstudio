@@ -126,7 +126,7 @@ class OverlayService {
     overlay.insert(overlayEntry);
   }
 
-  static void showCreateGroup(BuildContext context, {required Function(Options, String) onCreate, VoidCallback? onCancel}) {
+  static void showCreateGroup(BuildContext context, {required Function(Options, String, String) onCreate, VoidCallback? onCancel}) {
     // Close existing create group overlay if one exists
     _activeCreateGroupOverlay?.remove();
     _activeCreateGroupOverlay = null;
@@ -136,10 +136,10 @@ class OverlayService {
 
     overlayEntry = OverlayEntry(
       builder: (context) => CreateGroupOverlay(
-        onCreate: (selectionType, groupName) {
+        onCreate: (selectionType, groupName, description) {
           overlayEntry.remove();
           _activeCreateGroupOverlay = null;
-          onCreate(selectionType, groupName);
+          onCreate(selectionType, groupName, description);
         },
         onClose: () {
           overlayEntry.remove();

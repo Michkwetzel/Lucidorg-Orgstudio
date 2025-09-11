@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:platform_v2/abstractClasses/blockBehaviourStrategy.dart';
 import 'package:platform_v2/abstractClasses/blockContext.dart';
 import 'package:platform_v2/config/constants.dart';
+import 'package:platform_v2/config/enums.dart';
 import 'package:platform_v2/config/provider.dart';
 
 class AssessmentSendStrategy extends BlockBehaviorStrategy {
@@ -29,14 +30,26 @@ class AssessmentSendStrategy extends BlockBehaviorStrategy {
 
   @override
   Widget blockData(BlockContext context) {
+    final blockData = context.blockNotifier.blockData;
+    final hierarchy = blockData?.hierarchy;
+    final showHierarchy = hierarchy != null && hierarchy != Hierarchy.none;
+    
     return Column(
       spacing: 4,
       mainAxisAlignment: MainAxisAlignment.center,
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Text(context.blockNotifier.blockData?.name ?? ""),
-        Text(context.blockNotifier.blockData?.role ?? ""),
-        Text(context.blockNotifier.blockData?.department ?? ""),
+        Text(blockData?.name ?? ""),
+        Text(blockData?.role ?? ""),
+        Text(blockData?.department ?? ""),
+        if (showHierarchy)
+          Text(
+            hierarchy.name,
+            style: const TextStyle(
+              fontWeight: FontWeight.w600,
+              fontSize: 11,
+            ),
+          ),
       ],
     );
   }

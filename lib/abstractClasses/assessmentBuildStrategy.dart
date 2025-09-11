@@ -4,6 +4,7 @@ import 'package:platform_v2/abstractClasses/blockBehaviourStrategy.dart';
 import 'package:platform_v2/abstractClasses/blockContext.dart';
 import 'package:platform_v2/abstractClasses/orgBuildStrategy.dart';
 import 'package:platform_v2/config/constants.dart';
+import 'package:platform_v2/config/enums.dart';
 import 'package:platform_v2/config/provider.dart';
 import 'package:platform_v2/services/firestoreIDGenerator.dart';
 import 'package:platform_v2/services/uiServices/overLayService.dart';
@@ -39,6 +40,8 @@ class AssessmentBuildStrategy extends BlockBehaviorStrategy {
     final blockData = context.blockNotifier.blockData;
     final hasMultipleEmails = blockData?.hasMultipleEmails ?? false;
     final emailRatio = context.blockNotifier.emailStatusRatio;
+    final hierarchy = blockData?.hierarchy;
+    final showHierarchy = hierarchy != null && hierarchy != Hierarchy.none;
 
     return Column(
       spacing: 4,
@@ -67,6 +70,14 @@ class AssessmentBuildStrategy extends BlockBehaviorStrategy {
             color: Colors.black54,
           ),
         ),
+        if (showHierarchy)
+          Text(
+            hierarchy.name,
+            style: const TextStyle(
+              fontWeight: FontWeight.w600,
+              fontSize: 11,
+            ),
+          ),
         if (hasMultipleEmails && emailRatio.isNotEmpty)
           Text(
             emailRatio,

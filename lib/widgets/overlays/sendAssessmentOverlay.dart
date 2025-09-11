@@ -105,6 +105,9 @@ class _SendAssessmentOverlayState extends ConsumerState<SendAssessmentOverlay> {
       case Options.department:
         _scanForDepartments();
         break;
+      case Options.hierarchy:
+        // Hierarchy selection not implemented for assessment sending
+        break;
       case Options.all:
         _selectAllBlocks();
         break;
@@ -121,9 +124,24 @@ class _SendAssessmentOverlayState extends ConsumerState<SendAssessmentOverlay> {
   @override
   void initState() {
     super.initState();
+    
+    // Clear all selection providers to ensure clean state
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(selectedBlocksProvider.notifier).state = {};
+      ref.read(selectedDepartmentsProvider.notifier).state = {};
+      ref.read(selectedHierarchiesProvider.notifier).state = {};
+    });
+    
     // Listen for app view changes
     ref.listenManual(appStateProvider.select((state) => state.appView), (previous, next) {
       if (next != AppView.assessmentBuild) {
+        widget.onClose?.call();
+      }
+    });
+    
+    // Listen for assessment mode changes
+    ref.listenManual(appStateProvider.select((state) => state.assessmentMode), (previous, next) {
+      if (next != AssessmentMode.assessmentSend) {
         widget.onClose?.call();
       }
     });

@@ -10,9 +10,11 @@ enum ChartType { bar, radar, both }
 
 enum Permission { admin, error }
 
-enum Options { select, department, all }
+enum Options { select, department, hierarchy, all }
 
 enum Pilar { alignment, people, process, leadership, none }
+
+enum Hierarchy { ceo, csuite, team, none}
 
 enum Benchmark {
   orgIndex,
