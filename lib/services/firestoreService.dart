@@ -48,14 +48,14 @@ class FirestoreService {
 
   static Future<void> addBlock({required String? orgId, String? assessmentId, required Map<String, dynamic> blockData}) async {
     final collection = _getBlocksCollection(orgId: orgId, assessmentId: assessmentId);
-    await collection.doc(blockData['blockID']).set({
+    await collection.doc(blockData['blockId']).set({
       ...blockData,
     });
   }
 
   static Future<void> addAnalysisBlock({required String? orgId, String? assessmentId, required Map<String, dynamic> blockData}) async {
     final collection = _instance.collection('orgs').doc(orgId).collection('assessments').doc(assessmentId).collection('analysisBlocks');
-    await collection.doc(blockData['blockID']).set({
+    await collection.doc(blockData['blockId']).set({
       ...blockData,
     });
   }

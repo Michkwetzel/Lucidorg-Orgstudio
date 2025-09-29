@@ -1,9 +1,9 @@
 name: platform_v2
-description: "Org Builder"
+description: "Business operations platform."
 
 publish_to: 'none'
 
-version: 2.0.2
+version: 2.2.0
 
 environment:
   sdk: ^3.8.0

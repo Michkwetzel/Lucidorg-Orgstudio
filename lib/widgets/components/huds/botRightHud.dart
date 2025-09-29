@@ -15,7 +15,8 @@ class BotRightHud extends ConsumerWidget {
     final assessmentMode = ref.watch(appStateProvider).assessmentMode;
 
     // Show in assessmentBuild, assessmentDataView, and assessmentAnalyze modes
-    if (appView != AppView.assessmentBuild || (assessmentMode != AssessmentMode.assessmentBuild && assessmentMode != AssessmentMode.assessmentDataView && assessmentMode != AssessmentMode.assessmentAnalyze)) {
+    if (appView != AppView.assessmentBuild ||
+        (assessmentMode != AssessmentMode.assessmentBuild && assessmentMode != AssessmentMode.assessmentDataView && assessmentMode != AssessmentMode.assessmentAnalyze)) {
       return SizedBox.shrink();
     }
 
@@ -78,6 +79,7 @@ class BotRightHud extends ConsumerWidget {
             };
 
             HttpService.postRequest(path: 'https://us-central1-efficiency-1st.cloudfunctions.net/sendAssessmentToBlockIdsV2', request: request);
+            // HttpService.postRequest(path: 'http://127.0.0.1:5001/efficiency-1st/us-central1/sendAssessmentToBlockIdsV2', request: request);
           },
           onCancel: () {},
         );
@@ -120,7 +122,7 @@ class BotRightHud extends ConsumerWidget {
     for (final blockId in blockIds) {
       final blockNotifier = ref.read(blockNotifierProvider(blockId));
       final blockData = blockNotifier.blockData;
-      
+
       // Check data availability instead of email count - more reliable
       final allDataDocs = blockNotifier.allDataDocs;
       if (allDataDocs.isNotEmpty) {
@@ -135,7 +137,7 @@ class BotRightHud extends ConsumerWidget {
         // Single-email data available: use blockResultDocId
         dataDocIds.add(blockNotifier.blockResultDocId);
       }
-      
+
       // Collect rawResults for averaging (this works for both single and multi-email)
       if (blockData != null && blockData.rawResults.isNotEmpty) {
         // Only include blocks with complete rawResults (37 questions)

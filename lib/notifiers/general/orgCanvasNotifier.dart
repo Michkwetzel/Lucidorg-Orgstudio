@@ -125,7 +125,7 @@ class OrgCanvasNotifier extends StateNotifier<Set<String>> {
           orgId: appState.orgId,
           assessmentId: appState.assessmentId,
           blockData: {
-            'blockID': blockID,
+            'blockId': blockID,
             'position': {'x': position.dx, 'y': position.dy},
             ...analysisBlockData.toMap(),
           },
@@ -136,7 +136,7 @@ class OrgCanvasNotifier extends StateNotifier<Set<String>> {
           orgId: appState.orgId,
           assessmentId: appState.assessmentId,
           blockData: {
-            'blockID': blockID,
+            'blockId': blockID,
             'position': {'x': position.dx, 'y': position.dy},
             if (department != null) 'department': department,
           },

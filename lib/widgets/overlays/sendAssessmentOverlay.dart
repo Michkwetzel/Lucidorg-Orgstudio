@@ -23,7 +23,7 @@ class _SendAssessmentOverlayState extends ConsumerState<SendAssessmentOverlay> {
   Options selectedOption = Options.select;
   List<String> availableDepartments = [];
 
-  void _handleSend() {
+  void _handleSend() { 
     widget.onSend?.call(selectedOption, textController.text.trim());
     // final selectedBlockIds = ref.read(selectedBlocksProvider);
 
