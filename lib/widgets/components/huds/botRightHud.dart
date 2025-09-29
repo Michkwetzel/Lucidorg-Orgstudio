@@ -68,7 +68,7 @@ class BotRightHud extends ConsumerWidget {
         // Open the confirmation Overlay
         OverlayService.showAssessmentSendConfirmation(
           context,
-          onSend: () {
+          onSend: () async {
             final blockIds = ref.read(selectedBlocksProvider);
             final assessmentId = ref.read(appStateProvider).assessmentId;
             final orgId = ref.read(appStateProvider).orgId;
@@ -78,8 +78,14 @@ class BotRightHud extends ConsumerWidget {
               'blockIds': blockIds.toList(),
             };
 
-            HttpService.postRequest(path: 'https://us-central1-efficiency-1st.cloudfunctions.net/sendAssessmentToBlockIdsV2', request: request);
-            // HttpService.postRequest(path: 'http://127.0.0.1:5001/efficiency-1st/us-central1/sendAssessmentToBlockIdsV2', request: request);
+            try {
+              final response = await HttpService.postRequest(path: 'https://us-central1-efficiency-1st.cloudfunctions.net/sendAssessmentToBlockIdsV2', request: request);
+              // final response = await HttpService.postRequest(path: 'http://127.0.0.1:5001/efficiency-1st/us-central1/sendAssessmentToBlockIdsV2', request: request);
+
+              return {'success': true, 'data': response};
+            } catch (e) {
+              return {'success': false, 'error': e.toString()};
+            }
           },
           onCancel: () {},
         );

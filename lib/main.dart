@@ -21,6 +21,8 @@ void main() async {
   final router = setupRouter();
   NavigationService.initialize(router);
 
+  print("platform v2.1.1");
+
   runApp(const ProviderScope(child: App()));
 
   // Shows FPS overlay in debug mode

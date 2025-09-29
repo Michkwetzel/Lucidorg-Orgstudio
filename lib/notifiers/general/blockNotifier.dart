@@ -152,6 +152,13 @@ class BlockNotifier extends ChangeNotifier {
   }
 
   void _setupResultStream() {
+    // Reset multi-email state when switching to single email mode
+    if (_blockData?.hasMultipleEmails != true) {
+      _allDataDocs = [];
+      _sentCount = 0;
+      _submittedCount = 0;
+    }
+
     // Use conditional logic based on whether block has multiple emails
     if (_blockData?.hasMultipleEmails == true) {
       _setupMultiEmailResultStream();

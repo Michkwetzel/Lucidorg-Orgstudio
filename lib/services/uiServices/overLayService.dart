@@ -153,17 +153,14 @@ class OverlayService {
     overlay.insert(overlayEntry);
   }
 
-  static void showAssessmentSendConfirmation(BuildContext context, {required VoidCallback onSend, VoidCallback? onCancel}) {
+  static void showAssessmentSendConfirmation(BuildContext context, {required Future<Map<String, dynamic>> Function() onSend, VoidCallback? onCancel}) {
     // Note: Confirmation overlay can stack over send assessment overlay
     final overlay = Overlay.of(context);
     late OverlayEntry overlayEntry;
 
     overlayEntry = OverlayEntry(
       builder: (context) => AssessmentSendConfirmationOverlay(
-        onSend: () {
-          overlayEntry.remove();
-          onSend();
-        },
+        onSend: onSend,
         onCancel: () {
           overlayEntry.remove();
           onCancel?.call();
