@@ -122,7 +122,7 @@ class AnalysisBlockNotifer extends ChangeNotifier {
 
       // Debounce before saving to firestore AND ending drag state
       _debounceTimer = Timer(_debounceDuration, () async {
-        print("Single doc upload");
+        // print("Single doc upload");
 
         await FirestoreService.updateAnalysisBlockPosition(orgId: appState.orgId, assessmentId: appState.assessmentId, blockID: blockID, position: {'x': newPosition.dx, 'y': newPosition.dy});
         
@@ -363,7 +363,7 @@ class AnalysisBlockNotifer extends ChangeNotifier {
       );
       // The block will be removed from UI automatically through the stream subscription
     } catch (e) {
-      print("Error deleting analysis block $blockID: $e");
+      // print("Error deleting analysis block $blockID: $e");
       rethrow; // Let the UI handle the error
     }
   }

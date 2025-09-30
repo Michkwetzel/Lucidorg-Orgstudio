@@ -47,7 +47,7 @@ class BlockNotifier extends ChangeNotifier {
     _blockDataDocStream = FirestoreService.getBlockStream(orgId: appState.orgId, assessmentId: appState.assessmentId, blockID: blockID);
     _blockDataDocStreamSub = _blockDataDocStream.listen(
       (snapshot) {
-        print("Updating block data");
+        // print("Updating block data");
         DocumentSnapshot<Map<String, dynamic>> doc = snapshot;
         // Check if document exists before accessing data
         if (doc.exists && doc.data() != null) {
@@ -74,7 +74,7 @@ class BlockNotifier extends ChangeNotifier {
               hierarchy = Hierarchy.none;
               break;
           }
-          print("blockID: $blockID, hierarchy: ${data['hierarchy']}");
+          // print("blockID: $blockID, hierarchy: ${data['hierarchy']}");
 
           BlockData newBlockData = BlockData(
             name: name,
@@ -172,7 +172,7 @@ class BlockNotifier extends ChangeNotifier {
 
     _blockResultStreamSub = blockResultStream.listen(
       (event) {
-        print("Updating block results");
+        // print("Updating block results");
 
         QuerySnapshot<Map<String, dynamic>> snapshot = event;
         if (snapshot.docs.isNotEmpty) {
@@ -356,7 +356,7 @@ class BlockNotifier extends ChangeNotifier {
     }
 
     collectDescendants(blockID);
-    print("updating descendants: $allDescendants");
+    // print("updating descendants: $allDescendants");
     _descendants = allDescendants;
   }
 
@@ -369,7 +369,7 @@ class BlockNotifier extends ChangeNotifier {
 
       // Debounce before saving to firestore
       _debounceTimer = Timer(_debounceDuration, () async {
-        print("Single doc upload");
+        // print("Single doc upload");
 
         await FirestoreService.updateBlockPosition(orgId: appState.orgId, assessmentId: appState.assessmentId, blockID: blockID, position: {'x': newPosition.dx, 'y': newPosition.dy});
       });

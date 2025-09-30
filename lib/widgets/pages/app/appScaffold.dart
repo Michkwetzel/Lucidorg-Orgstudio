@@ -11,7 +11,7 @@ class AppScaffold extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    print('AppScaffold building...');
+    // print('AppScaffold building...');
     return Scaffold(
       backgroundColor: Colors.grey,
       body: Stack(

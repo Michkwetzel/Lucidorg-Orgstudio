@@ -95,7 +95,7 @@ class AssessmentSendStrategy extends BlockBehaviorStrategy {
 
   @override
   void onTap(BlockContext context) {
-    print("Block tapped");
+    // print("Block tapped");
     final selectedBlocks = context.ref.read(selectedBlocksProvider);
 
     if (selectedBlocks.contains(context.blockId)) {
