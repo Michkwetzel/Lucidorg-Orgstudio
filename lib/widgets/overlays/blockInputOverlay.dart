@@ -40,6 +40,8 @@ class _BlockInputOverlayState extends ConsumerState<BlockInputOverlay> {
   bool isLoadingAssessmentResults = false;
   bool isSavingAssessmentResults = false;
   Hierarchy selectedHierarchy = Hierarchy.none;
+  bool emailError = false;
+  String emailErrorMessage = '';
 
   @override
   void initState() {
@@ -112,6 +114,14 @@ class _BlockInputOverlayState extends ConsumerState<BlockInputOverlay> {
     });
   }
 
+  bool _isValidEmail(String email) {
+    // RFC 5322 compliant email validation
+    final emailRegex = RegExp(
+      r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
+    );
+    return emailRegex.hasMatch(email.trim());
+  }
+
   void _handleSave() async {
     List<String> emails = [];
 
@@ -123,14 +133,41 @@ class _BlockInputOverlayState extends ConsumerState<BlockInputOverlay> {
 
       // Add CSV emails
       emails.addAll(csvEmails);
+
+      // Validate all emails
+      final invalidEmails = emails.where((email) => !_isValidEmail(email)).toList();
+      if (invalidEmails.isNotEmpty) {
+        setState(() {
+          emailError = true;
+          emailErrorMessage = 'Invalid email(s): ${invalidEmails.join(', ')}';
+        });
+        return;
+      }
+    } else {
+      // Validate single email
+      final email = emailController.text.trim();
+      if (email.isNotEmpty && !_isValidEmail(email)) {
+        setState(() {
+          emailError = true;
+          emailErrorMessage = 'Invalid email format';
+        });
+        return;
+      }
+      emails = [email];
     }
+
+    // Clear any email errors if validation passed
+    setState(() {
+      emailError = false;
+      emailErrorMessage = '';
+    });
 
     final data = BlockData(
       name: nameController.text.trim(),
       role: roleController.text.trim(),
       department: departmentController.text.trim(),
       hierarchy: selectedHierarchy,
-      emails: isMultipleEmails ? emails : [emailController.text.trim()],
+      emails: emails,
       // Preserve existing rawResults, sent, and submitted status
       rawResults: widget.initialData?.rawResults ?? [],
       sent: widget.initialData?.sent ?? false,
@@ -430,7 +467,7 @@ class _BlockInputOverlayState extends ConsumerState<BlockInputOverlay> {
                           const SizedBox(height: 12),
 
                           // Email/Emails field
-                          _buildTextField(
+                          _buildEmailField(
                             isMultipleEmails ? 'Emails' : 'Email',
                             emailController,
                             hintText: isMultipleEmails ? 'Enter comma-separated emails' : 'Enter Email',
@@ -705,6 +742,68 @@ class _BlockInputOverlayState extends ConsumerState<BlockInputOverlay> {
             }).toList(),
           ),
         ),
+      ],
+    );
+  }
+
+  Widget _buildEmailField(String label, TextEditingController controller, {String? hintText}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        const SizedBox(height: 4),
+        TextField(
+          controller: controller,
+          maxLines: isMultipleEmails && label == 'Emails' ? 3 : 1,
+          onChanged: (value) => setState(() {
+            // Clear error when user starts typing
+            if (emailError) {
+              emailError = false;
+              emailErrorMessage = '';
+            }
+          }),
+          decoration: InputDecoration(
+            hintText: hintText ?? 'Enter $label',
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(
+                color: emailError ? Colors.red.shade300 : Colors.grey.shade300,
+              ),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(
+                color: emailError ? Colors.red.shade300 : Colors.grey.shade300,
+              ),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(
+                color: emailError ? Colors.red : Colors.blue,
+              ),
+            ),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 8,
+            ),
+          ),
+        ),
+        if (emailError) ...[
+          const SizedBox(height: 4),
+          Text(
+            emailErrorMessage,
+            style: TextStyle(
+              fontSize: 12,
+              color: Colors.red.shade600,
+            ),
+          ),
+        ],
       ],
     );
   }
