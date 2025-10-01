@@ -10,7 +10,7 @@ import 'package:platform_v2/notifiers/general/blockNotifier.dart';
 import 'package:platform_v2/services/firestoreService.dart';
 
 class AnalysisBlockNotifer extends ChangeNotifier {
-  final String blockID;
+  final String blockId;
   final GroupsNotifier groupsNotifier;
   bool _dataLoaded = false;
   bool _isDragging = false;
@@ -26,8 +26,8 @@ class AnalysisBlockNotifer extends ChangeNotifier {
   static const Duration _debounceDuration = Duration(milliseconds: 2000);
   static const Duration _filtersDebounceDuration = Duration(milliseconds: 10000);
 
-  AnalysisBlockNotifer({required this.blockID, required this.appState, required this.groupsNotifier}) {
-    final stream = FirestoreService.getAnalysisBlockStream(orgId: appState.orgId, assessmentId: appState.assessmentId, blockId: blockID);
+  AnalysisBlockNotifer({required this.blockId, required this.appState, required this.groupsNotifier}) {
+    final stream = FirestoreService.getAnalysisBlockStream(orgId: appState.orgId, assessmentId: appState.assessmentId, blockId: blockId);
 
     _blockDataDocStreamSub = stream.listen((snapshot) {
       if (snapshot.exists && snapshot.data() != null) {
@@ -124,7 +124,7 @@ class AnalysisBlockNotifer extends ChangeNotifier {
       _debounceTimer = Timer(_debounceDuration, () async {
         // print("Single doc upload");
 
-        await FirestoreService.updateAnalysisBlockPosition(orgId: appState.orgId, assessmentId: appState.assessmentId, blockID: blockID, position: {'x': newPosition.dx, 'y': newPosition.dy});
+        await FirestoreService.updateAnalysisBlockPosition(orgId: appState.orgId, assessmentId: appState.assessmentId, blockId: blockId, position: {'x': newPosition.dx, 'y': newPosition.dy});
         
         // End drag state to restore full table rendering
         if (_isDragging) {
@@ -156,7 +156,7 @@ class AnalysisBlockNotifer extends ChangeNotifier {
       await FirestoreService.updateAnalysisBlockData(
         orgId: appState.orgId,
         assessmentId: appState.assessmentId,
-        blockID: blockID,
+        blockId: blockId,
         blockData: blockData,
       );
     }
@@ -170,7 +170,7 @@ class AnalysisBlockNotifer extends ChangeNotifier {
       await FirestoreService.updateAnalysisBlockData(
         orgId: appState.orgId,
         assessmentId: appState.assessmentId,
-        blockID: blockID,
+        blockId: blockId,
         blockData: blockData,
       );
     }
@@ -184,7 +184,7 @@ class AnalysisBlockNotifer extends ChangeNotifier {
       await FirestoreService.updateAnalysisBlockData(
         orgId: appState.orgId,
         assessmentId: appState.assessmentId,
-        blockID: blockID,
+        blockId: blockId,
         blockData: blockData,
       );
     }
@@ -232,7 +232,7 @@ class AnalysisBlockNotifer extends ChangeNotifier {
       await FirestoreService.updateAnalysisBlockData(
         orgId: appState.orgId,
         assessmentId: appState.assessmentId,
-        blockID: blockID,
+        blockId: blockId,
         blockData: blockData,
       );
     });
@@ -245,7 +245,7 @@ class AnalysisBlockNotifer extends ChangeNotifier {
       await FirestoreService.updateAnalysisBlockData(
         orgId: appState.orgId,
         assessmentId: appState.assessmentId,
-        blockID: blockID,
+        blockId: blockId,
         blockData: blockData,
       );
     });
@@ -359,11 +359,11 @@ class AnalysisBlockNotifer extends ChangeNotifier {
       await FirestoreService.deleteAnalysisBlock(
         orgId: appState.orgId,
         assessmentId: appState.assessmentId,
-        blockID: blockID,
+        blockId: blockId,
       );
       // The block will be removed from UI automatically through the stream subscription
     } catch (e) {
-      // print("Error deleting analysis block $blockID: $e");
+      // print("Error deleting analysis block $blockId: $e");
       rethrow; // Let the UI handle the error
     }
   }

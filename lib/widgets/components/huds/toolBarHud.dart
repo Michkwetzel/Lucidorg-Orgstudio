@@ -14,9 +14,9 @@ class ToolBarHud extends ConsumerWidget {
         GestureDetector(
           onTap: () {
             // // Add new block at center of canvas
-            // final blockID = FirestoreIdGenerator.generate();
-            // ref.read(canvasProvider.notifier).addBlock(blockID);
-            // print("Added new block: $blockID");
+            // final blockId = FirestoreIdGenerator.generate();
+            // ref.read(canvasProvider.notifier).addBlock(blockId);
+            // print("Added new block: $blockId");
           },
           child: Container(
             width: 120,

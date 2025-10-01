@@ -72,8 +72,8 @@ class _OrgCanvasState extends ConsumerState<OrgCanvas> {
                 // Create new block at tap position
                 if (ref.read(appStateProvider.notifier).assessmentMode != AssessmentMode.assessmentSend) {
                   // But only if not select blocks for assessment mode.
-                  final blockID = FirestoreIdGenerator.generate();
-                  ref.read(canvasProvider.notifier).addBlock(blockID, _lastTapPosition);
+                  final blockId = FirestoreIdGenerator.generate();
+                  ref.read(canvasProvider.notifier).addBlock(blockId, _lastTapPosition);
                 }
               },
               child: Container(
@@ -89,16 +89,16 @@ class _OrgCanvasState extends ConsumerState<OrgCanvas> {
                     // Conditionally render analysis blocks or regular blocks
                     if (assessmentMode == AssessmentMode.assessmentAnalyze)
                       ...canvasState.map(
-                        (blockID) => AnalysisBlock(
-                          key: ValueKey('analysis_$blockID'), // Unique key for analysis blocks
-                          blockId: blockID,
+                        (blockId) => AnalysisBlock(
+                          key: ValueKey('analysis_$blockId'), // Unique key for analysis blocks
+                          blockId: blockId,
                         ),
                       )
                     else
                       ...canvasState.map(
-                        (blockID) => Block(
-                          key: ValueKey('block_$blockID'), // Unique key for regular blocks
-                          blockId: blockID,
+                        (blockId) => Block(
+                          key: ValueKey('block_$blockId'), // Unique key for regular blocks
+                          blockId: blockId,
                         ),
                       ),
                   ],

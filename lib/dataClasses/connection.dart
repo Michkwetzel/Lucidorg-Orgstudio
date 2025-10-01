@@ -9,17 +9,26 @@ class Connection {
 
   factory Connection.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
+
+    // Handle both old (parentID/childID) and new (parentId/childId) field names
+    final parentId = (data['parentId'] ?? data['parentID']) as String?;
+    final childId = (data['childId'] ?? data['childID']) as String?;
+
+    if (parentId == null || childId == null) {
+      throw Exception('Connection document ${doc.id} is missing required fields. parentId: $parentId, childId: $childId');
+    }
+
     return Connection(
       doc.id,
-      parentId: data['parentID'] as String,
-      childId: data['childID'] as String,
+      parentId: parentId,
+      childId: childId,
     );
   }
 
   Map<String, dynamic> toFirestore() {
     return {
-      'parentID': parentId,
-      'childID': childId,
+      'parentId': parentId,
+      'childId': childId,
     };
   }
 }

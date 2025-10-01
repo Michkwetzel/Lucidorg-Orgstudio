@@ -60,21 +60,21 @@ class FirestoreService {
     });
   }
 
-  static Future<void> deleteBlock({required String? orgId, String? assessmentId, required String blockID}) async {
+  static Future<void> deleteBlock({required String? orgId, String? assessmentId, required String blockId}) async {
     final collection = _getBlocksCollection(orgId: orgId, assessmentId: assessmentId);
-    await collection.doc(blockID).delete();
+    await collection.doc(blockId).delete();
   }
 
-  static Future<void> deleteAnalysisBlock({required String? orgId, String? assessmentId, required String blockID}) async {
+  static Future<void> deleteAnalysisBlock({required String? orgId, String? assessmentId, required String blockId}) async {
     final collection = _instance.collection('orgs').doc(orgId).collection('assessments').doc(assessmentId).collection('analysisBlocks');
-    await collection.doc(blockID).delete();
+    await collection.doc(blockId).delete();
   }
 
-  static Future<void> deleteBlockDataDocs({required String? orgId, required String? assessmentId, required String blockID}) async {
+  static Future<void> deleteBlockDataDocs({required String? orgId, required String? assessmentId, required String blockId}) async {
     final collection = _instance.collection('orgs').doc(orgId).collection('assessments').doc(assessmentId).collection('data');
 
     // Query all data docs for this block
-    final querySnapshot = await collection.where('blockId', isEqualTo: blockID).get();
+    final querySnapshot = await collection.where('blockId', isEqualTo: blockId).get();
 
     if (querySnapshot.docs.isEmpty) {
       return; // No data docs to delete
@@ -89,23 +89,23 @@ class FirestoreService {
     await batch.commit();
   }
 
-  static Future<void> updateBlockPosition({required String? orgId, String? assessmentId, required String blockID, required Map<String, double> position}) async {
+  static Future<void> updateBlockPosition({required String? orgId, String? assessmentId, required String blockId, required Map<String, double> position}) async {
     final collection = _getBlocksCollection(orgId: orgId, assessmentId: assessmentId);
-    await collection.doc(blockID).update({
+    await collection.doc(blockId).update({
       'position': position,
     });
   }
 
-  static Future<void> updateAnalysisBlockPosition({required String? orgId, String? assessmentId, required String blockID, required Map<String, double> position}) async {
+  static Future<void> updateAnalysisBlockPosition({required String? orgId, String? assessmentId, required String blockId, required Map<String, double> position}) async {
     final collection = _instance.collection('orgs').doc(orgId).collection('assessments').doc(assessmentId).collection('analysisBlocks');
-    await collection.doc(blockID).update({
+    await collection.doc(blockId).update({
       'position': position,
     });
   }
 
-  static Future<void> updateAnalysisBlockData({required String? orgId, String? assessmentId, required String blockID, required AnalysisBlockData blockData}) async {
+  static Future<void> updateAnalysisBlockData({required String? orgId, String? assessmentId, required String blockId, required AnalysisBlockData blockData}) async {
     final collection = _instance.collection('orgs').doc(orgId).collection('assessments').doc(assessmentId).collection('analysisBlocks');
-    await collection.doc(blockID).update({
+    await collection.doc(blockId).update({
       'blockName': blockData.blockName,
       'analysisBlockType': blockData.analysisBlockType.name,
       'analysisSubType': blockData.analysisSubType.name,
@@ -113,9 +113,9 @@ class FirestoreService {
     });
   }
 
-  static Future<void> updateData({required String? orgId, String? assessmentId, required String blockID, required BlockData blockData}) async {
+  static Future<void> updateData({required String? orgId, String? assessmentId, required String blockId, required BlockData blockData}) async {
     final collection = _getBlocksCollection(orgId: orgId, assessmentId: assessmentId);
-    await collection.doc(blockID).update({
+    await collection.doc(blockId).update({
       'name': blockData.name,
       'role': blockData.role,
       'department': blockData.department,
@@ -125,27 +125,27 @@ class FirestoreService {
   }
 
   // For now just 1 email doc per block.
-  static Stream<QuerySnapshot<Map<String, dynamic>>> getBlockResultStream({required String? orgId, required String? assessmentId, required String blockID}) {
+  static Stream<QuerySnapshot<Map<String, dynamic>>> getBlockResultStream({required String? orgId, required String? assessmentId, required String blockId}) {
     // final collectionPath = 'orgs/$orgId/assessments/$assessmentId/data';
-    // print('Block result stream collection path: $collectionPath (where blockId == $blockID)');
+    // print('Block result stream collection path: $collectionPath (where blockId == $blockId)');
 
     final collection = _instance.collection('orgs').doc(orgId).collection('assessments').doc(assessmentId).collection('data');
-    return collection.where('blockId', isEqualTo: blockID).limit(1).snapshots();
+    return collection.where('blockId', isEqualTo: blockId).limit(1).snapshots();
   }
 
   // Get ALL data docs for a block (for multi-email blocks)
-  static Stream<QuerySnapshot<Map<String, dynamic>>> getAllBlockResultsStream({required String? orgId, required String? assessmentId, required String blockID}) {
+  static Stream<QuerySnapshot<Map<String, dynamic>>> getAllBlockResultsStream({required String? orgId, required String? assessmentId, required String blockId}) {
     // final collectionPath = 'orgs/$orgId/assessments/$assessmentId/data';
-    // print('All block results stream collection path: $collectionPath (where blockId == $blockID)');
+    // print('All block results stream collection path: $collectionPath (where blockId == $blockId)');
 
     final collection = _instance.collection('orgs').doc(orgId).collection('assessments').doc(assessmentId).collection('data');
-    return collection.where('blockId', isEqualTo: blockID).snapshots();
+    return collection.where('blockId', isEqualTo: blockId).snapshots();
   }
 
   // 1 Block. BlockNotifier subscribes to this
-  static Stream<DocumentSnapshot<Map<String, dynamic>>> getBlockStream({required String? orgId, String? assessmentId, required String blockID}) {
+  static Stream<DocumentSnapshot<Map<String, dynamic>>> getBlockStream({required String? orgId, String? assessmentId, required String blockId}) {
     final collection = _getBlocksCollection(orgId: orgId, assessmentId: assessmentId);
-    return collection.doc(blockID).snapshots();
+    return collection.doc(blockId).snapshots();
   }
 
   // All blocks in Collection
@@ -182,8 +182,8 @@ class FirestoreService {
     final collection = _getConnectionsCollection(orgId: orgId, assessmentId: assessmentId);
     await collection.doc(connection.id).set({
       'id': connection.id,
-      'parentID': connection.parentId,
-      'childID': connection.childId,
+      'parentId': connection.parentId,
+      'childId': connection.childId,
     });
   }
 
@@ -197,10 +197,10 @@ class FirestoreService {
     WriteBatch batch = _instance.batch();
 
     final collection = _getBlocksCollection(orgId: orgId, assessmentId: assessmentId);
-    for (String blockID in positions.keys) {
-      final docRef = collection.doc(blockID);
+    for (String blockId in positions.keys) {
+      final docRef = collection.doc(blockId);
       batch.update(docRef, {
-        'position': {'x': positions[blockID]!.dx, 'y': positions[blockID]!.dy},
+        'position': {'x': positions[blockId]!.dx, 'y': positions[blockId]!.dy},
       });
     }
 
@@ -277,8 +277,8 @@ class FirestoreService {
     });
 
     await _instance.collection('orgs').doc(orgref.id).collection('connections').doc().set({
-      'parentID': docRef1.id,
-      'childID': docRef2.id,
+      'parentId': docRef1.id,
+      'childId': docRef2.id,
     });
   }
 

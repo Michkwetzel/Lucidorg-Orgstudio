@@ -11,7 +11,7 @@ import 'package:platform_v2/services/firestoreService.dart';
 class BlockNotifier extends ChangeNotifier {
   Logger logger = Logger('BlockNotifier');
 
-  final String blockID;
+  final String blockId;
   String blockResultDocId = '';
   Set<String> _descendants = {};
   bool positionLoaded = false;
@@ -40,11 +40,11 @@ class BlockNotifier extends ChangeNotifier {
   static const Duration _debounceDuration = Duration(milliseconds: 500);
 
   BlockNotifier({
-    required this.blockID,
+    required this.blockId,
     required this.appState,
   }) {
     // Get Block doc stream and listen to fields
-    _blockDataDocStream = FirestoreService.getBlockStream(orgId: appState.orgId, assessmentId: appState.assessmentId, blockID: blockID);
+    _blockDataDocStream = FirestoreService.getBlockStream(orgId: appState.orgId, assessmentId: appState.assessmentId, blockId: blockId);
     _blockDataDocStreamSub = _blockDataDocStream.listen(
       (snapshot) {
         // print("Updating block data");
@@ -74,7 +74,7 @@ class BlockNotifier extends ChangeNotifier {
               hierarchy = Hierarchy.none;
               break;
           }
-          // print("blockID: $blockID, hierarchy: ${data['hierarchy']}");
+          // print("blockId: $blockId, hierarchy: ${data['hierarchy']}");
 
           BlockData newBlockData = BlockData(
             name: name,
@@ -100,7 +100,7 @@ class BlockNotifier extends ChangeNotifier {
 
             if (!positionLoaded) {
               positionLoaded = true;
-              // print("Initial load completed for block $blockID");
+              // print("Initial load completed for block $blockId");
             }
 
             // Set up result stream on first load or if email count changed
@@ -112,7 +112,7 @@ class BlockNotifier extends ChangeNotifier {
             // logger.info("Block update state");
             notifyListeners();
           } else {
-            // print("No changes detected for block $blockID - skipping update");
+            // print("No changes detected for block $blockId - skipping update");
           }
         }
       },
@@ -183,7 +183,7 @@ class BlockNotifier extends ChangeNotifier {
   }
 
   void _setupSingleEmailResultStream() {
-    blockResultStream = FirestoreService.getBlockResultStream(orgId: appState.orgId, assessmentId: appState.assessmentId, blockID: blockID);
+    blockResultStream = FirestoreService.getBlockResultStream(orgId: appState.orgId, assessmentId: appState.assessmentId, blockId: blockId);
 
     _blockResultStreamSub = blockResultStream.listen(
       (event) {
@@ -222,9 +222,9 @@ class BlockNotifier extends ChangeNotifier {
             if (rawResultsInt.isNotEmpty) {
               try {
                 _benchmarks = _calculateBenchmarks(rawResultsInt);
-                // print("Calculated benchmarks for block $blockID: ${_benchmarks?.length} benchmarks");
+                // print("Calculated benchmarks for block $blockId: ${_benchmarks?.length} benchmarks");
               } catch (e) {
-                print("Error calculating benchmarks for block $blockID: $e");
+                print("Error calculating benchmarks for block $blockId: $e");
                 _benchmarks = null;
               }
             }
@@ -240,7 +240,7 @@ class BlockNotifier extends ChangeNotifier {
   }
 
   void _setupMultiEmailResultStream() {
-    blockResultStream = FirestoreService.getAllBlockResultsStream(orgId: appState.orgId, assessmentId: appState.assessmentId, blockID: blockID);
+    blockResultStream = FirestoreService.getAllBlockResultsStream(orgId: appState.orgId, assessmentId: appState.assessmentId, blockId: blockId);
 
     _blockResultStreamSub = blockResultStream.listen(
       (event) {
@@ -284,7 +284,7 @@ class BlockNotifier extends ChangeNotifier {
             allRawResultsLists.add(resultsList);
           }
         } catch (e) {
-          print("Error casting rawResults for block $blockID: $e");
+          print("Error casting rawResults for block $blockId: $e");
         }
       }
     }
@@ -309,9 +309,9 @@ class BlockNotifier extends ChangeNotifier {
     if (averagedRawResults.isNotEmpty) {
       try {
         _benchmarks = _calculateBenchmarks(averagedRawResults);
-        // print("Calculated benchmarks for multi-email block $blockID: ${_benchmarks?.length} benchmarks from ${allRawResultsLists.length} submissions");
+        // print("Calculated benchmarks for multi-email block $blockId: ${_benchmarks?.length} benchmarks from ${allRawResultsLists.length} submissions");
       } catch (e) {
-        print("Error calculating benchmarks for multi-email block $blockID: $e");
+        print("Error calculating benchmarks for multi-email block $blockId: $e");
         _benchmarks = null;
       }
     }
@@ -359,18 +359,18 @@ class BlockNotifier extends ChangeNotifier {
     Set<String> visited = {};
 
     // recursive function to get all descendants
-    void collectDescendants(String currentBlockID) {
-      if (visited.contains(currentBlockID)) return; // Prevent circular references
-      visited.add(currentBlockID);
+    void collectDescendants(String currentBlockId) {
+      if (visited.contains(currentBlockId)) return; // Prevent circular references
+      visited.add(currentBlockId);
 
-      Set<String> descendants = parentAndChildren[currentBlockID] ?? {};
+      Set<String> descendants = parentAndChildren[currentBlockId] ?? {};
       for (var descendant in descendants) {
         allDescendants.add(descendant);
         collectDescendants(descendant);
       }
     }
 
-    collectDescendants(blockID);
+    collectDescendants(blockId);
     // print("updating descendants: $allDescendants");
     _descendants = allDescendants;
   }
@@ -386,7 +386,7 @@ class BlockNotifier extends ChangeNotifier {
       _debounceTimer = Timer(_debounceDuration, () async {
         // print("Single doc upload");
 
-        await FirestoreService.updateBlockPosition(orgId: appState.orgId, assessmentId: appState.assessmentId, blockID: blockID, position: {'x': newPosition.dx, 'y': newPosition.dy});
+        await FirestoreService.updateBlockPosition(orgId: appState.orgId, assessmentId: appState.assessmentId, blockId: blockId, position: {'x': newPosition.dx, 'y': newPosition.dy});
       });
     }
   }
@@ -478,7 +478,7 @@ class BlockNotifier extends ChangeNotifier {
       FirestoreService.updateData(
         orgId: appState.orgId,
         assessmentId: appState.assessmentId,
-        blockID: blockID,
+        blockId: blockId,
         blockData: newData,
       );
       notifyListeners();

@@ -52,12 +52,12 @@ final canvasProvider = StateNotifierProvider<OrgCanvasNotifier, Set<String>>((re
   return notifier;
 });
 
-final blockNotifierProvider = ChangeNotifierProvider.family<BlockNotifier, String>((ref, blockID) {
+final blockNotifierProvider = ChangeNotifierProvider.family<BlockNotifier, String>((ref, blockId) {
   final appStateNotifier = ref.read(appStateProvider.notifier);
   ref.watch(appStateProvider.select((state) => state.appView));
 
   final notifier = BlockNotifier(
-    blockID: blockID,
+    blockId: blockId,
     appState: appStateNotifier,
   );
 
@@ -65,10 +65,10 @@ final blockNotifierProvider = ChangeNotifierProvider.family<BlockNotifier, Strin
 });
 
 // Analysis Block Notifier Provider - no autoDispose for caching
-final analysisBlockNotifierProvider = ChangeNotifierProvider.family<AnalysisBlockNotifer, String>((ref, blockID) {
+final analysisBlockNotifierProvider = ChangeNotifierProvider.family<AnalysisBlockNotifer, String>((ref, blockId) {
   final appStateNotifier = ref.read(appStateProvider.notifier);
   final groupsNotifier = ref.read(groupsProvider);
-  return AnalysisBlockNotifer(blockID: blockID, appState: appStateNotifier, groupsNotifier: groupsNotifier);
+  return AnalysisBlockNotifer(blockId: blockId, appState: appStateNotifier, groupsNotifier: groupsNotifier);
 });
 
 // Groups Provider - no autoDispose for caching

@@ -107,9 +107,9 @@ class ConnectionManager extends StateNotifier<ConnectionsState> {
     return parentToChildren;
   }
 
-  void createDirectConnection({required String childBlockID, required String parentBlockID}) {
+  void createDirectConnection({required String childBlockId, required String parentBlockId}) {
     logger.info("Create Direct connection");
-    Connection newConnection = Connection(FirestoreIdGenerator.generate(), parentId: parentBlockID, childId: childBlockID);
+    Connection newConnection = Connection(FirestoreIdGenerator.generate(), parentId: parentBlockId, childId: childBlockId);
 
     // Track pending addition and update UI immediately
     _pendingAdditions.add(newConnection.id);
@@ -128,10 +128,10 @@ class ConnectionManager extends StateNotifier<ConnectionsState> {
     });
   }
 
-  void onBlockDelete(String blockID) {
+  void onBlockDelete(String blockId) {
     // Find connections to delete and then delete
     for (var connection in state.connections) {
-      if (connection.parentId == blockID || connection.childId == blockID) {
+      if (connection.parentId == blockId || connection.childId == blockId) {
         removeConnection(connection.id);
       }
     }

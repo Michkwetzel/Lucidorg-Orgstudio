@@ -99,13 +99,13 @@ class OrgCanvasNotifier extends StateNotifier<Set<String>> {
     super.dispose();
   }
 
-  Future<void> addBlock(String blockID, Offset position, {String? department}) async {
+  Future<void> addBlock(String blockId, Offset position, {String? department}) async {
     // Mark as pending addition
-    _pendingAdditions.add(blockID);
+    _pendingAdditions.add(blockId);
 
     // Update UI immediately
-    state = {...state, blockID};
-    _initialPositions[blockID] = position;
+    state = {...state, blockId};
+    _initialPositions[blockId] = position;
 
     try {
       if (_isAnalysisMode) {
@@ -125,7 +125,7 @@ class OrgCanvasNotifier extends StateNotifier<Set<String>> {
           orgId: appState.orgId,
           assessmentId: appState.assessmentId,
           blockData: {
-            'blockId': blockID,
+            'blockId': blockId,
             'position': {'x': position.dx, 'y': position.dy},
             ...analysisBlockData.toMap(),
           },
@@ -136,7 +136,7 @@ class OrgCanvasNotifier extends StateNotifier<Set<String>> {
           orgId: appState.orgId,
           assessmentId: appState.assessmentId,
           blockData: {
-            'blockId': blockID,
+            'blockId': blockId,
             'position': {'x': position.dx, 'y': position.dy},
             if (department != null) 'department': department,
           },
@@ -144,41 +144,41 @@ class OrgCanvasNotifier extends StateNotifier<Set<String>> {
       }
     } catch (e) {
       // If Firestore operation fails, revert UI changes
-      _pendingAdditions.remove(blockID);
-      state = Set<String>.from(state)..remove(blockID);
-      _initialPositions.remove(blockID);
+      _pendingAdditions.remove(blockId);
+      state = Set<String>.from(state)..remove(blockId);
+      _initialPositions.remove(blockId);
       rethrow;
     }
   }
 
-  void deleteBlock(String blockID) async {
+  void deleteBlock(String blockId) async {
     // Mark as pending deletion
-    _pendingDeletions.add(blockID);
+    _pendingDeletions.add(blockId);
 
     // Update UI immediately
-    state = Set<String>.from(state)..remove(blockID);
-    _initialPositions.remove(blockID);
+    state = Set<String>.from(state)..remove(blockId);
+    _initialPositions.remove(blockId);
 
     // Only handle connections for regular blocks (analysis blocks don't use connections)
     if (!_isAnalysisMode) {
-      connectionManager.onBlockDelete(blockID);
+      connectionManager.onBlockDelete(blockId);
     }
 
     try {
       if (_isAnalysisMode) {
-        await FirestoreService.deleteAnalysisBlock(orgId: appState.orgId, assessmentId: appState.assessmentId, blockID: blockID);
+        await FirestoreService.deleteAnalysisBlock(orgId: appState.orgId, assessmentId: appState.assessmentId, blockId: blockId);
       } else {
         // Delete associated data docs if in assessmentBuild mode
         if (appState.assessmentMode == AssessmentMode.assessmentBuild && appState.assessmentId != null) {
-          await FirestoreService.deleteBlockDataDocs(orgId: appState.orgId, assessmentId: appState.assessmentId, blockID: blockID);
+          await FirestoreService.deleteBlockDataDocs(orgId: appState.orgId, assessmentId: appState.assessmentId, blockId: blockId);
         }
 
-        await FirestoreService.deleteBlock(orgId: appState.orgId, assessmentId: appState.assessmentId, blockID: blockID);
+        await FirestoreService.deleteBlock(orgId: appState.orgId, assessmentId: appState.assessmentId, blockId: blockId);
       }
     } catch (e) {
       // If Firestore operation fails, revert UI changes
-      _pendingDeletions.remove(blockID);
-      state = {...state, blockID};
+      _pendingDeletions.remove(blockId);
+      state = {...state, blockId};
       // Note: You'd need to restore the position too
       rethrow;
     }

@@ -80,11 +80,11 @@ class OrgBuildStrategy extends BlockBehaviorStrategy {
         top: 0,
         child: SelectionDot(
           onTap: () {
-            String newBlockID = FirestoreIdGenerator.generate();
+            String newBlockId = FirestoreIdGenerator.generate();
             Offset newPosition = Offset(context.blockNotifier.position.dx, context.blockNotifier.position.dy - 300);
 
-            context.ref.read(canvasProvider.notifier).addBlock(newBlockID, newPosition, department: getDepartment());
-            context.ref.read(connectionManagerProvider.notifier).createDirectConnection(parentBlockID: newBlockID, childBlockID: context.blockId);
+            context.ref.read(canvasProvider.notifier).addBlock(newBlockId, newPosition, department: getDepartment());
+            context.ref.read(connectionManagerProvider.notifier).createDirectConnection(parentBlockId: newBlockId, childBlockId: context.blockId);
             context.blockNotifier.onDeSelect();
           },
         ),
@@ -96,9 +96,9 @@ class OrgBuildStrategy extends BlockBehaviorStrategy {
         bottom: 0,
         child: SelectionDot(
           onTap: () {
-            String newBlockID = FirestoreIdGenerator.generate();
-            context.ref.read(canvasProvider.notifier).addBlock(newBlockID, Offset(context.blockNotifier.position.dx, context.blockNotifier.position.dy + 300), department: getDepartment());
-            context.ref.read(connectionManagerProvider.notifier).createDirectConnection(parentBlockID: context.blockId, childBlockID: newBlockID);
+            String newBlockId = FirestoreIdGenerator.generate();
+            context.ref.read(canvasProvider.notifier).addBlock(newBlockId, Offset(context.blockNotifier.position.dx, context.blockNotifier.position.dy + 300), department: getDepartment());
+            context.ref.read(connectionManagerProvider.notifier).createDirectConnection(parentBlockId: context.blockId, childBlockId: newBlockId);
             context.blockNotifier.onDeSelect();
           },
         ),
@@ -110,14 +110,14 @@ class OrgBuildStrategy extends BlockBehaviorStrategy {
         top: (context.hitboxHeight / 2) - (kSelectionDotSize / 2),
         child: SelectionDot(
           onTap: () {
-            String newBlockID = FirestoreIdGenerator.generate();
+            String newBlockId = FirestoreIdGenerator.generate();
             Offset newPosition = Offset(context.blockNotifier.position.dx + 300, context.blockNotifier.position.dy);
 
-            context.ref.read(canvasProvider.notifier).addBlock(newBlockID, newPosition, department: getDepartment());
+            context.ref.read(canvasProvider.notifier).addBlock(newBlockId, newPosition, department: getDepartment());
 
-            String? parentID = _findParentOfBlock(context.ref, context.blockId);
-            if (parentID != null) {
-              context.ref.read(connectionManagerProvider.notifier).createDirectConnection(parentBlockID: parentID, childBlockID: newBlockID);
+            String? parentId = _findParentOfBlock(context.ref, context.blockId);
+            if (parentId != null) {
+              context.ref.read(connectionManagerProvider.notifier).createDirectConnection(parentBlockId: parentId, childBlockId: newBlockId);
             }
             context.blockNotifier.onDeSelect();
           },
@@ -130,14 +130,14 @@ class OrgBuildStrategy extends BlockBehaviorStrategy {
         top: (context.hitboxHeight / 2) - (kSelectionDotSize / 2),
         child: SelectionDot(
           onTap: () {
-            String newBlockID = FirestoreIdGenerator.generate();
+            String newBlockId = FirestoreIdGenerator.generate();
             Offset newPosition = Offset(context.blockNotifier.position.dx - 300, context.blockNotifier.position.dy);
 
-            context.ref.read(canvasProvider.notifier).addBlock(newBlockID, newPosition, department: getDepartment());
+            context.ref.read(canvasProvider.notifier).addBlock(newBlockId, newPosition, department: getDepartment());
 
-            String? parentID = _findParentOfBlock(context.ref, context.blockId);
-            if (parentID != null) {
-              context.ref.read(connectionManagerProvider.notifier).createDirectConnection(parentBlockID: parentID, childBlockID: newBlockID);
+            String? parentId = _findParentOfBlock(context.ref, context.blockId);
+            if (parentId != null) {
+              context.ref.read(connectionManagerProvider.notifier).createDirectConnection(parentBlockId: parentId, childBlockId: newBlockId);
             }
             context.blockNotifier.onDeSelect();
           },
@@ -221,10 +221,10 @@ class OrgBuildStrategy extends BlockBehaviorStrategy {
   }
 
   // Helper function to find parent of current block
-  String? _findParentOfBlock(WidgetRef ref, String blockID) {
+  String? _findParentOfBlock(WidgetRef ref, String blockId) {
     final connections = ref.read(connectionManagerProvider).connections;
     for (final connection in connections) {
-      if (connection.childId == blockID) {
+      if (connection.childId == blockId) {
         return connection.parentId;
       }
     }

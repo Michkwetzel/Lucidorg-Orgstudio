@@ -31,7 +31,7 @@ class AppEntryLayout extends ConsumerWidget {
             children: [
               Secondarybutton(
                 onPressed: () => {
-                  // HttpService.postRequest(path: "https://setadminclaim-rbyavkqn2a-uc.a.run.app", request: {"userUID" : "E7gkUdRStUTKyNJRwJyjaI4NBSB3"})
+                  HttpService.postRequest(path: "https://setadminclaim-rbyavkqn2a-uc.a.run.app", request: {"userUID" : "fub8nJmh07YIxBvUuCoobvMOw373"})
                 },
                 buttonText: "Create Account",
               ),
