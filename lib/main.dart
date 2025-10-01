@@ -21,7 +21,7 @@ void main() async {
   final router = setupRouter();
   NavigationService.initialize(router);
 
-  print("platform v2.1.1");
+  print("platform v2.3.0");
 
   runApp(const ProviderScope(child: App()));
 

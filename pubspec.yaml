@@ -3,7 +3,7 @@ description: "Business operations platform."
 
 publish_to: 'none'
 
-version: 2.2.1
+version: 2.3.0
 
 environment:
   sdk: ^3.8.0
