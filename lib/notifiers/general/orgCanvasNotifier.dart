@@ -158,7 +158,7 @@ class OrgCanvasNotifier extends StateNotifier<Set<String>> {
     // Update UI immediately
     state = Set<String>.from(state)..remove(blockID);
     _initialPositions.remove(blockID);
-    
+
     // Only handle connections for regular blocks (analysis blocks don't use connections)
     if (!_isAnalysisMode) {
       connectionManager.onBlockDelete(blockID);
@@ -168,6 +168,11 @@ class OrgCanvasNotifier extends StateNotifier<Set<String>> {
       if (_isAnalysisMode) {
         await FirestoreService.deleteAnalysisBlock(orgId: appState.orgId, assessmentId: appState.assessmentId, blockID: blockID);
       } else {
+        // Delete associated data docs if in assessmentBuild mode
+        if (appState.assessmentMode == AssessmentMode.assessmentBuild && appState.assessmentId != null) {
+          await FirestoreService.deleteBlockDataDocs(orgId: appState.orgId, assessmentId: appState.assessmentId, blockID: blockID);
+        }
+
         await FirestoreService.deleteBlock(orgId: appState.orgId, assessmentId: appState.assessmentId, blockID: blockID);
       }
     } catch (e) {

@@ -151,6 +151,21 @@ class BlockNotifier extends ChangeNotifier {
     return totalEmails > 1 && _submittedCount > 0 && _submittedCount < totalEmails;
   }
 
+  // Data doc tracking for deletion warnings
+  bool get hasDataDocs => _allDataDocs.isNotEmpty || (_blockData?.sent ?? false);
+
+  int get dataDocsCount => _allDataDocs.isNotEmpty ? _allDataDocs.length : (_blockData?.sent ?? false ? 1 : 0);
+
+  int get dataDocsWithResultsCount {
+    if (_allDataDocs.isEmpty) {
+      // Single email mode - check if submitted
+      return (_blockData?.submitted ?? false) ? 1 : 0;
+    } else {
+      // Multi-email mode - count submitted docs
+      return _allDataDocs.where((doc) => doc['submitted'] == true).length;
+    }
+  }
+
   void _setupResultStream() {
     // Reset multi-email state when switching to single email mode
     if (_blockData?.hasMultipleEmails != true) {

@@ -7,6 +7,7 @@ import 'package:platform_v2/config/enums.dart';
 import 'package:platform_v2/config/provider.dart';
 import 'package:platform_v2/services/firestoreIdGenerator.dart';
 import 'package:platform_v2/services/uiServices/overLayService.dart';
+import 'package:platform_v2/services/uiServices/alertService.dart';
 
 //Class encapsulating Block behaviour and appearance in OrgBuild mode
 class OrgBuildStrategy extends BlockBehaviorStrategy {
@@ -296,9 +297,32 @@ class BlockDropdownMenu extends ConsumerWidget {
     );
   }
 
-  void _handleSelection(String value, WidgetRef ref) {
+  void _handleSelection(String value, WidgetRef ref) async {
     if (value == 'delete') {
-      ref.read(canvasProvider.notifier).deleteBlock(blockId);
+      final blockNotifier = ref.read(blockNotifierProvider(blockId));
+
+      // Check if block has data docs
+      if (blockNotifier.hasDataDocs) {
+        final dataDocsCount = blockNotifier.dataDocsCount;
+        final withResults = blockNotifier.dataDocsWithResultsCount;
+
+        final message = dataDocsCount == 1
+            ? 'This block has 1 data document${withResults > 0 ? ' with submitted results' : ''}. Deleting this block will also delete all associated data. Continue?'
+            : 'This block has $dataDocsCount data documents${withResults > 0 ? ', $withResults with submitted results' : ''}. Deleting this block will also delete all associated data. Continue?';
+
+        await AlertService.showConfirmation(
+          title: 'Delete Block with Data',
+          message: message,
+          confirmText: 'Delete',
+          cancelText: 'Cancel',
+          onConfirm: () {
+            ref.read(canvasProvider.notifier).deleteBlock(blockId);
+          },
+        );
+      } else {
+        // No data docs, delete directly
+        ref.read(canvasProvider.notifier).deleteBlock(blockId);
+      }
     }
   }
 }

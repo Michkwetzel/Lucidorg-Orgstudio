@@ -242,6 +242,7 @@ class AssessmentBuildStrategy extends BlockBehaviorStrategy {
 
   @override
   void onTap(BlockContext context) {
+    print(context.blockId);
     if (context.blockNotifier.selected) {
       context.blockNotifier.onDeSelect();
       context.ref.read(selectedBlockProvider.notifier).state = null;

@@ -70,6 +70,25 @@ class FirestoreService {
     await collection.doc(blockID).delete();
   }
 
+  static Future<void> deleteBlockDataDocs({required String? orgId, required String? assessmentId, required String blockID}) async {
+    final collection = _instance.collection('orgs').doc(orgId).collection('assessments').doc(assessmentId).collection('data');
+
+    // Query all data docs for this block
+    final querySnapshot = await collection.where('blockId', isEqualTo: blockID).get();
+
+    if (querySnapshot.docs.isEmpty) {
+      return; // No data docs to delete
+    }
+
+    // Use batch to delete all data docs efficiently
+    final batch = _instance.batch();
+    for (final doc in querySnapshot.docs) {
+      batch.delete(doc.reference);
+    }
+
+    await batch.commit();
+  }
+
   static Future<void> updateBlockPosition({required String? orgId, String? assessmentId, required String blockID, required Map<String, double> position}) async {
     final collection = _getBlocksCollection(orgId: orgId, assessmentId: assessmentId);
     await collection.doc(blockID).update({
