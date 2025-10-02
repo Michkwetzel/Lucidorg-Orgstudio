@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -29,6 +30,8 @@ class _BlockInputOverlayState extends ConsumerState<BlockInputOverlay> {
   final TextEditingController nameController = TextEditingController();
   final TextEditingController roleController = TextEditingController();
   final TextEditingController departmentController = TextEditingController();
+  final TextEditingController regionController = TextEditingController();
+  final TextEditingController subOfficeController = TextEditingController();
   final TextEditingController assessmentResultsController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
 
@@ -43,11 +46,16 @@ class _BlockInputOverlayState extends ConsumerState<BlockInputOverlay> {
   bool emailError = false;
   String emailErrorMessage = '';
 
+  // Timer for auto-save debouncing
+  Timer? _autoSaveTimer;
+  static const Duration _autoSaveDuration = Duration(milliseconds: 500);
+
   @override
   void initState() {
     super.initState();
     _initializeWithData();
     _loadAssessmentResults();
+    _setupAutoSaveListeners();
   }
 
   void _initializeWithData() {
@@ -56,6 +64,8 @@ class _BlockInputOverlayState extends ConsumerState<BlockInputOverlay> {
       nameController.text = data.name;
       roleController.text = data.role;
       departmentController.text = data.department;
+      regionController.text = data.region;
+      subOfficeController.text = data.subOffice;
 
       // Handle emails
       if (data.emails.length > 1) {
@@ -68,6 +78,42 @@ class _BlockInputOverlayState extends ConsumerState<BlockInputOverlay> {
 
       selectedHierarchy = data.hierarchy;
     }
+  }
+
+  void _setupAutoSaveListeners() {
+    // Add listeners to auto-save specific fields
+    roleController.addListener(_triggerAutoSave);
+    departmentController.addListener(_triggerAutoSave);
+    regionController.addListener(_triggerAutoSave);
+    subOfficeController.addListener(_triggerAutoSave);
+  }
+
+  void _triggerAutoSave() {
+    _autoSaveTimer?.cancel();
+    _autoSaveTimer = Timer(_autoSaveDuration, () {
+      _autoSave();
+    });
+  }
+
+  void _autoSave() {
+    // Auto-save only department, region, subOffice, role, hierarchy
+    // Save directly to BlockNotifier to avoid closing the overlay
+    final blockNotifier = ref.read(blockNotifierProvider(widget.blockId));
+
+    final data = BlockData(
+      name: nameController.text.trim(),
+      role: roleController.text.trim(),
+      department: departmentController.text.trim(),
+      hierarchy: selectedHierarchy,
+      emails: widget.initialData?.emails ?? [],
+      region: regionController.text.trim(),
+      subOffice: subOfficeController.text.trim(),
+      rawResults: widget.initialData?.rawResults ?? [],
+      sent: widget.initialData?.sent ?? false,
+      submitted: widget.initialData?.submitted ?? false,
+    );
+
+    blockNotifier.updateData(data);
   }
 
   Future<void> _loadAssessmentResults() async {
@@ -105,6 +151,8 @@ class _BlockInputOverlayState extends ConsumerState<BlockInputOverlay> {
       nameController.clear();
       roleController.clear();
       departmentController.clear();
+      regionController.clear();
+      subOfficeController.clear();
       assessmentResultsController.clear();
       emailController.clear();
       isMultipleEmails = false;
@@ -168,6 +216,8 @@ class _BlockInputOverlayState extends ConsumerState<BlockInputOverlay> {
       department: departmentController.text.trim(),
       hierarchy: selectedHierarchy,
       emails: emails,
+      region: regionController.text.trim(),
+      subOffice: subOfficeController.text.trim(),
       // Preserve existing rawResults, sent, and submitted status
       rawResults: widget.initialData?.rawResults ?? [],
       sent: widget.initialData?.sent ?? false,
@@ -305,9 +355,16 @@ class _BlockInputOverlayState extends ConsumerState<BlockInputOverlay> {
 
   @override
   void dispose() {
+    _autoSaveTimer?.cancel();
+    roleController.removeListener(_triggerAutoSave);
+    departmentController.removeListener(_triggerAutoSave);
+    regionController.removeListener(_triggerAutoSave);
+    subOfficeController.removeListener(_triggerAutoSave);
     nameController.dispose();
     roleController.dispose();
     departmentController.dispose();
+    regionController.dispose();
+    subOfficeController.dispose();
     assessmentResultsController.dispose();
     emailController.dispose();
     super.dispose();
@@ -386,6 +443,22 @@ class _BlockInputOverlayState extends ConsumerState<BlockInputOverlay> {
                           // Department field
                           _buildTextField('Department', departmentController),
                           const SizedBox(height: 12),
+
+                          // Region and Sub-Office fields (only show if department is "Office" or "office")
+                          if (departmentController.text.toLowerCase() == 'office') ...[
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: _buildTextField('Region', regionController),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: _buildTextField('Sub-Office', subOfficeController),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                          ],
 
                           // Hierarchy field
                           _buildHierarchySelector(),
@@ -625,6 +698,10 @@ class _BlockInputOverlayState extends ConsumerState<BlockInputOverlay> {
               assessmentResultsErrorMessage = '';
             }
           }),
+          onSubmitted: (value) {
+            // Close overlay when Enter is pressed
+            widget.onClose?.call();
+          },
           decoration: InputDecoration(
             hintText: 'Enter 37 consecutive numbers (e.g., 1234567890...)',
             counterText: '', // Hide default counter since we have custom one
@@ -688,7 +765,17 @@ class _BlockInputOverlayState extends ConsumerState<BlockInputOverlay> {
   }
 
   Widget _buildHierarchySelector() {
-    const List<Hierarchy> hierarchyOptions = [Hierarchy.none, Hierarchy.ceo, Hierarchy.csuite, Hierarchy.team];
+    const List<Hierarchy> hierarchyOptions = [
+      Hierarchy.none,
+      Hierarchy.ceo,
+      Hierarchy.cSuite,
+      Hierarchy.regionalDirector,
+      Hierarchy.officeDirector,
+      Hierarchy.officeManager,
+      Hierarchy.partner,
+      Hierarchy.teamLead,
+      Hierarchy.team,
+    ];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -706,40 +793,117 @@ class _BlockInputOverlayState extends ConsumerState<BlockInputOverlay> {
             borderRadius: BorderRadius.circular(8),
             border: Border.all(color: Colors.grey.shade300),
           ),
-          child: Row(
-            children: hierarchyOptions.map((option) {
-              final index = hierarchyOptions.indexOf(option);
-              final isSelected = selectedHierarchy == option;
-
-              return Expanded(
-                child: GestureDetector(
-                  onTap: () => setState(() {
-                    selectedHierarchy = option;
-                  }),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    decoration: BoxDecoration(
-                      color: isSelected ? Colors.blue : Colors.transparent,
-                      borderRadius: BorderRadius.only(
-                        topLeft: index == 0 ? const Radius.circular(7) : Radius.zero,
-                        bottomLeft: index == 0 ? const Radius.circular(7) : Radius.zero,
-                        topRight: index == hierarchyOptions.length - 1 ? const Radius.circular(7) : Radius.zero,
-                        bottomRight: index == hierarchyOptions.length - 1 ? const Radius.circular(7) : Radius.zero,
+          padding: const EdgeInsets.all(8),
+          child: Column(
+            children: [
+              // First row - 3 items
+              Row(
+                children: hierarchyOptions.sublist(0, 3).map((option) {
+                  final isSelected = selectedHierarchy == option;
+                  return Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 2),
+                      child: GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            selectedHierarchy = option;
+                          });
+                          _triggerAutoSave();
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 10),
+                          decoration: BoxDecoration(
+                            color: isSelected ? Colors.blue : Colors.transparent,
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            option.displayName,
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: isSelected ? Colors.white : Colors.grey.shade700,
+                              fontWeight: FontWeight.w500,
+                              fontSize: 11,
+                            ),
+                          ),
+                        ),
                       ),
                     ),
-                    child: Text(
-                      option.name,
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: isSelected ? Colors.white : Colors.grey.shade700,
-                        fontWeight: FontWeight.w500,
-                        fontSize: 12,
+                  );
+                }).toList(),
+              ),
+              const SizedBox(height: 4),
+              // Second row - 3 items
+              Row(
+                children: hierarchyOptions.sublist(3, 6).map((option) {
+                  final isSelected = selectedHierarchy == option;
+                  return Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 2),
+                      child: GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            selectedHierarchy = option;
+                          });
+                          _triggerAutoSave();
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 10),
+                          decoration: BoxDecoration(
+                            color: isSelected ? Colors.blue : Colors.transparent,
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            option.displayName,
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: isSelected ? Colors.white : Colors.grey.shade700,
+                              fontWeight: FontWeight.w500,
+                              fontSize: 11,
+                            ),
+                          ),
+                        ),
                       ),
                     ),
-                  ),
-                ),
-              );
-            }).toList(),
+                  );
+                }).toList(),
+              ),
+              const SizedBox(height: 4),
+              // Third row - 3 items
+              Row(
+                children: hierarchyOptions.sublist(6, 9).map((option) {
+                  final isSelected = selectedHierarchy == option;
+                  return Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 2),
+                      child: GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            selectedHierarchy = option;
+                          });
+                          _triggerAutoSave();
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 10),
+                          decoration: BoxDecoration(
+                            color: isSelected ? Colors.blue : Colors.transparent,
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            option.displayName,
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: isSelected ? Colors.white : Colors.grey.shade700,
+                              fontWeight: FontWeight.w500,
+                              fontSize: 11,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ],
           ),
         ),
       ],
@@ -768,6 +932,10 @@ class _BlockInputOverlayState extends ConsumerState<BlockInputOverlay> {
               emailErrorMessage = '';
             }
           }),
+          onSubmitted: (value) {
+            // Close overlay when Enter is pressed
+            widget.onClose?.call();
+          },
           decoration: InputDecoration(
             hintText: hintText ?? 'Enter $label',
             border: OutlineInputBorder(
@@ -823,6 +991,16 @@ class _BlockInputOverlayState extends ConsumerState<BlockInputOverlay> {
         TextField(
           controller: controller,
           maxLines: isMultipleEmails && label == 'Emails' ? 3 : 1,
+          onChanged: (value) {
+            // Trigger rebuild when department changes to show/hide region/subOffice fields
+            if (label == 'Department') {
+              setState(() {});
+            }
+          },
+          onSubmitted: (value) {
+            // Close overlay when Enter is pressed
+            widget.onClose?.call();
+          },
           decoration: InputDecoration(
             hintText: hintText ?? 'Enter $label',
             border: OutlineInputBorder(

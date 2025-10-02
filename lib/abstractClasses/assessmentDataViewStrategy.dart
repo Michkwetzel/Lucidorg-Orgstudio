@@ -6,6 +6,7 @@ import 'package:platform_v2/config/enums.dart';
 import 'package:platform_v2/config/provider.dart';
 import 'package:platform_v2/dataClasses/displayOption.dart';
 import 'package:platform_v2/services/uiServices/overLayService.dart';
+import 'package:platform_v2/widgets/components/general/officeBadge.dart';
 
 // The rulebook for what functions a strategy can implement.
 class AssessmentDataViewStrategy extends BlockBehaviorStrategy {
@@ -27,6 +28,28 @@ class AssessmentDataViewStrategy extends BlockBehaviorStrategy {
               child: blockData(context),
             ),
           ),
+
+          // Region badge (top-left)
+          if (context.blockNotifier.blockData?.region.isNotEmpty == true)
+            Positioned(
+              left: context.hitboxOffset + 3,
+              top: context.hitboxOffset + 3,
+              child: OfficeBadge(
+                value: context.blockNotifier.blockData!.region,
+                isTopLeft: true,
+              ),
+            ),
+
+          // SubOffice badge (top-right)
+          if (context.blockNotifier.blockData?.subOffice.isNotEmpty == true)
+            Positioned(
+              right: context.hitboxOffset + 3,
+              top: context.hitboxOffset + 3,
+              child: OfficeBadge(
+                value: context.blockNotifier.blockData!.subOffice,
+                isTopLeft: false,
+              ),
+            ),
         ],
       ),
     );

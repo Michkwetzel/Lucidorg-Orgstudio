@@ -57,6 +57,8 @@ class BlockNotifier extends ChangeNotifier {
           String name = data['name'] ?? '';
           String role = data['role'] ?? '';
           String department = data['department'] ?? '';
+          String region = data['region'] ?? '';
+          String subOffice = data['subOffice'] ?? '';
           List<String> emails = List<String>.from(data['emails'] ?? []);
           Offset position = Offset(data['position']['x'] ?? 0, data['position']['y'] ?? 0);
           Hierarchy hierarchy = Hierarchy.none;
@@ -64,8 +66,23 @@ class BlockNotifier extends ChangeNotifier {
             case 'ceo':
               hierarchy = Hierarchy.ceo;
               break;
-            case 'csuite':
-              hierarchy = Hierarchy.csuite;
+            case 'cSuite':
+              hierarchy = Hierarchy.cSuite;
+              break;
+            case 'regionalDirector':
+              hierarchy = Hierarchy.regionalDirector;
+              break;
+            case 'officeDirector':
+              hierarchy = Hierarchy.officeDirector;
+              break;
+            case 'officeManager':
+              hierarchy = Hierarchy.officeManager;
+              break;
+            case 'partner':
+              hierarchy = Hierarchy.partner;
+              break;
+            case 'teamLead':
+              hierarchy = Hierarchy.teamLead;
               break;
             case 'team':
               hierarchy = Hierarchy.team;
@@ -82,6 +99,8 @@ class BlockNotifier extends ChangeNotifier {
             department: department,
             emails: emails,
             hierarchy: hierarchy,
+            region: region,
+            subOffice: subOffice,
             // Keep existing rawResults, sent, submitted if they exist
             rawResults: _blockData?.rawResults ?? [],
             sent: _blockData?.sent ?? false,

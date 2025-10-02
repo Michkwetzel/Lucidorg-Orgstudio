@@ -121,6 +121,8 @@ class FirestoreService {
       'department': blockData.department,
       'hierarchy': blockData.hierarchy.name,
       'emails': blockData.emails,
+      'region': blockData.region,
+      'subOffice': blockData.subOffice,
     });
   }
 

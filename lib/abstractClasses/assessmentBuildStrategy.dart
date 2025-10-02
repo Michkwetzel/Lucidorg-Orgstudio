@@ -8,6 +8,7 @@ import 'package:platform_v2/config/enums.dart';
 import 'package:platform_v2/config/provider.dart';
 import 'package:platform_v2/services/firestoreIDGenerator.dart';
 import 'package:platform_v2/services/uiServices/overLayService.dart';
+import 'package:platform_v2/widgets/components/general/officeBadge.dart';
 
 //Class encapsulating Block behaviour and appearance in AssessmentBuild mode
 class AssessmentBuildStrategy extends BlockBehaviorStrategy {
@@ -28,6 +29,28 @@ class AssessmentBuildStrategy extends BlockBehaviorStrategy {
               child: blockData(context),
             ),
           ),
+
+          // Region badge (top-left)
+          if (context.blockNotifier.blockData?.region.isNotEmpty == true)
+            Positioned(
+              left: context.hitboxOffset + 3,
+              top: context.hitboxOffset + 3,
+              child: OfficeBadge(
+                value: context.blockNotifier.blockData!.region,
+                isTopLeft: true,
+              ),
+            ),
+
+          // SubOffice badge (top-right)
+          if (context.blockNotifier.blockData?.subOffice.isNotEmpty == true)
+            Positioned(
+              right: context.hitboxOffset + 3,
+              top: context.hitboxOffset + 3,
+              child: OfficeBadge(
+                value: context.blockNotifier.blockData!.subOffice,
+                isTopLeft: false,
+              ),
+            ),
 
           if (context.blockNotifier.selected) ...buildDotWidgets(context),
         ],

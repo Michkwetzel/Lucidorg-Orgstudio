@@ -10,6 +10,8 @@ class BlockData {
   final List<int> rawResults;
   final bool sent;
   final bool submitted;
+  final String region;
+  final String subOffice;
   //TODO: At the moment these are not nullable. might be usefull to do this later depending on how calculations are made.
 
   BlockData({
@@ -21,6 +23,8 @@ class BlockData {
     this.rawResults = const [],
     this.sent = false,
     this.submitted = false,
+    this.region = '',
+    this.subOffice = '',
   });
 
   // Convenience getters
@@ -40,6 +44,8 @@ class BlockData {
     Offset? position,
     bool? sent,
     bool? submitted,
+    String? region,
+    String? subOffice,
   }) {
     return BlockData(
       name: name ?? this.name,
@@ -50,12 +56,14 @@ class BlockData {
       rawResults: rawResults ?? this.rawResults,
       sent: sent ?? this.sent,
       submitted: submitted ?? this.submitted,
+      region: region ?? this.region,
+      subOffice: subOffice ?? this.subOffice,
     );
   }
 
   @override
   String toString() {
-    return 'BlockData(name: $name\n, role: $role\n, department: $department\n, emails: $emails)';
+    return 'BlockData(name: $name\n, role: $role\n, department: $department\n, region: $region\n, subOffice: $subOffice\n, emails: $emails)';
   }
 
   // Override equality operator to compare values instead of references
@@ -71,7 +79,9 @@ class BlockData {
         _listEquals(emails, other.emails) &&
         _listEquals(rawResults, other.rawResults) &&
         sent == other.sent &&
-        submitted == other.submitted;
+        submitted == other.submitted &&
+        region == other.region &&
+        subOffice == other.subOffice;
   }
 
   // Override hashCode to be consistent with equality
@@ -86,6 +96,8 @@ class BlockData {
       Object.hashAll(rawResults),
       sent,
       submitted,
+      region,
+      subOffice,
     );
   }
 
@@ -119,6 +131,8 @@ class BlockData {
     required String email,
     bool sent = false,
     bool submitted = false,
+    String region = '',
+    String subOffice = '',
   }) {
     return BlockData(
       name: name,
@@ -128,6 +142,8 @@ class BlockData {
       emails: [email],
       sent: sent,
       submitted: submitted,
+      region: region,
+      subOffice: subOffice,
     );
   }
 }

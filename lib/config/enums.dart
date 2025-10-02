@@ -14,7 +14,42 @@ enum Options { select, department, hierarchy, all }
 
 enum Pilar { alignment, people, process, leadership, none }
 
-enum Hierarchy { ceo, csuite, team, none}
+enum Hierarchy {
+  ceo,
+  cSuite,
+  regionalDirector,
+  officeDirector,
+  officeManager,
+  partner,
+  teamLead,
+  team,
+  none
+}
+
+extension HierarchyDisplay on Hierarchy {
+  String get displayName {
+    switch (this) {
+      case Hierarchy.ceo:
+        return "CEO";
+      case Hierarchy.cSuite:
+        return "C-Suite";
+      case Hierarchy.regionalDirector:
+        return "Regional Director";
+      case Hierarchy.officeDirector:
+        return "Office Director";
+      case Hierarchy.officeManager:
+        return "Office Manager";
+      case Hierarchy.partner:
+        return "Partner";
+      case Hierarchy.teamLead:
+        return "Team Lead";
+      case Hierarchy.team:
+        return "Team";
+      case Hierarchy.none:
+        return "None";
+    }
+  }
+}
 
 enum Benchmark {
   orgIndex,
