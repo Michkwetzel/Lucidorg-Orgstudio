@@ -443,4 +443,143 @@ class FirestoreService {
 
     await _instance.collection('questions').doc('v.2025-08-22').set(multipleChoiceQuestions);
   }
+
+  /// Copies all blocks from a source region to a target region, including their connections
+  ///
+  /// Parameters:
+  /// - [orgId]: Organization ID
+  /// - [assessmentId]: Optional assessment ID (if null, uses org-level blocks)
+  /// - [sourceRegion]: Source region number (default: '1')
+  /// - [targetRegion]: Target region number (e.g., '2', '3', etc.)
+  /// - [xOffset]: Horizontal offset for positioning new blocks (default: 2000.0)
+  ///
+  /// Returns a map containing:
+  /// - 'blocksCreated': Number of blocks copied
+  /// - 'connectionsCreated': Number of connections copied
+  static Future<Map<String, int>> copyRegionBlocksAndConnections({
+    required String orgId,
+    String? assessmentId,
+    String sourceRegion = '1',
+    required String targetRegion,
+    double xOffset = 2000.0,
+  }) async {
+    try {
+      final blocksCollection = _getBlocksCollection(orgId: orgId, assessmentId: assessmentId);
+      final connectionsCollection = _getConnectionsCollection(orgId: orgId, assessmentId: assessmentId);
+
+      // PHASE 1: Query and copy blocks
+      final blocksQuery = await blocksCollection
+          .where('region', isEqualTo: sourceRegion)
+          .get();
+
+      // Filter blocks with department == 'Office' (case-insensitive)
+      final sourceBlocks = blocksQuery.docs.where((doc) {
+        final data = doc.data();
+        final department = (data['department'] as String? ?? '').toLowerCase();
+        return department == 'office';
+      }).toList();
+
+      if (sourceBlocks.isEmpty) {
+        return {'blocksCreated': 0, 'connectionsCreated': 0};
+      }
+
+      // Create mapping from old block IDs to new block IDs
+      final Map<String, String> oldIdToNewId = {};
+      WriteBatch batch = _instance.batch();
+      int batchCount = 0;
+      const int maxBatchSize = 500;
+
+      // Create new blocks with updated region and position
+      for (final blockDoc in sourceBlocks) {
+        final oldBlockId = blockDoc.id;
+        final newBlockId = blocksCollection.doc().id; // Generate new ID
+        oldIdToNewId[oldBlockId] = newBlockId;
+
+        final blockData = blockDoc.data();
+        final position = blockData['position'] as Map<String, dynamic>?;
+        final oldX = (position?['x'] as num?)?.toDouble() ?? 0.0;
+        final oldY = (position?['y'] as num?)?.toDouble() ?? 0.0;
+
+        // Copy all block data with updates
+        final newBlockData = {
+          ...blockData,
+          'region': targetRegion,
+          'position': {
+            'x': oldX + xOffset,
+            'y': oldY,
+          },
+        };
+
+        batch.set(blocksCollection.doc(newBlockId), newBlockData);
+        batchCount++;
+
+        // Commit and start new batch if we hit the limit
+        if (batchCount >= maxBatchSize) {
+          await batch.commit();
+          batch = _instance.batch(); // Create new batch
+          batchCount = 0;
+        }
+      }
+
+      // PHASE 2: Query and copy connections
+      final sourceBlockIds = oldIdToNewId.keys.toList();
+
+      // Get all connections where both parent and child are in source blocks
+      final connectionsQuery = await connectionsCollection.get();
+      final relevantConnections = connectionsQuery.docs.where((doc) {
+        final data = doc.data();
+        final parentId = data['parentId'] as String?;
+        final childId = data['childId'] as String?;
+
+        // Only include if both endpoints are in the source region blocks
+        return parentId != null &&
+               childId != null &&
+               sourceBlockIds.contains(parentId) &&
+               sourceBlockIds.contains(childId);
+      }).toList();
+
+      int connectionsCreated = 0;
+      for (final connectionDoc in relevantConnections) {
+        final data = connectionDoc.data();
+        final oldParentId = data['parentId'] as String;
+        final oldChildId = data['childId'] as String;
+
+        // Map to new block IDs
+        final newParentId = oldIdToNewId[oldParentId];
+        final newChildId = oldIdToNewId[oldChildId];
+
+        if (newParentId != null && newChildId != null) {
+          final newConnectionId = connectionsCollection.doc().id;
+
+          batch.set(connectionsCollection.doc(newConnectionId), {
+            'id': newConnectionId,
+            'parentId': newParentId,
+            'childId': newChildId,
+          });
+
+          connectionsCreated++;
+          batchCount++;
+
+          // Commit and start new batch if we hit the limit
+          if (batchCount >= maxBatchSize) {
+            await batch.commit();
+            batch = _instance.batch(); // Create new batch
+            batchCount = 0;
+          }
+        }
+      }
+
+      // Commit any remaining operations
+      if (batchCount > 0) {
+        await batch.commit();
+      }
+
+      return {
+        'blocksCreated': sourceBlocks.length,
+        'connectionsCreated': connectionsCreated,
+      };
+    } catch (e) {
+      throw Exception('Failed to copy region blocks and connections: $e');
+    }
+  }
 }

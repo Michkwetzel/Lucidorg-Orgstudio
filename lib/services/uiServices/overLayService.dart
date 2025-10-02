@@ -7,6 +7,7 @@ import 'package:platform_v2/widgets/overlays/sendAssessmentOverlay.dart';
 import 'package:platform_v2/widgets/overlays/createGroupOverlay.dart';
 import 'package:platform_v2/widgets/overlays/blockInputOverlay.dart';
 import 'package:platform_v2/widgets/overlays/sendAssConfirmOverlay.dart';
+import 'package:platform_v2/widgets/overlays/copyRegionOverlay.dart';
 
 class OverlayService {
   static OverlayEntry? _activeBlockInputOverlay;
@@ -14,6 +15,7 @@ class OverlayService {
   static OverlayEntry? _activeCreateGroupOverlay;
   static OverlayEntry? _activeAssessmentCreationOverlay;
   static OverlayEntry? _activeBlockDataViewOverlay;
+  static OverlayEntry? _activeCopyRegionOverlay;
 
   static void showBlockInput(BuildContext context, {required Function(BlockData) onSave, VoidCallback? onCancel, BlockData? initialData, required String blockId}) {
     // Close existing block input overlay if one exists
@@ -171,6 +173,33 @@ class OverlayService {
     overlay.insert(overlayEntry);
   }
 
+  static void showCopyRegion(BuildContext context, {required Function(String, String) onCopy, VoidCallback? onCancel}) {
+    // Close existing copy region overlay if one exists
+    _activeCopyRegionOverlay?.remove();
+    _activeCopyRegionOverlay = null;
+
+    final overlay = Overlay.of(context);
+    late OverlayEntry overlayEntry;
+
+    overlayEntry = OverlayEntry(
+      builder: (context) => CopyRegionOverlay(
+        onCopy: (sourceRegion, targetRegion) {
+          onCopy(sourceRegion, targetRegion);
+          overlayEntry.remove();
+          _activeCopyRegionOverlay = null;
+        },
+        onClose: () {
+          overlayEntry.remove();
+          _activeCopyRegionOverlay = null;
+          onCancel?.call();
+        },
+      ),
+    );
+
+    _activeCopyRegionOverlay = overlayEntry;
+    overlay.insert(overlayEntry);
+  }
+
   // Utility method to close all active overlays
   static void closeAllOverlays() {
     _activeBlockInputOverlay?.remove();
@@ -187,5 +216,8 @@ class OverlayService {
 
     _activeAssessmentCreationOverlay?.remove();
     _activeAssessmentCreationOverlay = null;
+
+    _activeCopyRegionOverlay?.remove();
+    _activeCopyRegionOverlay = null;
   }
 }
