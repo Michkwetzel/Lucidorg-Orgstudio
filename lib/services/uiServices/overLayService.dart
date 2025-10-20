@@ -8,6 +8,8 @@ import 'package:platform_v2/widgets/overlays/createGroupOverlay.dart';
 import 'package:platform_v2/widgets/overlays/blockInputOverlay.dart';
 import 'package:platform_v2/widgets/overlays/sendAssConfirmOverlay.dart';
 import 'package:platform_v2/widgets/overlays/copyRegionOverlay.dart';
+import 'package:platform_v2/widgets/overlays/generateMockDataOverlay.dart';
+import 'package:platform_v2/widgets/overlays/selectOrgForAssessmentOverlay.dart';
 
 class OverlayService {
   static OverlayEntry? _activeBlockInputOverlay;
@@ -16,6 +18,8 @@ class OverlayService {
   static OverlayEntry? _activeAssessmentCreationOverlay;
   static OverlayEntry? _activeBlockDataViewOverlay;
   static OverlayEntry? _activeCopyRegionOverlay;
+  static OverlayEntry? _activeGenerateMockDataOverlay;
+  static OverlayEntry? _activeSelectOrgForAssessmentOverlay;
 
   static void showBlockInput(BuildContext context, {required Function(BlockData) onSave, VoidCallback? onCancel, BlockData? initialData, required String blockId}) {
     // Close existing block input overlay if one exists
@@ -200,6 +204,60 @@ class OverlayService {
     overlay.insert(overlayEntry);
   }
 
+  static void showGenerateMockData(BuildContext context, {required Function(String, int) onGenerate, VoidCallback? onCancel}) {
+    // Close existing generate mock data overlay if one exists
+    _activeGenerateMockDataOverlay?.remove();
+    _activeGenerateMockDataOverlay = null;
+
+    final overlay = Overlay.of(context);
+    late OverlayEntry overlayEntry;
+
+    overlayEntry = OverlayEntry(
+      builder: (context) => GenerateMockDataOverlay(
+        onGenerate: (region, variationLevel) {
+          onGenerate(region, variationLevel);
+          overlayEntry.remove();
+          _activeGenerateMockDataOverlay = null;
+        },
+        onClose: () {
+          overlayEntry.remove();
+          _activeGenerateMockDataOverlay = null;
+          onCancel?.call();
+        },
+      ),
+    );
+
+    _activeGenerateMockDataOverlay = overlayEntry;
+    overlay.insert(overlayEntry);
+  }
+
+  static void showSelectOrgForAssessment(BuildContext context, {required Function(String, String) onSelect, VoidCallback? onCancel}) {
+    // Close existing select org for assessment overlay if one exists
+    _activeSelectOrgForAssessmentOverlay?.remove();
+    _activeSelectOrgForAssessmentOverlay = null;
+
+    final overlay = Overlay.of(context);
+    late OverlayEntry overlayEntry;
+
+    overlayEntry = OverlayEntry(
+      builder: (context) => SelectOrgForAssessmentOverlay(
+        onSelect: (orgId, orgName) {
+          onSelect(orgId, orgName);
+          overlayEntry.remove();
+          _activeSelectOrgForAssessmentOverlay = null;
+        },
+        onClose: () {
+          overlayEntry.remove();
+          _activeSelectOrgForAssessmentOverlay = null;
+          onCancel?.call();
+        },
+      ),
+    );
+
+    _activeSelectOrgForAssessmentOverlay = overlayEntry;
+    overlay.insert(overlayEntry);
+  }
+
   // Utility method to close all active overlays
   static void closeAllOverlays() {
     _activeBlockInputOverlay?.remove();
@@ -219,5 +277,11 @@ class OverlayService {
 
     _activeCopyRegionOverlay?.remove();
     _activeCopyRegionOverlay = null;
+
+    _activeGenerateMockDataOverlay?.remove();
+    _activeGenerateMockDataOverlay = null;
+
+    _activeSelectOrgForAssessmentOverlay?.remove();
+    _activeSelectOrgForAssessmentOverlay = null;
   }
 }

@@ -20,6 +20,7 @@ class Block extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    print("block building");
     const dotOverhang = 38.0;
     final hitboxOffset = ref.read(blockNotifierProvider(blockId).notifier).selected ? dotOverhang : 0.0;
 

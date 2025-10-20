@@ -62,9 +62,13 @@ class AssessmentBuildStrategy extends BlockBehaviorStrategy {
   Widget blockData(BlockContext context) {
     final blockData = context.blockNotifier.blockData;
     final hasMultipleEmails = blockData?.hasMultipleEmails ?? false;
+    final isTeamHierarchy = blockData?.hierarchy == Hierarchy.team;
     final emailRatio = context.blockNotifier.emailStatusRatio;
     final hierarchy = blockData?.hierarchy;
     final showHierarchy = hierarchy != null && hierarchy != Hierarchy.none;
+
+    // Show email ratio for team hierarchy or blocks with multiple emails
+    final showEmailRatio = (isTeamHierarchy || hasMultipleEmails) && emailRatio.isNotEmpty;
 
     return Column(
       spacing: 4,
@@ -101,7 +105,7 @@ class AssessmentBuildStrategy extends BlockBehaviorStrategy {
               fontSize: 11,
             ),
           ),
-        if (hasMultipleEmails && emailRatio.isNotEmpty)
+        if (showEmailRatio)
           Text(
             emailRatio,
             style: const TextStyle(
@@ -117,12 +121,16 @@ class AssessmentBuildStrategy extends BlockBehaviorStrategy {
   @override
   BoxDecoration blockDecoration(BlockContext context) {
     final hasMultipleEmails = context.blockNotifier.blockData?.hasMultipleEmails ?? false;
-    
+    final isTeamHierarchy = context.blockNotifier.blockData?.hierarchy == Hierarchy.team;
+
+    // Team hierarchy or multiple emails should use multi-email logic
+    final isMultiEmailBlock = isTeamHierarchy || hasMultipleEmails;
+
     // Determine base color based on status
     Color blockColor;
     BoxDecoration baseDecoration;
 
-    if (hasMultipleEmails) {
+    if (isMultiEmailBlock) {
       // Multi-email block logic
       final sent = context.blockNotifier.sent;
       final allSubmitted = context.blockNotifier.allEmailsSubmitted;
@@ -265,7 +273,26 @@ class AssessmentBuildStrategy extends BlockBehaviorStrategy {
 
   @override
   void onTap(BlockContext context) {
-    print(context.blockId);
+    print('=== Block Clicked ===');
+    print('Block ID: ${context.blockId}');
+    print('Block Name: ${context.blockNotifier.blockData?.name ?? "NO NAME"}');
+    print('Has Multiple Emails: ${context.blockNotifier.blockData?.hasMultipleEmails ?? false}');
+    print('Total Emails: ${context.blockNotifier.blockData?.totalEmailCount ?? 0}');
+    print('Associated Data Docs Count: ${context.blockNotifier.allDataDocs.length}');
+
+    if (context.blockNotifier.allDataDocs.isNotEmpty) {
+      print('Data Docs:');
+      for (var i = 0; i < context.blockNotifier.allDataDocs.length; i++) {
+        final doc = context.blockNotifier.allDataDocs[i];
+        print('  [$i] Doc ID: ${doc['id'] ?? 'N/A'}, Email: ${doc['email'] ?? 'N/A'}, Sent: ${doc['sentAssessment'] ?? false}, Submitted: ${doc['submitted'] ?? false}');
+      }
+    } else {
+      print('No multi-email data docs (single email mode or no data docs created yet)');
+    }
+    print('Sent: ${context.blockNotifier.sent}');
+    print('Submitted: ${context.blockNotifier.submitted}');
+    print('==================');
+
     if (context.blockNotifier.selected) {
       context.blockNotifier.onDeSelect();
       context.ref.read(selectedBlockProvider.notifier).state = null;

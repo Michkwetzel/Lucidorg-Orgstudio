@@ -155,17 +155,36 @@ class BlockNotifier extends ChangeNotifier {
   int get sentCount => _sentCount;
   int get submittedCount => _submittedCount;
   String get emailStatusRatio {
+    // For team hierarchy, use data doc count instead of email count
+    if (_blockData?.hierarchy == Hierarchy.team) {
+      final totalDataDocs = _allDataDocs.length;
+      if (totalDataDocs == 0) return '';
+      return '$_submittedCount/$totalDataDocs';
+    }
+
     final totalEmails = _blockData?.totalEmailCount ?? 0;
     if (totalEmails <= 1) return '';
     return '$_submittedCount/$totalEmails';
   }
 
   bool get allEmailsSubmitted {
+    // For team hierarchy, check against data doc count
+    if (_blockData?.hierarchy == Hierarchy.team) {
+      final totalDataDocs = _allDataDocs.length;
+      return totalDataDocs > 0 && _submittedCount == totalDataDocs;
+    }
+
     final totalEmails = _blockData?.totalEmailCount ?? 0;
     return totalEmails > 1 && _submittedCount == totalEmails;
   }
 
   bool get partialEmailsSubmitted {
+    // For team hierarchy, check against data doc count
+    if (_blockData?.hierarchy == Hierarchy.team) {
+      final totalDataDocs = _allDataDocs.length;
+      return totalDataDocs > 0 && _submittedCount > 0 && _submittedCount < totalDataDocs;
+    }
+
     final totalEmails = _blockData?.totalEmailCount ?? 0;
     return totalEmails > 1 && _submittedCount > 0 && _submittedCount < totalEmails;
   }
@@ -186,19 +205,35 @@ class BlockNotifier extends ChangeNotifier {
   }
 
   void _setupResultStream() {
+    print('=== Setting up result stream for block $blockId ===');
+    print('Block name: ${_blockData?.name}');
+    print('Hierarchy: ${_blockData?.hierarchy}');
+    print('Has multiple emails: ${_blockData?.hasMultipleEmails}');
+    print('Email count: ${_blockData?.emails.length}');
+    print('Emails: ${_blockData?.emails}');
+
+    // Determine if this block should use multi-email stream
+    // Team hierarchy always uses multi-email stream (for mock data support)
+    // Otherwise, use multi-email stream only if block has multiple emails
+    final shouldUseMultiEmailStream = _blockData?.hierarchy == Hierarchy.team ||
+                                      _blockData?.hasMultipleEmails == true;
+
     // Reset multi-email state when switching to single email mode
-    if (_blockData?.hasMultipleEmails != true) {
+    if (!shouldUseMultiEmailStream) {
       _allDataDocs = [];
       _sentCount = 0;
       _submittedCount = 0;
     }
 
-    // Use conditional logic based on whether block has multiple emails
-    if (_blockData?.hasMultipleEmails == true) {
+    // Use conditional logic based on hierarchy or email count
+    if (shouldUseMultiEmailStream) {
+      print('Setting up MULTI-EMAIL result stream (team hierarchy or multiple emails)');
       _setupMultiEmailResultStream();
     } else {
+      print('Setting up SINGLE-EMAIL result stream');
       _setupSingleEmailResultStream();
     }
+    print('==========================================');
   }
 
   void _setupSingleEmailResultStream() {
@@ -265,6 +300,13 @@ class BlockNotifier extends ChangeNotifier {
       (event) {
         QuerySnapshot<Map<String, dynamic>> snapshot = event;
         _allDataDocs = snapshot.docs.map((doc) => {'id': doc.id, ...doc.data()}).toList();
+
+        print('Multi-email stream update for block $blockId (${_blockData?.name}):');
+        print('  Received ${_allDataDocs.length} data docs from Firestore');
+        for (var i = 0; i < _allDataDocs.length; i++) {
+          final doc = _allDataDocs[i];
+          print('    [$i] Email: ${doc['email']}, Sent: ${doc['sentAssessment']}, Submitted: ${doc['submitted']}');
+        }
 
         _processMultiEmailData();
         notifyListeners();

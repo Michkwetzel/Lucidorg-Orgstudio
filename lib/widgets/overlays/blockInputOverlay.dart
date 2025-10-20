@@ -67,16 +67,17 @@ class _BlockInputOverlayState extends ConsumerState<BlockInputOverlay> {
       regionController.text = data.region;
       subOfficeController.text = data.subOffice;
 
+      selectedHierarchy = data.hierarchy;
+
+      // Auto-detect multiple emails based on hierarchy
+      isMultipleEmails = selectedHierarchy == Hierarchy.team;
+
       // Handle emails
       if (data.emails.length > 1) {
-        isMultipleEmails = true;
         emailController.text = data.emails.join(', ');
       } else if (data.emails.isNotEmpty) {
-        isMultipleEmails = false;
         emailController.text = data.emails.first;
       }
-
-      selectedHierarchy = data.hierarchy;
     }
   }
 
@@ -224,56 +225,57 @@ class _BlockInputOverlayState extends ConsumerState<BlockInputOverlay> {
       submitted: widget.initialData?.submitted ?? false,
     );
 
-    // Save assessment results if provided
-    if (assessmentResultsController.text.trim().isNotEmpty) {
-      await _saveAssessmentResults();
-    }
+    // COMMENTED OUT: Save assessment results if provided
+    // if (assessmentResultsController.text.trim().isNotEmpty) {
+    //   await _saveAssessmentResults();
+    // }
 
     widget.onSave?.call(data);
   }
 
-  Future<void> _saveAssessmentResults() async {
-    final appState = ref.read(appStateProvider);
-    final orgId = appState.orgId;
-    final assessmentId = appState.assessmentId;
+  // COMMENTED OUT: Assessment results saving functionality
+  // Future<void> _saveAssessmentResults() async {
+  //   final appState = ref.read(appStateProvider);
+  //   final orgId = appState.orgId;
+  //   final assessmentId = appState.assessmentId;
 
-    if (orgId == null || assessmentId == null) {
-      setState(() {
-        assessmentResultsError = true;
-        assessmentResultsErrorMessage = 'Missing organization or assessment context';
-      });
-      return;
-    }
+  //   if (orgId == null || assessmentId == null) {
+  //     setState(() {
+  //       assessmentResultsError = true;
+  //       assessmentResultsErrorMessage = 'Missing organization or assessment context';
+  //     });
+  //     return;
+  //   }
 
-    setState(() {
-      isSavingAssessmentResults = true;
-      assessmentResultsError = false;
-      assessmentResultsErrorMessage = '';
-    });
+  //   setState(() {
+  //     isSavingAssessmentResults = true;
+  //     assessmentResultsError = false;
+  //     assessmentResultsErrorMessage = '';
+  //   });
 
-    try {
-      final rawResults = _parseAssessmentResults(assessmentResultsController.text);
-      if (rawResults.isEmpty) {
-        throw Exception('Invalid assessment results format');
-      }
+  //   try {
+  //     final rawResults = _parseAssessmentResults(assessmentResultsController.text);
+  //     if (rawResults.isEmpty) {
+  //       throw Exception('Invalid assessment results format');
+  //     }
 
-      final docId = await _findAssessmentDataDocId(orgId, assessmentId, widget.blockId);
-      if (docId == null) {
-        throw Exception('No assessment data document found for this block');
-      }
+  //     final docId = await _findAssessmentDataDocId(orgId, assessmentId, widget.blockId);
+  //     if (docId == null) {
+  //       throw Exception('No assessment data document found for this block');
+  //     }
 
-      await _updateAssessmentDataRawResults(orgId, assessmentId, docId, rawResults);
-    } catch (e) {
-      setState(() {
-        assessmentResultsError = true;
-        assessmentResultsErrorMessage = e.toString().replaceAll('Exception: ', '');
-      });
-    } finally {
-      setState(() {
-        isSavingAssessmentResults = false;
-      });
-    }
-  }
+  //     await _updateAssessmentDataRawResults(orgId, assessmentId, docId, rawResults);
+  //   } catch (e) {
+  //     setState(() {
+  //       assessmentResultsError = true;
+  //       assessmentResultsErrorMessage = e.toString().replaceAll('Exception: ', '');
+  //     });
+  //   } finally {
+  //     setState(() {
+  //       isSavingAssessmentResults = false;
+  //     });
+  //   }
+  // }
 
   void _onCSVDataExtracted(List<String> emails, bool error) {
     setState(() {
@@ -282,21 +284,22 @@ class _BlockInputOverlayState extends ConsumerState<BlockInputOverlay> {
     });
   }
 
-  List<int> _parseAssessmentResults(String input) {
-    if (input.trim().isEmpty) return [];
+  // COMMENTED OUT: Assessment results parsing
+  // List<int> _parseAssessmentResults(String input) {
+  //   if (input.trim().isEmpty) return [];
 
-    // Remove any whitespace and validate only digits
-    final cleanInput = input.replaceAll(RegExp(r'\s'), '');
-    if (!RegExp(r'^\d+$').hasMatch(cleanInput)) return [];
+  //   // Remove any whitespace and validate only digits
+  //   final cleanInput = input.replaceAll(RegExp(r'\s'), '');
+  //   if (!RegExp(r'^\d+$').hasMatch(cleanInput)) return [];
 
-    // Convert each character to an integer
-    return cleanInput.split('').map((char) => int.parse(char)).toList();
-  }
+  //   // Convert each character to an integer
+  //   return cleanInput.split('').map((char) => int.parse(char)).toList();
+  // }
 
-  bool _isValidAssessmentResults(String input) {
-    final cleanInput = input.replaceAll(RegExp(r'\s'), '');
-    return cleanInput.length == 37 && RegExp(r'^\d+$').hasMatch(cleanInput);
-  }
+  // bool _isValidAssessmentResults(String input) {
+  //   final cleanInput = input.replaceAll(RegExp(r'\s'), '');
+  //   return cleanInput.length == 37 && RegExp(r'^\d+$').hasMatch(cleanInput);
+  // }
 
   Future<String?> _findAssessmentDataDocId(String orgId, String assessmentId, String blockId) async {
     try {
@@ -320,19 +323,20 @@ class _BlockInputOverlayState extends ConsumerState<BlockInputOverlay> {
     }
   }
 
-  Future<void> _updateAssessmentDataRawResults(String orgId, String assessmentId, String docId, List<int> rawResults) async {
-    try {
-      await FirestoreService.instance.collection('orgs').doc(orgId).collection('assessments').doc(assessmentId).collection('data').doc(docId).update(
-        {
-          'rawResults': rawResults,
-          'sentAssessment': true,
-          'submitted': true,
-        },
-      );
-    } catch (e) {
-      throw Exception('Failed to update assessment data: $e');
-    }
-  }
+  // COMMENTED OUT: Assessment results updating
+  // Future<void> _updateAssessmentDataRawResults(String orgId, String assessmentId, String docId, List<int> rawResults) async {
+  //   try {
+  //     await FirestoreService.instance.collection('orgs').doc(orgId).collection('assessments').doc(assessmentId).collection('data').doc(docId).update(
+  //       {
+  //         'rawResults': rawResults,
+  //         'sentAssessment': true,
+  //         'submitted': true,
+  //       },
+  //     );
+  //   } catch (e) {
+  //     throw Exception('Failed to update assessment data: $e');
+  //   }
+  // }
 
   Future<List<int>?> _loadExistingRawResults(String orgId, String assessmentId, String blockId) async {
     try {
@@ -464,80 +468,9 @@ class _BlockInputOverlayState extends ConsumerState<BlockInputOverlay> {
                           _buildHierarchySelector(),
                           const SizedBox(height: 12),
 
-                          // Assessment Results field
-                          _buildAssessmentResultsField(),
-                          const SizedBox(height: 12),
-
-                          // Email type selection
-                          const Text(
-                            'Email Type',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Container(
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(color: Colors.grey.shade300),
-                            ),
-                            child: Row(
-                              children: [
-                                Expanded(
-                                  child: GestureDetector(
-                                    onTap: () => setState(() {
-                                      isMultipleEmails = false;
-                                      csvEmails.clear();
-                                      csvError = false;
-                                    }),
-                                    child: Container(
-                                      padding: const EdgeInsets.symmetric(vertical: 12),
-                                      decoration: BoxDecoration(
-                                        color: !isMultipleEmails ? Colors.blue : Colors.transparent,
-                                        borderRadius: const BorderRadius.only(
-                                          topLeft: Radius.circular(7),
-                                          bottomLeft: Radius.circular(7),
-                                        ),
-                                      ),
-                                      child: Text(
-                                        'Single Email',
-                                        textAlign: TextAlign.center,
-                                        style: TextStyle(
-                                          color: !isMultipleEmails ? Colors.white : Colors.grey.shade700,
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                Expanded(
-                                  child: GestureDetector(
-                                    onTap: () => setState(() => isMultipleEmails = true),
-                                    child: Container(
-                                      padding: const EdgeInsets.symmetric(vertical: 12),
-                                      decoration: BoxDecoration(
-                                        color: isMultipleEmails ? Colors.blue : Colors.transparent,
-                                        borderRadius: const BorderRadius.only(
-                                          topRight: Radius.circular(7),
-                                          bottomRight: Radius.circular(7),
-                                        ),
-                                      ),
-                                      child: Text(
-                                        'Multiple Emails',
-                                        textAlign: TextAlign.center,
-                                        style: TextStyle(
-                                          color: isMultipleEmails ? Colors.white : Colors.grey.shade700,
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(height: 12),
+                          // COMMENTED OUT: Assessment Results field
+                          // _buildAssessmentResultsField(),
+                          // const SizedBox(height: 12),
 
                           // Email/Emails field
                           _buildEmailField(
@@ -619,150 +552,151 @@ class _BlockInputOverlayState extends ConsumerState<BlockInputOverlay> {
     );
   }
 
-  Widget _buildAssessmentResultsField() {
-    final isValid = _isValidAssessmentResults(assessmentResultsController.text);
-    final currentLength = assessmentResultsController.text.replaceAll(RegExp(r'\s'), '').length;
+  // COMMENTED OUT: Assessment results field builder
+  // Widget _buildAssessmentResultsField() {
+  //   final isValid = _isValidAssessmentResults(assessmentResultsController.text);
+  //   final currentLength = assessmentResultsController.text.replaceAll(RegExp(r'\s'), '').length;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            const Text(
-              'Assessment Results',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            const SizedBox(width: 8),
-            if (isLoadingAssessmentResults) ...[
-              SizedBox(
-                width: 12,
-                height: 12,
-                child: CircularProgressIndicator(
-                  strokeWidth: 1.5,
-                  color: Colors.blue.shade600,
-                ),
-              ),
-              const SizedBox(width: 4),
-              Text(
-                'Loading...',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.blue.shade600,
-                ),
-              ),
-            ] else if (isSavingAssessmentResults) ...[
-              SizedBox(
-                width: 12,
-                height: 12,
-                child: CircularProgressIndicator(
-                  strokeWidth: 1.5,
-                  color: Colors.green.shade600,
-                ),
-              ),
-              const SizedBox(width: 4),
-              Text(
-                'Saving...',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.green.shade600,
-                ),
-              ),
-            ] else ...[
-              Text(
-                '($currentLength/37)',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: isValid ? Colors.green.shade600 : Colors.grey.shade600,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ],
-          ],
-        ),
-        const SizedBox(height: 4),
-        TextField(
-          controller: assessmentResultsController,
-          enabled: !isLoadingAssessmentResults && !isSavingAssessmentResults,
-          maxLength: 37,
-          keyboardType: TextInputType.number,
-          inputFormatters: [
-            FilteringTextInputFormatter.digitsOnly,
-          ],
-          onChanged: (value) => setState(() {
-            // Clear error when user starts typing
-            if (assessmentResultsError) {
-              assessmentResultsError = false;
-              assessmentResultsErrorMessage = '';
-            }
-          }),
-          onSubmitted: (value) {
-            // Close overlay when Enter is pressed
-            widget.onClose?.call();
-          },
-          decoration: InputDecoration(
-            hintText: 'Enter 37 consecutive numbers (e.g., 1234567890...)',
-            counterText: '', // Hide default counter since we have custom one
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(
-                color: assessmentResultsError
-                    ? Colors.red.shade300
-                    : isValid
-                    ? Colors.green.shade300
-                    : Colors.grey.shade300,
-              ),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(
-                color: assessmentResultsError
-                    ? Colors.red.shade300
-                    : isValid
-                    ? Colors.green.shade300
-                    : Colors.grey.shade300,
-              ),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(
-                color: assessmentResultsError
-                    ? Colors.red
-                    : isValid
-                    ? Colors.green
-                    : Colors.blue,
-              ),
-            ),
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 12,
-              vertical: 8,
-            ),
-          ),
-        ),
-        if (assessmentResultsError) ...[
-          const SizedBox(height: 4),
-          Text(
-            assessmentResultsErrorMessage,
-            style: TextStyle(
-              fontSize: 12,
-              color: Colors.red.shade600,
-            ),
-          ),
-        ] else if (currentLength > 0 && !isValid && !isLoadingAssessmentResults) ...[
-          const SizedBox(height: 4),
-          Text(
-            currentLength < 37 ? 'Please enter exactly 37 numbers' : 'Too many numbers entered',
-            style: TextStyle(
-              fontSize: 12,
-              color: Colors.red.shade600,
-            ),
-          ),
-        ],
-      ],
-    );
-  }
+  //   return Column(
+  //     crossAxisAlignment: CrossAxisAlignment.start,
+  //     children: [
+  //       Row(
+  //         children: [
+  //           const Text(
+  //             'Assessment Results',
+  //             style: TextStyle(
+  //               fontSize: 14,
+  //               fontWeight: FontWeight.w500,
+  //             ),
+  //           ),
+  //           const SizedBox(width: 8),
+  //           if (isLoadingAssessmentResults) ...[
+  //             SizedBox(
+  //               width: 12,
+  //               height: 12,
+  //               child: CircularProgressIndicator(
+  //                 strokeWidth: 1.5,
+  //                 color: Colors.blue.shade600,
+  //               ),
+  //             ),
+  //             const SizedBox(width: 4),
+  //             Text(
+  //               'Loading...',
+  //               style: TextStyle(
+  //                 fontSize: 12,
+  //                 color: Colors.blue.shade600,
+  //               ),
+  //             ),
+  //           ] else if (isSavingAssessmentResults) ...[
+  //             SizedBox(
+  //               width: 12,
+  //               height: 12,
+  //               child: CircularProgressIndicator(
+  //                 strokeWidth: 1.5,
+  //                 color: Colors.green.shade600,
+  //               ),
+  //             ),
+  //             const SizedBox(width: 4),
+  //             Text(
+  //               'Saving...',
+  //               style: TextStyle(
+  //                 fontSize: 12,
+  //                 color: Colors.green.shade600,
+  //               ),
+  //             ),
+  //           ] else ...[
+  //             Text(
+  //               '($currentLength/37)',
+  //               style: TextStyle(
+  //                 fontSize: 12,
+  //                 color: isValid ? Colors.green.shade600 : Colors.grey.shade600,
+  //                 fontWeight: FontWeight.w500,
+  //               ),
+  //             ),
+  //           ],
+  //         ],
+  //       ),
+  //       const SizedBox(height: 4),
+  //       TextField(
+  //         controller: assessmentResultsController,
+  //         enabled: !isLoadingAssessmentResults && !isSavingAssessmentResults,
+  //         maxLength: 37,
+  //         keyboardType: TextInputType.number,
+  //         inputFormatters: [
+  //           FilteringTextInputFormatter.digitsOnly,
+  //         ],
+  //         onChanged: (value) => setState(() {
+  //           // Clear error when user starts typing
+  //           if (assessmentResultsError) {
+  //             assessmentResultsError = false;
+  //             assessmentResultsErrorMessage = '';
+  //           }
+  //         }),
+  //         onSubmitted: (value) {
+  //           // Close overlay when Enter is pressed
+  //           widget.onClose?.call();
+  //         },
+  //         decoration: InputDecoration(
+  //           hintText: 'Enter 37 consecutive numbers (e.g., 1234567890...)',
+  //           counterText: '', // Hide default counter since we have custom one
+  //           border: OutlineInputBorder(
+  //             borderRadius: BorderRadius.circular(8),
+  //             borderSide: BorderSide(
+  //               color: assessmentResultsError
+  //                   ? Colors.red.shade300
+  //                   : isValid
+  //                   ? Colors.green.shade300
+  //                   : Colors.grey.shade300,
+  //             ),
+  //           ),
+  //           enabledBorder: OutlineInputBorder(
+  //             borderRadius: BorderRadius.circular(8),
+  //             borderSide: BorderSide(
+  //               color: assessmentResultsError
+  //                   ? Colors.red.shade300
+  //                   : isValid
+  //                   ? Colors.green.shade300
+  //                   : Colors.grey.shade300,
+  //             ),
+  //           ),
+  //           focusedBorder: OutlineInputBorder(
+  //             borderRadius: BorderRadius.circular(8),
+  //             borderSide: BorderSide(
+  //               color: assessmentResultsError
+  //                   ? Colors.red
+  //                   : isValid
+  //                   ? Colors.green
+  //                   : Colors.blue,
+  //             ),
+  //           ),
+  //           contentPadding: const EdgeInsets.symmetric(
+  //             horizontal: 12,
+  //             vertical: 8,
+  //           ),
+  //         ),
+  //       ),
+  //       if (assessmentResultsError) ...[
+  //         const SizedBox(height: 4),
+  //         Text(
+  //           assessmentResultsErrorMessage,
+  //           style: TextStyle(
+  //             fontSize: 12,
+  //             color: Colors.red.shade600,
+  //           ),
+  //         ),
+  //       ] else if (currentLength > 0 && !isValid && !isLoadingAssessmentResults) ...[
+  //         const SizedBox(height: 4),
+  //         Text(
+  //           currentLength < 37 ? 'Please enter exactly 37 numbers' : 'Too many numbers entered',
+  //           style: TextStyle(
+  //             fontSize: 12,
+  //             color: Colors.red.shade600,
+  //           ),
+  //         ),
+  //       ],
+  //     ],
+  //   );
+  // }
 
   Widget _buildHierarchySelector() {
     const List<Hierarchy> hierarchyOptions = [
@@ -807,6 +741,8 @@ class _BlockInputOverlayState extends ConsumerState<BlockInputOverlay> {
                         onTap: () {
                           setState(() {
                             selectedHierarchy = option;
+                            // Auto-switch to multiple emails if hierarchy is team
+                            isMultipleEmails = option == Hierarchy.team;
                           });
                           _triggerAutoSave();
                         },
@@ -843,6 +779,8 @@ class _BlockInputOverlayState extends ConsumerState<BlockInputOverlay> {
                         onTap: () {
                           setState(() {
                             selectedHierarchy = option;
+                            // Auto-switch to multiple emails if hierarchy is team
+                            isMultipleEmails = option == Hierarchy.team;
                           });
                           _triggerAutoSave();
                         },
@@ -879,6 +817,8 @@ class _BlockInputOverlayState extends ConsumerState<BlockInputOverlay> {
                         onTap: () {
                           setState(() {
                             selectedHierarchy = option;
+                            // Auto-switch to multiple emails if hierarchy is team
+                            isMultipleEmails = option == Hierarchy.team;
                           });
                           _triggerAutoSave();
                         },
