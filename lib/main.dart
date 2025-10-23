@@ -25,13 +25,6 @@ void main() async {
 
   runApp(const ProviderScope(child: App()));
 
-  // Shows FPS overlay in debug mode
-  if (kDebugMode) {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      // This enables the performance overlay
-      debugProfileBuildsEnabled = true;
-    });
-  }
 }
 
 class App extends ConsumerWidget {

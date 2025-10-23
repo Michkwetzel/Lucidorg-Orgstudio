@@ -100,12 +100,21 @@ class _SendAssessmentOverlayState extends ConsumerState<SendAssessmentOverlay> {
   void _handleOptionTap(Options option) {
     switch (option) {
       case Options.select:
+        // Clear all selections when switching to select mode
+        ref.read(selectedBlocksProvider.notifier).state = {};
+        ref.read(selectedDepartmentsProvider.notifier).state = {};
         ref.read(appStateProvider.notifier).setAssessmentMode(AssessmentMode.assessmentSend);
         break;
       case Options.department:
+        // Clear block selections when switching to department mode
+        ref.read(selectedBlocksProvider.notifier).state = {};
+        ref.read(selectedDepartmentsProvider.notifier).state = {};
         _scanForDepartments();
         break;
       case Options.hierarchy:
+        // Clear selections when switching to hierarchy mode
+        ref.read(selectedBlocksProvider.notifier).state = {};
+        ref.read(selectedDepartmentsProvider.notifier).state = {};
         // Hierarchy selection not implemented for assessment sending
         break;
       case Options.all:

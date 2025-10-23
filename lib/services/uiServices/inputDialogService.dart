@@ -10,6 +10,8 @@ class InputDialogService {
     required List<FormField> fields,
     String confirmText = 'Create',
     String cancelText = 'Cancel',
+    bool enableConfirm = true,
+    String? demoMessage,
   }) async {
     final BuildContext? context = NavigationService.router.routerDelegate.navigatorKey.currentContext;
     if (context == null) return null;
@@ -23,6 +25,8 @@ class InputDialogService {
           fields: fields,
           confirmText: confirmText,
           cancelText: cancelText,
+          enableConfirm: enableConfirm,
+          demoMessage: demoMessage,
         );
       },
     );
@@ -39,6 +43,8 @@ class InputDialogService {
           required: true,
         ),
       ],
+      enableConfirm: false,
+      demoMessage: "This is a demo, can't create org",
     );
   }
 }
@@ -68,12 +74,16 @@ class _FormDialog extends StatefulWidget {
   final List<FormField> fields;
   final String confirmText;
   final String cancelText;
+  final bool enableConfirm;
+  final String? demoMessage;
 
   const _FormDialog({
     required this.title,
     required this.fields,
     required this.confirmText,
     required this.cancelText,
+    this.enableConfirm = true,
+    this.demoMessage,
   });
 
   @override
@@ -114,21 +124,36 @@ class _FormDialogState extends State<_FormDialog> {
           key: _formKey,
           child: Column(
             mainAxisSize: MainAxisSize.min,
-            children: widget.fields.map((field) {
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 16),
-                child: TextFormField(
-                  controller: _controllers[field.key],
-                  decoration: InputDecoration(
-                    labelText: field.label,
-                    hintText: field.hint,
+            children: [
+              // Show demo message if provided
+              if (widget.demoMessage != null)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: Text(
+                    widget.demoMessage!,
+                    style: const TextStyle(
+                      color: Colors.orange,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
-                  keyboardType: field.inputType,
-                  maxLines: field.maxLines,
-                  validator: field.required ? (value) => value?.trim().isEmpty == true ? 'This field is required' : null : null,
                 ),
-              );
-            }).toList(),
+              // Show form fields
+              ...widget.fields.map((field) {
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: TextFormField(
+                    controller: _controllers[field.key],
+                    decoration: InputDecoration(
+                      labelText: field.label,
+                      hintText: field.hint,
+                    ),
+                    keyboardType: field.inputType,
+                    maxLines: field.maxLines,
+                    validator: field.required ? (value) => value?.trim().isEmpty == true ? 'This field is required' : null : null,
+                  ),
+                );
+              }),
+            ],
           ),
         ),
       ),
@@ -138,14 +163,14 @@ class _FormDialogState extends State<_FormDialog> {
           child: Text(widget.cancelText),
         ),
         ElevatedButton(
-          onPressed: () {
+          onPressed: widget.enableConfirm ? () {
             if (_formKey.currentState!.validate()) {
               final result = {
                 for (final field in widget.fields) field.key: _controllers[field.key]!.text.trim(),
               };
               Navigator.of(context).pop(result);
             }
-          },
+          } : null,
           child: Text(widget.confirmText),
         ),
       ],

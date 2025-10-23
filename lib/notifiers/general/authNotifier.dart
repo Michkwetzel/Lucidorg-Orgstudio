@@ -99,6 +99,13 @@ class AuthNotifier extends StateNotifier<AuthState> {
     return await _auth.signInWithPopup(GoogleAuthProvider());
   }
 
+  Future<void> signInAnonymously() async {
+    logger.info("Signing in anonymously (guest mode)");
+    _auth.signOut();
+    await _auth.signInAnonymously();
+    logger.info("Successfully signed in as guest");
+  }
+
   void signOutUser() {
     _auth.signOut();
     state = state.copyWith(firebaseUser: null, userProfile: null);

@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:platform_v2/config/constants.dart';
-import 'package:platform_v2/services/httpService.dart';
+import 'package:platform_v2/services/firestoreService.dart';
 import 'package:platform_v2/services/uiServices/navigationService.dart';
 import 'package:platform_v2/widgets/components/buildingBlocks/buttons/callToActionButton.dart';
-import 'package:platform_v2/widgets/components/buildingBlocks/buttons/secondaryButton.dart';
 
 class AppEntryLayout extends ConsumerWidget {
   const AppEntryLayout({super.key});
@@ -24,22 +23,19 @@ class AppEntryLayout extends ConsumerWidget {
             'assets/logo/logo.jpg',
             width: 300,
           ),
-          Wrap(
-            spacing: 32,
-            runSpacing: 8,
-            alignment: WrapAlignment.center,
-            children: [
-              Secondarybutton(
-                onPressed: () => {
-                  HttpService.postRequest(path: "https://setadminclaim-rbyavkqn2a-uc.a.run.app", request: {"userUID" : "fub8nJmh07YIxBvUuCoobvMOw373"})
-                },
-                buttonText: "Create Account",
-              ),
-              CallToActionButton(
-                onPressed: () => NavigationService.navigateTo('/auth/logIn'),
-                buttonText: "Log in",
-              ),
-            ],
+          CallToActionButton(
+            onPressed: () async {
+              // Log the access to Firestore (best effort, don't block on failure)
+              try {
+                FirestoreService.logGuestAccess();
+              } catch (e) {
+                // Silently fail - don't block demo access
+              }
+
+              // Navigate directly to org select screen
+              NavigationService.navigateToOrgSelect(ref);
+            },
+            buttonText: "Demo Sign in",
           ),
         ],
       ),

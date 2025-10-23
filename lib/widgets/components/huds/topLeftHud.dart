@@ -47,10 +47,10 @@ class TopLeftHud extends ConsumerWidget {
         ),
 
         // Dropdown section
-        if (_shouldShowDropdown(appState)) ...[
-          SizedBox(width: 16),
-          _buildDropdown(context, ref),
-        ],
+        // if (_shouldShowDropdown(appState)) ...[
+        //   SizedBox(width: 16),
+        //   _buildDropdown(context, ref),
+        // ],
       ],
     );
   }
@@ -120,12 +120,13 @@ class TopLeftHud extends ConsumerWidget {
           borderRadius: BorderRadius.circular(8),
         ),
         onSelected: (value) {
+          final appState = ref.read(appStateProvider);
           switch (value) {
             case AppView.orgBuild:
-              NavigationService.navigateToOrgBuild(ref, null, null);
+              NavigationService.navigateToOrgBuild(ref, appState.orgId, appState.orgName);
               break;
             case AppView.assessmentSelect:
-              NavigationService.navigateToAssessmentSelect(ref);
+              NavigationService.navigateToAssessmentSelect(ref, orgId: appState.orgId, orgName: appState.orgName);
               break;
             default:
               break;

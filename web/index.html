@@ -1,14 +1,14 @@
 <!DOCTYPE html>
 <html>
 <head>
-  
+
   <style>
     /* Completely disable horizontal swiping gestures at the document level */
     html, body, flt-glass-pane, flt-scene-host {
       overscroll-behavior-x: none !important;
       touch-action: pan-y !important; /* Only allow vertical panning */
     }
-    
+
     /* Target Flutter's render elements more specifically */
     flt-scene-host * {
       touch-action: pan-y !important;

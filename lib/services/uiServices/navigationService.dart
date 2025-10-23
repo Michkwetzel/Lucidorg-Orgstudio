@@ -84,11 +84,15 @@ class NavigationService {
   }
 
   // Assessment selection
-  static void navigateToAssessmentSelect(WidgetRef ref) {
+  static void navigateToAssessmentSelect(WidgetRef ref, {String? orgId, String? orgName}) {
     final appStateNotifier = ref.read(appStateProvider.notifier);
 
     appStateNotifier.batchUpdate(
       (state) => state.copyWith(
+        orgId: orgId,
+        clearOrgId: orgId == null,
+        orgName: orgName,
+        clearOrgName: orgName == null,
         clearAssessmentMode: true,
         appView: AppView.assessmentSelect,
       ),

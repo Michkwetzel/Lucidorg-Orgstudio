@@ -17,56 +17,12 @@ class BotLeftHud extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       spacing: 4,
       children: [
-        if (appView == AppView.orgSelect)
-          FilledButton.tonal(
-            onPressed: () {
-              _openSelectOrgForAssessmentOverlay(context, ref);
-            },
-            child: Text("Assessments"),
-          ),
-        if (appView == AppView.assessmentBuild)
-          FilledButton.tonal(
-            onPressed: () {
-              NavigationService.navigateToAssessmentSelect(ref);
-            },
-            child: Text("Assessments"),
-          ),
         if (appView == AppView.orgBuild || appView == AppView.assessmentBuild)
           FilledButton.tonal(
             onPressed: () async {
               NavigationService.navigateToOrgSelect(ref);
             },
             child: Text("Orgs"),
-          ),
-        if (appView == AppView.orgBuild)
-          Tooltip(
-            message: 'Copy Region Blocks',
-            child: FilledButton.tonal(
-              onPressed: () {
-                _openCopyRegionOverlay(context, ref);
-              },
-              child: Text("Copy Region"),
-            ),
-          ),
-        if (appView == AppView.assessmentBuild)
-          Tooltip(
-            message: 'Generate Mock Assessment Data',
-            child: FilledButton.tonal(
-              onPressed: () {
-                _openGenerateMockDataOverlay(context, ref);
-              },
-              child: Text("Mock Data"),
-            ),
-          ),
-        if (appView == AppView.assessmentBuild)
-          Tooltip(
-            message: 'Fix Block IDs',
-            child: FilledButton.tonal(
-              onPressed: () {
-                _fixBlockIds(context, ref);
-              },
-              child: Text("Fix Block IDs"),
-            ),
           ),
       ],
     );
@@ -76,17 +32,8 @@ class BotLeftHud extends ConsumerWidget {
     OverlayService.showSelectOrgForAssessment(
       context,
       onSelect: (orgId, orgName) {
-        // Set org context in appState
-        final appStateNotifier = ref.read(appStateProvider.notifier);
-        appStateNotifier.batchUpdate(
-          (state) => state.copyWith(
-            orgId: orgId,
-            orgName: orgName,
-          ),
-        );
-
-        // Navigate to assessment select
-        NavigationService.navigateToAssessmentSelect(ref);
+        // Navigate to assessment select with org context
+        NavigationService.navigateToAssessmentSelect(ref, orgId: orgId, orgName: orgName);
       },
       onCancel: () {},
     );

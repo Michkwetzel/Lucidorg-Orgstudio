@@ -38,7 +38,20 @@ class OrgSelectPage extends ConsumerWidget {
                       heading: org.orgName,
                       data: org.id,
                       onPressed: () {
-                        NavigationService.navigateToOrgBuild(ref, org.id, org.orgName);
+                        // Automatically select the specific assessment and go to canvas
+                        const assessmentId = 't4vXyZAB6bzYbbriJg7n';
+                        const assessmentName = 'Demo Assessment'; // You can change this name
+
+                        // Set org context first
+                        ref.read(appStateProvider.notifier).batchUpdate(
+                          (state) => state.copyWith(
+                            orgId: org.id,
+                            orgName: org.orgName,
+                          ),
+                        );
+
+                        // Navigate directly to assessment build (canvas)
+                        NavigationService.navigateToAssessmentBuild(ref, assessmentId, assessmentName);
                       },
                     ),
                   ),

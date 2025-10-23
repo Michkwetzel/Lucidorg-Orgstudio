@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:platform_v2/config/enums.dart';
 import 'package:platform_v2/config/provider.dart';
-import 'package:platform_v2/services/httpService.dart';
 import 'package:platform_v2/services/firestoreService.dart';
 import 'package:platform_v2/services/uiServices/overLayService.dart';
 
@@ -15,36 +14,23 @@ class BotRightHud extends ConsumerWidget {
     final assessmentMode = ref.watch(appStateProvider).assessmentMode;
 
     // Show in assessmentBuild, assessmentDataView, and assessmentAnalyze modes
-    if (appView != AppView.assessmentBuild ||
-        (assessmentMode != AssessmentMode.assessmentBuild && assessmentMode != AssessmentMode.assessmentDataView && assessmentMode != AssessmentMode.assessmentAnalyze)) {
-      return SizedBox.shrink();
-    }
 
     // Different functionality based on mode
-    if (assessmentMode == AssessmentMode.assessmentDataView) {
-      return Tooltip(
-        message: 'Create Group',
-        child: FilledButton.tonal(
-          onPressed: () {
-            // unselect a block if it was selected.
-            ref.read(selectedBlockProvider.notifier).state = null;
-            ref.read(appStateProvider.notifier).setAssessmentMode(AssessmentMode.assessmentGroupCreate);
-            _openCreateGroupOverlay(context, ref);
-          },
-          child: Icon(Icons.add),
-        ),
-      );
-    } else if (assessmentMode == AssessmentMode.assessmentAnalyze) {
-      return Tooltip(
-        message: 'Reload Groups',
-        child: FilledButton.tonal(
-          onPressed: () async {
-            await ref.read(groupsProvider).loadGroups();
-          },
-          child: Icon(Icons.refresh),
-        ),
-      );
-    } else {
+    // if (assessmentMode == AssessmentMode.assessmentDataView) {
+    //   return Tooltip(
+    //     message: 'Create Group',
+    //     child: FilledButton.tonal(
+    //       onPressed: () {
+    //         // unselect a block if it was selected.
+    //         ref.read(selectedBlockProvider.notifier).state = null;
+    //         ref.read(appStateProvider.notifier).setAssessmentMode(AssessmentMode.assessmentGroupCreate);
+    //         _openCreateGroupOverlay(context, ref);
+    //       },
+    //       child: Icon(Icons.add),
+    //     ),
+    //   );
+    // } else
+    if (assessmentMode == AssessmentMode.assessmentBuild) {
       return Tooltip(
         message: 'Send Assessment',
         child: FilledButton.tonal(
@@ -58,6 +44,8 @@ class BotRightHud extends ConsumerWidget {
           child: Icon(Icons.add),
         ),
       );
+    } else {
+      return SizedBox.shrink();
     }
   }
 
@@ -69,29 +57,26 @@ class BotRightHud extends ConsumerWidget {
         OverlayService.showAssessmentSendConfirmation(
           context,
           onSend: () async {
-            final blockIds = ref.read(selectedBlocksProvider);
-            final assessmentId = ref.read(appStateProvider).assessmentId;
-            final orgId = ref.read(appStateProvider).orgId;
-            final request = {
-              'assessmentId': assessmentId,
-              'orgId': orgId,
-              'blockIds': blockIds.toList(),
+            // Simulate processing delay for demo
+            await Future.delayed(const Duration(seconds: 2));
+
+            // Return demo message - no actual assessment sent
+            return {
+              'success': true,
+              'data': {'message': 'No assessments were sent as this is a demo.'},
             };
-
-            try {
-              final response = await HttpService.postRequest(path: 'https://us-central1-efficiency-1st.cloudfunctions.net/sendAssessmentToBlockIdsV2', request: request);
-              // final response = await HttpService.postRequest(path: 'http://127.0.0.1:5001/efficiency-1st/us-central1/sendAssessmentToBlockIdsV2', request: request);
-
-              return {'success': true, 'data': response};
-            } catch (e) {
-              return {'success': false, 'error': e.toString()};
-            }
           },
-          onCancel: () {},
+          onCancel: () {
+            // Clear selections and reset mode after confirmation overlay closes
+            ref.read(selectedBlocksProvider.notifier).state = {};
+            ref.read(selectedDepartmentsProvider.notifier).state = {};
+            ref.read(selectedHierarchiesProvider.notifier).state = {};
+            ref.read(appStateProvider.notifier).setAssessmentMode(AssessmentMode.assessmentBuild);
+          },
         );
       },
       onCancel: () {
-        // Clear AssessmentSend Blocks
+        // Clear AssessmentSend Blocks when canceling from the first overlay
         ref.read(selectedBlocksProvider.notifier).state = {};
         ref.read(selectedDepartmentsProvider.notifier).state = {};
         ref.read(selectedHierarchiesProvider.notifier).state = {};
