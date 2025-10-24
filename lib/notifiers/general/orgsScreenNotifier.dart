@@ -32,7 +32,7 @@ class OrgsScreenNotifier extends StateNotifier<OrgsScreenState> {
   void getOrgs() async {
     try {
       state = state.copyWith(isLoading: true, loadingMessage: "Getting orgs...");
-      logger.info("Getting orgs from firestore");
+      //logger.info("Getting orgs from firestore");
       final orgCollection = await FirestoreService.instance.collection('orgs').get();
       List<Org> orgs = [];
       List<String> orgNames = []; // For logging
@@ -42,7 +42,7 @@ class OrgsScreenNotifier extends StateNotifier<OrgsScreenState> {
       }
 
       state = state.copyWith(orgs: orgs, isLoading: false);
-      logger.info("orgs: ${orgNames.join(", ")}");
+      //logger.info("orgs: ${orgNames.join(", ")}");
     } catch (e) {
       state = state.copyWith(error: "Error getting orgs", isLoading: false);
       logger.severe("Error getting orgs: $e");

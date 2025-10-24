@@ -108,7 +108,7 @@ class ConnectionManager extends StateNotifier<ConnectionsState> {
   }
 
   void createDirectConnection({required String childBlockId, required String parentBlockId}) {
-    logger.info("Create Direct connection");
+    // //logger.info("Create Direct connection");
     Connection newConnection = Connection(FirestoreIdGenerator.generate(), parentId: parentBlockId, childId: childBlockId);
 
     // Track pending addition and update UI immediately

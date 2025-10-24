@@ -55,7 +55,7 @@ class GroupsNotifier extends ChangeNotifier {
       final newGroups = snapshot.docs.map((doc) => GroupData.fromFirestore(doc)).toList();
       _groups = newGroups;
       _dataLoaded = true;
-      _logger.info('Loaded ${_groups.length} groups');
+      // _//logger.info('Loaded ${_groups.length} groups');
       notifyListeners();
     });
   }
@@ -77,7 +77,7 @@ class GroupsNotifier extends ChangeNotifier {
   /// Simple method to reload groups from Firestore
   Future<void> loadGroups() async {
     try {
-      _logger.info('Loading groups from Firestore');
+      // _//logger.info('Loading groups from Firestore');
       final snapshot = await FirestoreService.instance
           .collection('orgs')
           .doc(appState.orgId)
@@ -88,7 +88,7 @@ class GroupsNotifier extends ChangeNotifier {
       
       _groups = snapshot.docs.map((doc) => GroupData.fromFirestore(doc)).toList();
       _dataLoaded = true;
-      _logger.info('Loaded ${_groups.length} groups');
+      // _//logger.info('Loaded ${_groups.length} groups');
       notifyListeners();
     } catch (e) {
       _logger.severe('Failed to load groups: $e');

@@ -12,7 +12,7 @@ class HttpService {
     };
 
     try {
-      logger.info("POST Request: URL=$uri, Body=${jsonEncode(request)} Headers=${headers.toString()}");
+      //logger.info("POST Request: URL=$uri, Body=${jsonEncode(request)} Headers=${headers.toString()}");
 
       final response = await http.post(uri, headers: headers, body: jsonEncode(request));
 
@@ -27,8 +27,8 @@ class HttpService {
   }
 
   static dynamic _handleResponse(http.Response response) {
-    logger.info("Response Status Code: ${response.statusCode}");
-    logger.info("Response Body: ${response.body}");
+    //logger.info("Response Status Code: ${response.statusCode}");
+    //logger.info("Response Body: ${response.body}");
     if (response.statusCode == 200) {
       try {
         return jsonDecode(response.body);

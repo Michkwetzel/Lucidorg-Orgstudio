@@ -21,7 +21,7 @@ class OrgSelectPage extends ConsumerWidget {
     final bool isLoading = ref.watch(orgsSelectProvider.select((state) => state.isLoading));
     final String loadingMessage = ref.watch(orgsSelectProvider.select((state) => state.loadingMessage));
 
-    logger.info("org Screen, Build run");
+    //logger.info("org Screen, Build run");
 
     return Padding(
       padding: const EdgeInsets.only(left: 32, right: 32, top: 105, bottom: 32),

@@ -128,7 +128,7 @@ class BlockNotifier extends ChangeNotifier {
               _setupResultStream();
             }
 
-            // logger.info("Block update state");
+            // //logger.info("Block update state");
             notifyListeners();
           } else {
             // print("No changes detected for block $blockId - skipping update");

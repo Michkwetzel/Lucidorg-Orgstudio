@@ -39,9 +39,9 @@ class AuthNotifier extends StateNotifier<AuthState> {
       if (user != null) {
         state = state.copyWith(firebaseUser: user);
         // await getUserInfo();
-        logger.info("User signed in with UID: ${user.uid}, Email: ${user.email}}");
+        // //logger.info("User signed in with UID: ${user.uid}, Email: ${user.email}}");
       } else {
-        logger.info("No user signed in");
+        // //logger.info("No user signed in");
       }
     });
   }
@@ -75,35 +75,35 @@ class AuthNotifier extends StateNotifier<AuthState> {
   // }
 
   Future<void> deleteAccount() async {
-    logger.info("Attempting to delete account that was just created");
+    // //logger.info("Attempting to delete account that was just created");
     await _auth.currentUser!.delete();
-    logger.info("Account deleted");
+    // //logger.info("Account deleted");
   }
 
   Future<void> createUserWithEmailAndPassword(String inputEmail, String inputPassword) async {
-    logger.info("Create user Account started inputEmail: $inputEmail, password: $inputPassword");
+    // //logger.info("Create user Account started inputEmail: $inputEmail, password: $inputPassword");
     _auth.signOut();
     await _auth.createUserWithEmailAndPassword(email: inputEmail, password: inputPassword);
-    logger.info("Success creating Google Auth Account");
+    // //logger.info("Success creating Google Auth Account");
   }
 
   Future<void> signInWithEmailAndPassword(String email, String password) async {
-    logger.info("Singing in with Email and Password $email, $password");
+    // //logger.info("Singing in with Email and Password $email, $password");
     _auth.signOut();
     await _auth.signInWithEmailAndPassword(email: email, password: password);
   }
 
   Future<dynamic> signinWithGoogle() async {
-    logger.info("Singing in with Google");
+    // //logger.info("Singing in with Google");
     _auth.signOut();
     return await _auth.signInWithPopup(GoogleAuthProvider());
   }
 
   Future<void> signInAnonymously() async {
-    logger.info("Signing in anonymously (guest mode)");
+    // //logger.info("Signing in anonymously (guest mode)");
     _auth.signOut();
     await _auth.signInAnonymously();
-    logger.info("Successfully signed in as guest");
+    // //logger.info("Successfully signed in as guest");
   }
 
   void signOutUser() {

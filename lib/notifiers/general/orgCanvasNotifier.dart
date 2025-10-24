@@ -51,7 +51,7 @@ class OrgCanvasNotifier extends StateNotifier<Set<String>> {
           _pendingDeletions.remove(change.doc.id);
           continue;
         }
-        logger.info("Deletion detected");
+        // //logger.info("Deletion detected");
         hasAdditionsOrDeletions = true;
       }
     }
@@ -94,7 +94,7 @@ class OrgCanvasNotifier extends StateNotifier<Set<String>> {
 
   @override
   void dispose() {
-    logger.info("OrgCanvasNotifier disposed - orgId: ${appState.orgId}");
+    //logger.info("OrgCanvasNotifier disposed - orgId: ${appState.orgId}");
     _blocksSubscription?.cancel();
     super.dispose();
   }

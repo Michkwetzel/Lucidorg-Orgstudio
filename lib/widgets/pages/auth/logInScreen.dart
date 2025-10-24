@@ -40,7 +40,7 @@ class _LogInScreenState extends ConsumerState<LogInScreen> {
           SnackBarService.showMessage("Can't sign in with this account", Colors.red, duration: 4);
         }
       } on Exception catch (e) {
-        logger.info("error signing in with google: $e");
+        //logger.info("error signing in with google: $e");
         SnackBarService.showMessage("Google sign in error, Please try again later or Reload Page", Colors.red, duration: 4);
       }
     }
@@ -50,7 +50,7 @@ class _LogInScreenState extends ConsumerState<LogInScreen> {
         await ref.read(authProvider.notifier).signInWithEmailAndPassword(email, password);
         successfullyLogIn();
       } on FirebaseAuthException catch (e) {
-        logger.info('Error logging in with Firebase Auth Account: ${e.code}');
+        //logger.info('Error logging in with Firebase Auth Account: ${e.code}');
         String errorText = '';
         switch (e.code) {
           case 'network-request-failed':

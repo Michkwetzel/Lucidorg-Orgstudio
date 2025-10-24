@@ -76,7 +76,7 @@ class AnalysisDataService {
     required List<String> dataDocIds,
   }) async {
     try {
-      _logger.info('Fetching data for ${dataDocIds.length} documents');
+      //logger.info('Fetching data for ${dataDocIds.length} documents');
 
       final List<EmailDataPoint> dataPoints = [];
 
@@ -118,7 +118,7 @@ class AnalysisDataService {
         }
       }
 
-      _logger.info('Successfully fetched ${dataPoints.length} data points');
+      //logger.info('Successfully fetched ${dataPoints.length} data points');
       return dataPoints;
     } catch (e) {
       _logger.severe('Error fetching group raw data: $e');
